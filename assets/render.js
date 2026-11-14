@@ -22,6 +22,8 @@ const I = {
   building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 21V5l8-2v18M12 8l8 2v11M2 21h20M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  moon: '<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+  sun: '<svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   contrast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
 };
@@ -330,7 +332,7 @@ const POLICIES = {
     '<h2>Questions or complaints</h2>' + P('Contact the Grievance Officer on the <a class="link" href="/grievance/">Grievance & Feedback</a> page.') },
   accessibility: { path: 'accessibility-statement', title: 'Accessibility Statement', desc: 'How this website supports people with disabilities', body: (D, x) =>
     P(x.name + ' wants everyone, including people with disabilities, to be able to use this website. We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA, in the spirit of the Rights of Persons with Disabilities Act, 2016.') +
-    '<h2>What we have done</h2>' + UL(['A “Skip to main content” link at the top of every page for keyboard and screen-reader users.', 'The whole website works with a keyboard, with a visible focus outline.', 'Text size controls (A−, A, A+) and a high-contrast mode at the top of every page. Your choice is remembered.', 'Descriptive text for every meaningful image.', 'Clear headings, labelled form fields and page titles that make sense on their own.', 'Layouts that work on phones, tablets and computers and when zoomed to 200%.', 'Animations are switched off if your device asks for reduced motion.']) +
+    '<h2>What we have done</h2>' + UL(['A “Skip to main content” link at the top of every page for keyboard and screen-reader users.', 'The whole website works with a keyboard, with a visible focus outline.', 'Text size controls (A−, A, A+), a dark mode, and Hindi and Marathi versions, at the top of every page. Your choice is remembered.', 'Descriptive text for every meaningful image.', 'Clear headings, labelled form fields and page titles that make sense on their own.', 'Layouts that work on phones, tablets and computers and when zoomed to 200%.', 'Animations are switched off if your device asks for reduced motion.']) +
     '<h2>Known limitations</h2>' + UL(['Some older photos may have short descriptions only.', 'WhatsApp and Google Maps open in their own apps, and their accessibility is controlled by those companies.']) +
     '<h2>Report a barrier</h2>' + P('If something on this website is hard to use, tell us and we will fix it or give you the information another way. Call or WhatsApp +91 ' + x.phone + ' or email <a class="link" href="mailto:' + x.email + '">' + x.email + '</a>. We aim to reply within 2 working days.') },
   grievance: { path: 'grievance', title: 'Grievance & Feedback', desc: 'Grievance officer, complaint process and feedback', body: (D, x) =>
@@ -342,14 +344,14 @@ const POLICIES = {
   help: { path: 'help', title: 'Help', desc: 'How to use this website', body: (D, x) =>
     '<h2>Getting an estimate</h2>' + UL(['Open a <a class="link" href="/services/">service</a> to see what it usually costs.', 'Use <a class="link" href="/get-quote/">Get a quote</a> to send your requirement. It opens WhatsApp with your details filled in — tap Send.', 'For furniture, tap <b>Add to quote</b> on the pieces you like, then open the quote list (the list icon at the top) and send it.']) +
     '<h2>Prices</h2>' + P('Prices are estimates. We confirm the exact price after a free site visit and measurement.') +
-    '<h2>Reading the website</h2>' + UL(['Use A−, A and A+ at the top of the page to change text size, and the contrast button for high contrast.', 'Press Tab to move between links and buttons; the first link skips to the main content.', 'No plug-ins or PDF reader are needed to use this website. Quotations and invoices we send you are PDF files and open in any PDF reader or browser.']) +
+    '<h2>Reading the website</h2>' + UL(['Use A−, A and A+ to change text size, the moon button for dark mode, and EN / हिंदी / मराठी to change language.', 'Press Tab to move between links and buttons; the first link skips to the main content.', 'No plug-ins or PDF reader are needed to use this website. Quotations and invoices we send you are PDF files and open in any PDF reader or browser.']) +
     '<h2>Still need help?</h2>' + P('Call or WhatsApp +91 ' + x.phone + ', or see the <a class="link" href="/sitemap/">site map</a> for every page.') }
 };
 Object.keys(POLICIES).forEach(k => {
   V['legal_' + k] = D => {
     const Pp = POLICIES[k], x = legalInfo(D);
     const body = pageHead(Pp.title, (x.updated && k !== 'help' ? 'Last updated: ' + x.updated : ''), crumbs([[Pp.title]])) +
-      '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal">' + Pp.body(D, x) + '</article>' + legalNav(k) + '</div></section>';
+      '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal">' + (CUR.lang !== 'en' && !/grievance|help/.test(k) ? '<p class="note">The English text of this policy applies.</p>' : '') + Pp.body(D, x) + '</article>' + legalNav(k) + '</div></section>';
     return { title: Pp.title + ' | ' + D.S.name, desc: Pp.title + ' of ' + D.S.name + ' (' + x.site + '): ' + Pp.desc + '.', body, ld: [crumbLD(D, [[Pp.title, '/' + Pp.path + '/']])] };
   };
 });
@@ -367,6 +369,36 @@ V.sitemap = D => {
   return { title: 'Site Map | ' + D.S.name, desc: 'All pages on the ' + D.S.name + ' website: services, furniture, areas, policies and help.', body, ld: [crumbLD(D, [['Site map', '/sitemap/']])] };
 };
 
+
+/* ── languages: English is the source; Hindi and Marathi come from /data/i18n.json ── */
+const CUR = { lang: 'en', dict: null };
+function setLang(lang, raw) {
+  CUR.lang = lang || 'en'; CUR.dict = null;
+  const d = raw && raw[CUR.lang]; if (CUR.lang === 'en' || !d) return;
+  const t = {}, p = [];
+  Object.keys(d).forEach(k => { const v = d[k]; if (!v) return; const key = k, val = esc(v);
+    if (/\{\d\}/.test(k)) p.push([new RegExp('^' + key.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\d)\}/g, '(.+?)') + '$'), val]); else t[key] = val; });
+  p.sort((a, b) => b[0].source.length - a[0].source.length);
+  CUR.dict = { t, p };
+}
+function trText(s) {
+  const D = CUR.dict; if (!D) return s;
+  const raw = s.trim(); if (!raw || !/[A-Za-z]/.test(raw)) return s;
+  const lead = s.slice(0, s.indexOf(raw[0])), trail = s.slice(s.lastIndexOf(raw[raw.length - 1]) + 1);
+  const core = raw.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  if (D.t[core] != null) return lead + D.t[core] + trail;
+  for (const [re, out] of D.p) { const m = core.match(re); if (m) return lead + out.replace(/\{(\d)\}/g, (_, i) => trText(esc(m[+i + 1])).trim()) + trail; }
+  return s;
+}
+const LOCAL_SKIP = /^\/(assets|images|data|admin\.html|favicon|icon-|apple-touch|site\.webmanifest|hi\/|mr\/|en\/)/;
+function localize(html) {
+  if (CUR.lang === 'en') return html;
+  html = html.replace(/<a([^>]*?)\shref="(\/[^"]*)"/g, (m, pre, href) => /data-nolocal/.test(m) || LOCAL_SKIP.test(href) ? m : '<a' + pre + ' href="/' + CUR.lang + href + '"');
+  return html.replace(/(<(script|style)[\s\S]*?<\/\2>)|(\s(?:alt|aria-label|placeholder|title)=")([^"]*)(")|>([^<]+)</g, (m, scr, _t, a1, av, a2, txt) => scr ? scr : a1 ? a1 + trText(av) + a2 : '>' + trText(txt) + '<');
+}
+const tr = s => CUR.lang === 'en' ? s : String(s).split(/( \| | — |: )/).map(x => /^( \| | — |: )$/.test(x) ? x : trText(esc(x)).replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')).join('');
+function langOf(path) { const m = String(path || '').match(/^\/(hi|mr)(\/|$)/); return m ? m[1] : 'en'; }
+
 /* ── routing ── */
 function routes(D) {
   const R = [['/', 'home'], ['/services/', 'services'], ['/furniture/', 'furniture'], ['/our-work/', 'work'], ['/about/', 'about'], ['/contact/', 'contact'], ['/get-quote/', 'quote'], ['/quote-list/', 'list'], ['/thanks/', 'thanks']];
@@ -379,20 +411,33 @@ function routes(D) {
   return R;
 }
 function resolve(D, path) {
+  path = String(path || '/').replace(/^\/(hi|mr)(?=\/|$)/, '');
   path = ('/' + String(path || '/').replace(/index\.html$/, '').replace(/^\/+/, '')).replace(/\/?$/, '/');
   const r = routes(D).find(x => x[0] === path);
   return r ? { path, view: r[1], args: r.slice(2) } : { path, view: 'notfound', args: [] };
 }
-function render(D, view, args) { return (V[view] && V[view].apply(null, [D].concat(args || []))) || V.notfound(D); }
+function render(D, view, args) {
+  const p = (V[view] && V[view].apply(null, [D].concat(args || []))) || V.notfound(D);
+  if (CUR.lang !== 'en') { p.body = localize(p.body); p.title = tr(p.title); p.desc = tr(p.desc); }
+  return p;
+}
+const headerL = (D, path) => localize(header(D, path)), footerL = D => localize(footer(D));
 
 /* ── header & footer ── */
 const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/about/', 'About'], ['/contact/', 'Contact']];
+const LANGS = [['en', 'EN', 'English'], ['hi', 'हिंदी', 'Hindi'], ['mr', 'मराठी', 'Marathi']];
+function langLinks(path) {
+  return '<span class="langs" role="group" aria-label="Language">' + LANGS.map(l => '<a data-nolocal href="' + (l[0] === 'en' ? '' : '/' + l[0]) + (path || '/') + '" hreflang="' + l[0] + '" lang="' + l[0] + '"' + (l[0] === CUR.lang ? ' aria-current="true"' : '') + ' title="' + l[2] + '">' + l[1] + '</a>').join('') + '</span>';
+}
 function header(D, path) {
-  const S = D.S;
-  return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><span>' + esc(S.top_note || '') + ' <a href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a></span>' +
-    '<span class="a11y" role="group" aria-label="Text size and contrast"><button type="button" data-fs="-1" aria-label="Decrease text size">A−</button><button type="button" data-fs="0" aria-label="Normal text size">A</button><button type="button" data-fs="1" aria-label="Increase text size">A+</button><button type="button" data-hc aria-pressed="false" aria-label="High contrast">' + I.contrast + '</button></span></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="38" height="38"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
-    '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') + '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
+  const S = D.S, fs = '<span class="fs" role="group" aria-label="Text size"><button type="button" data-fs="-1" aria-label="Decrease text size">A−</button><button type="button" data-fs="0" aria-label="Normal text size">A</button><button type="button" data-fs="1" aria-label="Increase text size">A+</button></span>';
+  const theme = '<button type="button" class="themebtn" data-theme aria-pressed="false" aria-label="Dark mode">' + I.moon + I.sun + '</button>';
+  return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><div class="wrap"><span class="tn-text">' + esc(S.top_note || '') + '</span>' +
+    '<a class="tn-phone" href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a><span class="tools">' + langLinks(path) + fs + theme + '</span></div></div>' +
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="40" height="40"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
+    '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
+    '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
     '<a class="listbtn" href="/quote-list/" aria-label="Quote list">' + I.list + '<b id="cartCount" data-count hidden>0</b></a>' +
     '<button class="menubtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span><b class="mdot" data-count hidden>0</b></button></div></header>';
 }
@@ -424,5 +469,5 @@ function orgLD(D) {
 
 function sig(str) { let h = 5381; str = String(str); for (let i = 0; i < str.length; i++) h = (h * 33 ^ str.charCodeAt(i)) >>> 0; return h.toString(36); }
 
-return { sig, esc, slugify, inr, src, small, I, prep, routes, resolve, render, header, footer, orgLD, card, catName, waLink, tel, range, V };
+return { CUR, LANGS, setLang, langOf, localize, tr, header: headerL, footer: footerL, sig, esc, slugify, inr, src, small, I, prep, routes, resolve, render, orgLD, card, catName, waLink, tel, range, V };
 });

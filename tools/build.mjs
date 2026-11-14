@@ -30,7 +30,7 @@ function page(route, view, args, lang) {
 <title>${esc(p.title)}</title>
 <meta name="description" content="${esc(p.desc)}"/>
 ${p.noindex ? '<meta name="robots" content="noindex,follow"/>' : `<link rel="canonical" href="${esc(url)}"/>`}
-<meta name="theme-color" content="#2F4A3A"/>
+<meta name="theme-color" content="#242421"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="${esc(S.name)}"/>
 <meta property="og:title" content="${esc(p.title)}"/>
@@ -43,7 +43,7 @@ ${alts}
 <meta name="geo.region" content="IN-MH"/>
 <meta name="geo.placename" content="Airoli, Navi Mumbai"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+<link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/site.webmanifest"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>

@@ -86,10 +86,11 @@ html.fs-1{font-size:93.75%}html.fs1{font-size:112.5%}html.fs2{font-size:125%}
 .themebtn svg{width:15px;height:15px}.themebtn .i-sun{display:none}
 html.dark .themebtn .i-sun{display:block}html.dark .themebtn .i-moon{display:none}
 .nav-tools{display:none}
-header.site{position:sticky;top:0;z-index:40;background:var(--head-bg);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+#hdr{position:sticky;top:0;z-index:40}
+header.site{position:relative;background:var(--head-bg);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
 header.site .wrap{display:flex;align-items:center;gap:1.5rem;height:74px}
 .brand{display:flex;align-items:center;gap:.65rem;text-decoration:none;font-family:var(--display);font-weight:800;font-size:1.22rem;line-height:1.1}
-.brand img{border-radius:10px}
+.brand img{border-radius:10px;width:44px;height:44px}
 .brand small{display:block;font-family:var(--body);font-weight:500;font-size:.74rem;color:var(--muted);letter-spacing:0}
 nav.main{display:flex;align-items:center;gap:1.5rem;margin-left:auto}
 nav.main a:not(.btn){position:relative;text-decoration:none;color:var(--muted);font-weight:600;padding:.4rem 0}
@@ -230,7 +231,7 @@ nav.main a:not(.btn):hover::after,nav.main a[aria-current]::after{transform:scal
 .areas svg{width:17px;height:17px;color:var(--link)}
 .areas a:hover,.areas a[aria-current]{border-color:var(--link);background:var(--forest);color:#fff}
 .areas a:hover svg,.areas a[aria-current] svg{color:var(--tape)}
-.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.team{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,300px));gap:1.2rem}
 .person{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1.4rem;display:flex;gap:1rem;align-items:flex-start;transition:transform .3s,box-shadow .3s}
 .person:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
 .mono{flex-shrink:0;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:var(--forest);color:var(--tape);font-family:var(--display);font-weight:800;font-size:1.3rem;box-shadow:0 0 0 4px #fff,0 0 0 5px var(--tape)}
@@ -238,6 +239,13 @@ nav.main a:not(.btn):hover::after,nav.main a[aria-current]::after{transform:scal
 .person .role{display:inline-block;font-size:.8rem;font-weight:700;color:var(--link);background:#E6EEE7;padding:.08rem .5rem;border-radius:5px;margin:.2rem 0 .5rem}
 .person p{color:var(--muted);font-size:.93rem}
 .split .team{grid-template-columns:1fr}
+.person.has-photo{flex-direction:column;padding:0;overflow:hidden;gap:0}
+.pphoto{width:100%;aspect-ratio:1/1;object-fit:cover;object-position:center 20%;transition:transform .6s}
+.person.has-photo:hover .pphoto{transform:scale(1.04)}
+.person.has-photo figcaption{padding:1.1rem 1.3rem 1.3rem}
+.split .team{grid-template-columns:1fr 1fr}
+@media (max-width:640px){.team,.split .team{grid-template-columns:1fr 1fr;gap:.7rem}.person.has-photo figcaption{padding:.8rem}.person.has-photo p{font-size:.84rem}.person.has-photo b{font-size:1rem}}
+.team .pphoto{display:block}
 .split .lede+.link,.split .lede+a.link{display:inline-block;margin-top:1rem}
 
 /* steps, faq, quotes, band */
@@ -393,7 +401,7 @@ footer.site .fbottom{display:flex;justify-content:space-between;gap:1rem;flex-wr
   .grid{grid-template-columns:repeat(2,1fr)}
   .steps{grid-template-columns:repeat(2,1fr)}
   footer.site .fgrid{grid-template-columns:1fr 1fr;gap:2rem}
-  nav.main{position:absolute;top:74px;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--bg);border-bottom:1px solid var(--line);padding:.4rem 1.5rem 1.2rem;box-shadow:0 20px 30px -20px rgba(0,0,0,.3);display:none}
+  nav.main{position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--bg);border-bottom:1px solid var(--line);padding:.4rem 1.5rem 1.2rem;box-shadow:0 20px 30px -20px rgba(0,0,0,.3);display:none}
   nav.main.open{display:flex}
   nav.main a:not(.btn){padding:.8rem 0;font-size:1.05rem;border-bottom:1px solid var(--line)}
   nav.main a:not(.btn)::after{display:none}
@@ -413,7 +421,6 @@ footer.site .fbottom{display:flex;justify-content:space-between;gap:1rem;flex-wr
   .wrap{padding:0 1rem}
   .top-note{font-size:.8rem;gap:.3rem .8rem}
   header.site .wrap{height:66px}
-  nav.main{top:66px}
   .brand{font-size:1.02rem}.brand small{font-size:.68rem}.brand img{width:34px;height:34px}
   .sec{padding:3rem 0}.sec.tight{padding:1.8rem 0 2.6rem}
   .hero{min-height:620px}

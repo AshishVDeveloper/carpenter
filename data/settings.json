@@ -5,8 +5,8 @@
   "hero_title": "Interiors and furniture for Mumbai homes, offices and shops",
   "hero_text": "Built by our own carpenters — on contract or labour basis, across Mumbai, Thane, Navi Mumbai and Uttar Pradesh.",
   "about": "Mumbai Interior is a team of carpenters and interior workers serving Mumbai, Thane, Navi Mumbai and Uttar Pradesh. We take on complete interior contracts and labour-basis work for homes, offices, shops, showrooms and malls, and we make furniture to measure in our own workshop.",
-  "phone": "8169838790",
-  "whatsapp": "918169838790",
+  "phone": "9004200401",
+  "whatsapp": "919004200401",
   "email": "ashishvishwakarma7300@gmail.com",
   "address": "Airoli, Navi Mumbai",
   "hours": "",
@@ -221,7 +221,7 @@
     "intro": "Sliding Aluminium Window, Teakwood Furniture, Sofa, Kapat",
     "address": "Room No. 36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708",
     "phones": [
-      "+91 8169838790",
+      "+91 9004200401",
       "+91 9833583310"
     ],
     "email": "ashishvishwakarma7300@gmail.com",
@@ -233,12 +233,14 @@
     {
       "name": "Ramkumar Vishwakarma",
       "role": "Founder",
-      "bio": "Started Mumbai Interior as a carpenter. Teakwood furniture, sofas, kapat (wardrobes) and sliding aluminium windows have been at the heart of the work from the start."
+      "bio": "Started Mumbai Interior as a carpenter. Teakwood furniture, sofas, kapat (wardrobes) and sliding aluminium windows have been at the heart of the work from the start.",
+      "photo": "images/team/ramkumar-vishwakarma.webp"
     },
     {
       "name": "Asheesh Vishwakarma",
       "role": "Director",
-      "bio": "Runs projects, quotations and client communication, and keeps every site moving to schedule."
+      "bio": "Runs projects, quotations and client communication, and keeps every site moving to schedule.",
+      "photo": "images/team/asheesh-vishwakarma.webp"
     }
   ],
   "faqs": [
@@ -256,7 +258,7 @@
     },
     {
       "q": "Do you visit the site before quoting?",
-      "a": "Yes. Call or WhatsApp us on 8169838790 to book a site visit and measurement."
+      "a": "Yes. Call or WhatsApp us on 9004200401 to book a site visit and measurement."
     },
     {
       "q": "Can you make furniture in my size and wood?",
@@ -272,7 +274,7 @@
       "name": "Asheesh Vishwakarma",
       "role": "Director and Grievance Officer",
       "email": "ashishvishwakarma7300@gmail.com",
-      "phone": "8169838790"
+      "phone": "9004200401"
     }
   }
 }

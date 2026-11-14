@@ -85,7 +85,7 @@ function areasHTML(D, current) {
 }
 function teamHTML(D) {
   const T = D.S.team || []; if (!T.length) return '';
-  return '<div class="team">' + T.map(t => '<figure class="person"><span class="mono" aria-hidden="true">' + esc(String(t.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('')) + '</span><figcaption><b>' + esc(t.name) + '</b><span class="role">' + esc(t.role) + '</span>' + (t.bio ? '<p>' + esc(t.bio) + '</p>' : '') + '</figcaption></figure>').join('') + '</div>';
+  return '<div class="team">' + T.map(t => '<figure class="person' + (t.photo ? ' has-photo' : '') + '">' + (t.photo ? '<img class="pphoto" src="' + esc(src(t.photo)) + '" alt="' + esc(t.name) + ', ' + esc(t.role) + '" loading="lazy" width="600" height="600"/>' : '<span class="mono" aria-hidden="true">' + esc(String(t.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('')) + '</span>') + '<figcaption><b>' + esc(t.name) + '</b><span class="role">' + esc(t.role) + '</span>' + (t.bio ? '<p>' + esc(t.bio) + '</p>' : '') + '</figcaption></figure>').join('') + '</div>';
 }
 function faqHTML(D) {
   const F = D.S.faqs || []; if (!F.length) return '';
@@ -434,7 +434,7 @@ function header(D, path) {
   const theme = '<button type="button" class="themebtn" data-theme aria-pressed="false" aria-label="Dark mode">' + I.moon + I.sun + '</button>';
   return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><div class="wrap"><span class="tn-text">' + esc(S.top_note || '') + '</span>' +
     '<a class="tn-phone" href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a><span class="tools">' + langLinks(path) + fs + theme + '</span></div></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="40" height="40"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.png" alt="" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
     '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
     '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
@@ -444,7 +444,7 @@ function header(D, path) {
 function footer(D) {
   const S = D.S, locs = (S.locations || []).filter(Boolean);
   return '<footer class="site"><div class="wrap fgrid">' +
-    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo.svg" alt="" width="40" height="40"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
+    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo.png" alt="" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +
@@ -460,9 +460,9 @@ function footer(D) {
 }
 function orgLD(D) {
   const S = D.S, L = S.letterhead || {};
-  return { '@context': 'https://schema.org', '@type': 'HomeAndConstructionBusiness', '@id': S.site_url + '/#business', name: S.name, url: S.site_url + '/', image: S.site_url + '/images/site/og.jpg', logo: S.site_url + '/assets/logo.svg', telephone: '+91' + S.phone, email: S.email, priceRange: '₹₹',
+  return { '@context': 'https://schema.org', '@type': 'HomeAndConstructionBusiness', '@id': S.site_url + '/#business', name: S.name, url: S.site_url + '/', image: S.site_url + '/images/site/og.jpg', logo: S.site_url + '/assets/logo.png', telephone: '+91' + S.phone, email: S.email, priceRange: '₹₹',
     address: { '@type': 'PostalAddress', streetAddress: L.address || S.address, addressLocality: 'Airoli, Navi Mumbai', addressRegion: 'Maharashtra', postalCode: (String(L.address || '').match(/\b\d{6}\b/) || [])[0], addressCountry: 'IN' },
-    areaServed: D.AREAS.map(a => ({ '@type': 'Place', name: a.name })), founder: (S.team || []).filter(t => /founder/i.test(t.role)).map(t => ({ '@type': 'Person', name: t.name, jobTitle: t.role })),
+    areaServed: D.AREAS.map(a => ({ '@type': 'Place', name: a.name })), founder: (S.team || []).filter(t => /founder/i.test(t.role)).map(t => ({ '@type': 'Person', name: t.name, jobTitle: t.role, image: t.photo ? S.site_url + src(t.photo) : undefined })),
     employee: (S.team || []).filter(t => !/founder/i.test(t.role)).map(t => ({ '@type': 'Person', name: t.name, jobTitle: t.role })),
     makesOffer: S.services.map(s => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: s.title, url: S.site_url + '/services/' + s.slug + '/' } })) };
 }

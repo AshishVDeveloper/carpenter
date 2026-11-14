@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="robots" content="noindex,nofollow"/>
 <title>Mumbai Interior — admin</title>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+<link rel="icon" href="/favicon.ico"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -189,7 +189,7 @@ td .s{color:var(--muted);font-size:.82rem}
 
 <div class="app" id="app" hidden>
   <aside class="sb" id="sb">
-    <div class="brand"><img src="assets/logo.svg" alt=""/>Mumbai Interior admin</div>
+    <div class="brand"><img src="assets/logo.png" alt=""/>Mumbai Interior admin</div>
     <nav class="nav" id="nav" aria-label="Admin sections"></nav>
     <div class="sbfoot"><a class="btn sm" href="/" target="_blank" rel="noopener">View website</a><button class="btn sm" onclick="logout()">Sign out</button><div class="who" id="who"></div></div>
   </aside>
@@ -343,7 +343,7 @@ function pgSettings(){const S=DB.settings,f=(k,l,t='text',h='')=>'<div class="fi
   '<div class="card"><h2>Founder & team <button type="button" class="btn sm" onclick="addTeam()">Add person</button></h2><div id="teamRows"></div><p class="hint">Shown on the homepage, About page and footer.</p></div>'+
   '<div class="card"><h2>Ways to hire you <button type="button" class="btn sm" onclick="addRow(\'work_modes\')">Add</button></h2><div id="modeRows"></div></div>'+
   '<div class="card"><h2>Locations <button type="button" class="btn sm" onclick="addLoc()">Add location</button></h2><div id="locRows"></div><p class="hint">The first location is shown as the main office.</p></div>'+
-  '<div class="card"><h2>Contact</h2><div class="g2">'+f('whatsapp','WhatsApp number with country code','tel','Orders go here. e.g. 918169838790')+f('phone','Phone','tel')+f('email','Email','email','Order copies are emailed here.')+f('hours','Opening hours')+'</div>'+f('map','Google Maps link for the main office','url')+'</div>'+
+  '<div class="card"><h2>Contact</h2><div class="g2">'+f('whatsapp','WhatsApp number with country code','tel','Orders go here. e.g. 919004200401')+f('phone','Phone','tel')+f('email','Email','email','Order copies are emailed here.')+f('hours','Opening hours')+'</div>'+f('map','Google Maps link for the main office','url')+'</div>'+
   '<div class="card"><div class="check" style="margin:0"><input type="checkbox" id="s_sample"'+(S.sample_data?' checked':'')+'/><label for="s_sample">Sample data — show a reminder in the admin until real products are added</label></div></div>'+saveBar('settings'));
   $('content').querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{S[el.dataset.k]=el.value;markDirty('settings')});$('s_sample').onchange=e=>{S.sample_data=e.target.checked;markDirty('settings')};drawLists()}
 function drawLists(){const S=DB.settings;S.services=S.services||[];S.work_modes=S.work_modes||[];S.locations=S.locations||[];

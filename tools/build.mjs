@@ -30,7 +30,7 @@ function page(route, view, args, lang) {
 <title>${esc(p.title)}</title>
 <meta name="description" content="${esc(p.desc)}"/>
 ${p.noindex ? '<meta name="robots" content="noindex,follow"/>' : `<link rel="canonical" href="${esc(url)}"/>`}
-<meta name="theme-color" content="#242421"/>
+${S.google_verification ? `<meta name="google-site-verification" content="${esc(S.google_verification)}"/>\n` : ''}${S.bing_verification ? `<meta name="msvalidate.01" content="${esc(S.bing_verification)}"/>\n` : ''}<meta name="theme-color" content="#242421"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="${esc(S.name)}"/>
 <meta property="og:title" content="${esc(p.title)}"/>

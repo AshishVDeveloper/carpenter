@@ -22,6 +22,7 @@ const I = {
   building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 21V5l8-2v18M12 8l8 2v11M2 21h20M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>',
   arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  contrast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
 };
 
@@ -230,7 +231,8 @@ V.contact = D => {
   const S = D.S;
   const body = pageHead('Contact us', 'Call, WhatsApp or send a message. We usually reply within an hour during working hours.', crumbs([['Contact']])) +
     '<section class="sec tight"><div class="wrap split">' + contactList(D) +
-    '<form class="panel" id="qf" novalidate><h2>Send a message</h2><div class="field"><label for="qName">Your name</label><input id="qName" name="name" autocomplete="name" required/></div><div class="field"><label for="qPhone">Phone</label><input id="qPhone" name="phone" type="tel" autocomplete="tel"/></div><div class="field"><label for="qMsg">Message</label><textarea id="qMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-wa" style="width:100%">' + I.wa + 'Send on WhatsApp</button></form></div></section>';
+    '<form class="panel" id="qf" novalidate><h2>Send a message</h2><div class="field"><label for="qName">Your name</label><input id="qName" name="name" autocomplete="name" required/></div><div class="field"><label for="qPhone">Phone</label><input id="qPhone" name="phone" type="tel" autocomplete="tel"/></div><div class="field"><label for="qMsg">Message</label><textarea id="qMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-wa" style="width:100%">' + I.wa + 'Send on WhatsApp</button></form></div></section>' +
+    '<section class="sec tight"><div class="wrap narrow0">' + officerBox(D) + '<p class="hint" style="margin-top:.6rem">Complaints are acknowledged within 48 hours and resolved within 30 days. See <a class="link" href="/grievance/">Grievance & Feedback</a>.</p></div></section>';
   return { title: 'Contact ' + S.name + ' — Call ' + S.phone + ' | Airoli, Bhandup, Thane', desc: 'Contact ' + S.name + ' for interior and furniture work. Call or WhatsApp ' + S.phone + '. Offices in Airoli (Navi Mumbai), Bhandup (Mumbai), Kunda and Prayagraj.', body, ld: [crumbLD(D, [['Contact', '/contact/']])] };
 };
 
@@ -269,6 +271,102 @@ V.area = (D, slug) => {
 V.notfound = D => ({ title: 'Page not found | ' + D.S.name, desc: 'This page does not exist.', noindex: true,
   body: '<section class="sec"><div class="wrap narrow center"><h1>Page not found</h1><p class="lede">This page may have moved. Try our services or furniture, or call <a class="link" href="' + tel(D.S) + '">' + esc(D.S.phone) + '</a>.</p><div class="ctas center"><a class="btn btn-primary" href="/services/">Services</a><a class="btn btn-ghost" href="/furniture/">Furniture</a></div></div></section>' });
 
+
+/* ── legal & citizen pages ── */
+const P = s => '<p>' + s + '</p>', UL = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+function legalInfo(D) {
+  const S = D.S, L = S.legal || {}, G = L.grievance || {}, LH = S.letterhead || {};
+  return { S, L, G, name: esc(L.legal_name || S.name), addr: esc(LH.address || S.address || ''), email: esc(G.email || S.email), phone: esc(G.phone || S.phone),
+    court: esc(L.jurisdiction || 'Thane, Maharashtra'), updated: esc(L.updated || ''), site: esc(S.site_url.replace(/^https?:\/\//, '')) };
+}
+function officerBox(D) {
+  const x = legalInfo(D);
+  return '<div class="officer"><h3>Grievance Officer</h3><dl><div><dt>Name</dt><dd>' + esc(x.G.name || '') + '</dd></div><div><dt>Designation</dt><dd>' + esc(x.G.role || '') + '</dd></div><div><dt>Business</dt><dd>' + x.name + (x.L.gstin ? ' · GSTIN ' + esc(x.L.gstin) : '') + '</dd></div><div><dt>Address</dt><dd>' + x.addr + '</dd></div><div><dt>Email</dt><dd><a href="mailto:' + x.email + '">' + x.email + '</a></dd></div><div><dt>Phone / WhatsApp</dt><dd><a href="tel:+91' + x.phone.replace(/\D/g, '').slice(-10) + '">+91 ' + x.phone + '</a></dd></div><div><dt>Hours</dt><dd>' + esc(x.S.hours || 'Monday to Saturday, 10 am to 7 pm') + '</dd></div></dl></div>';
+}
+const POLICIES = {
+  terms: { path: 'terms-of-use', title: 'Terms of Use', desc: 'Terms for using the website', body: (D, x) =>
+    '<h2>1. About these terms</h2>' + P('This website, ' + x.site + ', is run by ' + x.name + ', ' + x.addr + '. By using it you agree to these terms. If you do not agree, please do not use the website.') +
+    '<h2>2. Information on this website</h2>' + P('The services, furniture designs, photos and prices on this website are for general guidance. Prices are <b>estimates</b> and are not an offer to sell. A job or order is confirmed only by a written quotation or agreement from us, and the terms in that document apply to it.') +
+    '<h2>3. Quote requests and messages</h2>' + P('When you send a quote request, quote list or message, it opens WhatsApp or email on your device and you choose whether to send it. Sending a request does not create a contract. Please give correct contact details so we can reply.') +
+    '<h2>4. Acceptable use</h2>' + UL(['Do not misuse the website, try to break its security, or send spam or harmful code.', 'Do not copy the website to pass yourself off as ' + x.name + '.', 'Do not use content from this website in a misleading or derogatory way.']) +
+    '<h2>5. Intellectual property</h2>' + P('Text, layout, logo and our own photos belong to ' + x.name + '. Some photos are licensed stock images used as design references. See the <a class="link" href="/copyright-policy/">Copyright Policy</a>.') +
+    '<h2>6. Liability</h2>' + P('We take care to keep the website correct and available, but we do not guarantee that it is always complete, current or free of errors. We are not liable for any loss arising from use of the website, except where the law does not allow this to be excluded. See the <a class="link" href="/disclaimer/">Disclaimer</a>.') +
+    '<h2>7. Privacy</h2>' + P('How we handle your personal data is explained in the <a class="link" href="/privacy-policy/">Privacy Policy</a>.') +
+    '<h2>8. Law and jurisdiction</h2>' + P('These terms are governed by the laws of India, including the Information Technology Act, 2000 and the Consumer Protection Act, 2019. Courts at ' + x.court + ' have jurisdiction over any dispute, without limiting your rights as a consumer to approach a consumer commission.') +
+    '<h2>9. Changes</h2>' + P('We may update these terms. The date at the top shows the latest version.') },
+  privacy: { path: 'privacy-policy', title: 'Privacy Policy', desc: 'How we collect, use and protect personal data', body: (D, x) =>
+    P('This policy explains how ' + x.name + ' handles personal data collected through ' + x.site + '. It is written to follow the Information Technology Act, 2000 and its rules, and the Digital Personal Data Protection Act, 2023 and the DPDP Rules, 2025.') +
+    '<h2>1. What we collect</h2>' + UL(['<b>Details you type into our forms</b> — your name, phone number, site area or address, and details of the work you want (size, material, budget, notes).', '<b>Your quote list</b> — the furniture you add is stored only in your own browser on your device. We do not receive it unless you send it to us.', '<b>Messages you send us</b> on WhatsApp, by email or by phone.', '<b>Technical logs</b> — our hosting provider (GitHub Pages) and the font service (Google Fonts) may record your IP address, browser type and time of visit for security and operation. We do not use advertising or tracking cookies, and we do not run analytics that identify you.']) +
+    P('We do not collect passwords, bank or card details, Aadhaar, or any other sensitive personal data through this website. We do not take online payments on this website.') +
+    '<h2>2. Why we use it</h2>' + UL(['To reply to your enquiry and give you an estimate.', 'To arrange a site visit and prepare a quotation, agreement, bill or invoice.', 'To carry out and support the work you hire us for.', 'To keep records that tax and other laws require.']) +
+    P('By sending us a form or message you give consent for these uses. You can withdraw consent at any time by contacting the Grievance Officer below; this does not affect work already done or records the law requires us to keep.') +
+    '<h2>3. Sharing</h2>' + P('We never sell or rent your personal data, and we do not share it with other businesses for their marketing. Your data passes through these services only so that we can receive and answer you:') +
+    UL(['WhatsApp (Meta) — when you choose to send us a WhatsApp message.', 'FormSubmit — forwards a copy of website forms to our email inbox.', 'Google (Gmail) — our email service.']) +
+    P('We may disclose data if required by law, court order or a government authority.') +
+    '<h2>4. How long we keep it</h2>' + P('Enquiries that do not lead to work are deleted within 12 months. Records of jobs, quotations and invoices are kept for as long as tax and accounting laws require, and then deleted.') +
+    '<h2>5. Security</h2>' + P('The website is served over HTTPS. Business documents in our admin panel are encrypted on our devices, and access is limited to the people who run the business.') +
+    '<h2>6. Your rights</h2>' + UL(['Ask what personal data we hold about you and how it is used.', 'Ask us to correct, update or delete it.', 'Withdraw your consent.', 'Nominate another person to act for you in case of death or incapacity.', 'Raise a grievance with us, and if it is not resolved, complain to the Data Protection Board of India.']) +
+    P('Write to the Grievance Officer below. We acknowledge requests within 48 hours and aim to resolve them within 30 days.') +
+    '<h2>7. Children</h2>' + P('This website is meant for adults arranging interior work. We do not knowingly collect data from anyone under 18.') +
+    '<h2>8. Contact</h2>' + officerBox(D) },
+  disclaimer: { path: 'disclaimer', title: 'Disclaimer', desc: 'Limits on the information, prices and photos on this website', body: (D, x) =>
+    '<h2>Estimates are not final prices</h2>' + P('All prices on this website are indicative estimates for Mumbai and Thane. The final price depends on the exact size, wood or board, hardware, finish and site conditions, and is confirmed only in our written quotation after a site visit.') +
+    '<h2>Photos are design references</h2>' + P('Many photos on this website are licensed stock images that show the style of work we do. They are not photos of specific projects by ' + x.name + ' unless the page says so. Finished work will follow the agreed design, not the photo.') +
+    '<h2>Accuracy and availability</h2>' + P('We try to keep information correct and up to date, but we do not guarantee that it is complete, current or free from errors, or that the website will always be available. Nothing on this website is legal, structural or engineering advice.') +
+    '<h2>External links</h2>' + P('Links to other websites (for example WhatsApp and Google Maps) are for convenience. We do not control those websites and are not responsible for their content, privacy practices or availability.') },
+  copyright: { path: 'copyright-policy', title: 'Copyright Policy', desc: 'Using material from this website', body: (D, x) =>
+    P('Text, layout, logo and our own project photos on this website are © ' + x.name + '.') +
+    UL(['You may quote or reproduce our <b>text</b> free of charge, if it is reproduced accurately, not used in a derogatory or misleading way, and the source is acknowledged as “' + x.name + ' (' + x.site + ')”.', 'You may <b>not</b> use our name, logo or project photos to advertise another business, or in a way that suggests we endorse you.', 'Stock photos on this website are licensed to us from Pexels under its own licence. Permission to reuse them must come from Pexels, not from us.']) +
+    P('For any other use, ask us first at <a class="link" href="mailto:' + x.email + '">' + x.email + '</a>. If you believe something on this website infringes your copyright, write to the same address and we will review and act on it promptly.') },
+  linking: { path: 'hyperlinking-policy', title: 'Hyperlinking Policy', desc: 'Linking to and from this website', body: (D, x) =>
+    '<h2>Links to other websites</h2>' + P('We link to other websites, such as WhatsApp, Google Maps and payment or map services, for your convenience. We are not responsible for their content or reliability, and a link does not mean we endorse the website or its views. We cannot guarantee that these links will always work.') +
+    '<h2>Links to this website</h2>' + P('You do not need our permission to link to any page on ' + x.site + '. We ask that you tell us about the link, and that you do <b>not</b> load our pages inside frames on your website — our pages must open in a new browser window or tab.') },
+  refund: { path: 'refund-and-cancellation', title: 'Refund & Cancellation Policy', desc: 'Advances, cancellation and refunds for interior work and furniture', body: (D, x) =>
+    P('We do not take payments on this website. Every job has its own written quotation or agreement, and the payment schedule, cancellation and refund terms in that document apply first. Where the document is silent, the following applies.') +
+    '<h2>Advance payments</h2>' + P('Work starts after the advance agreed in the quotation is paid. The advance is used to buy material and book our carpenters for your job.') +
+    '<h2>Cancelling a job or order</h2>' + UL(['<b>Before we buy material or start work</b> — the advance is refunded in full, less any site-visit or design charges agreed in writing.', '<b>After material is bought or work has started</b> — we refund the advance less the cost of material bought, work already done and labour booked for your job. Material bought for your job is handed over to you.', '<b>Made-to-measure furniture</b> that is already made to your size cannot be cancelled.']) +
+    '<h2>Defects and changes</h2>' + P('Tell us about any defect in our workmanship as soon as you notice it. We will inspect and repair it as set out in your quotation or agreement. Changes you ask for after approval may change the price and the time needed.') +
+    '<h2>How refunds are paid</h2>' + P('Approved refunds are paid by bank transfer or UPI within 15 working days.') +
+    '<h2>Questions or complaints</h2>' + P('Contact the Grievance Officer on the <a class="link" href="/grievance/">Grievance & Feedback</a> page.') },
+  accessibility: { path: 'accessibility-statement', title: 'Accessibility Statement', desc: 'How this website supports people with disabilities', body: (D, x) =>
+    P(x.name + ' wants everyone, including people with disabilities, to be able to use this website. We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA, in the spirit of the Rights of Persons with Disabilities Act, 2016.') +
+    '<h2>What we have done</h2>' + UL(['A “Skip to main content” link at the top of every page for keyboard and screen-reader users.', 'The whole website works with a keyboard, with a visible focus outline.', 'Text size controls (A−, A, A+) and a high-contrast mode at the top of every page. Your choice is remembered.', 'Descriptive text for every meaningful image.', 'Clear headings, labelled form fields and page titles that make sense on their own.', 'Layouts that work on phones, tablets and computers and when zoomed to 200%.', 'Animations are switched off if your device asks for reduced motion.']) +
+    '<h2>Known limitations</h2>' + UL(['Some older photos may have short descriptions only.', 'WhatsApp and Google Maps open in their own apps, and their accessibility is controlled by those companies.']) +
+    '<h2>Report a barrier</h2>' + P('If something on this website is hard to use, tell us and we will fix it or give you the information another way. Call or WhatsApp +91 ' + x.phone + ' or email <a class="link" href="mailto:' + x.email + '">' + x.email + '</a>. We aim to reply within 2 working days.') },
+  grievance: { path: 'grievance', title: 'Grievance & Feedback', desc: 'Grievance officer, complaint process and feedback', body: (D, x) =>
+    P('We want every customer to be satisfied. If you have a complaint about our work, a quotation, your personal data or this website, or simply want to give feedback, contact our Grievance Officer.') + officerBox(D) +
+    '<h2>How we handle your complaint</h2><ol class="steps one">' + [['Tell us', 'Use the form below, WhatsApp, email or phone. Include your name, phone, site address and what went wrong.'], ['Acknowledgement within 48 hours', 'We confirm we have received your complaint and who is handling it.'], ['Resolution within 30 days', 'We inspect, discuss and resolve the complaint, and tell you the outcome.']].map(s => '<li class="step"><h3>' + s[0] + '</h3><p>' + s[1] + '</p></li>').join('') + '</ol>' +
+    '<h2>Send a complaint or feedback</h2><form class="panel" id="gf" novalidate><div class="row2"><div class="field"><label for="gName">Your name</label><input id="gName" name="name" autocomplete="name" required/></div><div class="field"><label for="gPhone">Phone</label><input id="gPhone" name="phone" type="tel" autocomplete="tel" required/></div></div>' +
+    '<div class="field"><label for="gType">Type</label><select id="gType" name="type"><option>Complaint about work</option><option>Quotation or billing</option><option>Personal data request</option><option>Website or accessibility</option><option>Feedback or suggestion</option></select></div><div class="field"><label for="gMsg">Details</label><textarea id="gMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-primary" style="width:100%">Send to Grievance Officer</button></form>' +
+    '<h2>If you are not satisfied</h2>' + UL(['Consumer complaints: National Consumer Helpline — call 1915 or visit <a class="link" href="https://consumerhelpline.gov.in" target="_blank" rel="noopener">consumerhelpline.gov.in</a>.', 'Personal data complaints: the Data Protection Board of India, after first contacting us.']) },
+  help: { path: 'help', title: 'Help', desc: 'How to use this website', body: (D, x) =>
+    '<h2>Getting an estimate</h2>' + UL(['Open a <a class="link" href="/services/">service</a> to see what it usually costs.', 'Use <a class="link" href="/get-quote/">Get a quote</a> to send your requirement. It opens WhatsApp with your details filled in — tap Send.', 'For furniture, tap <b>Add to quote</b> on the pieces you like, then open the quote list (the list icon at the top) and send it.']) +
+    '<h2>Prices</h2>' + P('Prices are estimates. We confirm the exact price after a free site visit and measurement.') +
+    '<h2>Reading the website</h2>' + UL(['Use A−, A and A+ at the top of the page to change text size, and the contrast button for high contrast.', 'Press Tab to move between links and buttons; the first link skips to the main content.', 'No plug-ins or PDF reader are needed to use this website. Quotations and invoices we send you are PDF files and open in any PDF reader or browser.']) +
+    '<h2>Still need help?</h2>' + P('Call or WhatsApp +91 ' + x.phone + ', or see the <a class="link" href="/sitemap/">site map</a> for every page.') }
+};
+Object.keys(POLICIES).forEach(k => {
+  V['legal_' + k] = D => {
+    const Pp = POLICIES[k], x = legalInfo(D);
+    const body = pageHead(Pp.title, (x.updated && k !== 'help' ? 'Last updated: ' + x.updated : ''), crumbs([[Pp.title]])) +
+      '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal">' + Pp.body(D, x) + '</article>' + legalNav(k) + '</div></section>';
+    return { title: Pp.title + ' | ' + D.S.name, desc: Pp.title + ' of ' + D.S.name + ' (' + x.site + '): ' + Pp.desc + '.', body, ld: [crumbLD(D, [[Pp.title, '/' + Pp.path + '/']])] };
+  };
+});
+function legalNav(cur) {
+  return '<nav class="legal-nav" aria-label="Policies"><h2>Policies & help</h2>' + Object.keys(POLICIES).map(k => '<a href="/' + POLICIES[k].path + '/"' + (k === cur ? ' aria-current="page"' : '') + '>' + POLICIES[k].title + '</a>').join('') + '<a href="/sitemap/"' + (cur === 'sitemap' ? ' aria-current="page"' : '') + '>Site map</a></nav>';
+}
+V.sitemap = D => {
+  const g = (t, items) => '<div class="smap-col"><h2>' + t + '</h2><ul>' + items.map(i => '<li><a href="' + i[0] + '">' + esc(i[1]) + '</a></li>').join('') + '</ul></div>';
+  const body = pageHead('Site map', 'Every page on this website.', crumbs([['Site map']])) + '<section class="sec tight"><div class="wrap legal-wrap"><div class="smap">' +
+    g('Main pages', [['/', 'Home'], ['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/about/', 'About us'], ['/contact/', 'Contact'], ['/get-quote/', 'Get a quote'], ['/quote-list/', 'Quote list']]) +
+    g('Services', D.S.services.map(s => ['/services/' + s.slug + '/', s.title])) +
+    g('Furniture', D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).map(c => ['/furniture/' + c.slug + '/', c.name]).concat(D.PRODUCTS.map(p => [p.url, p.name]))) +
+    g('Areas', D.AREAS.map(a => ['/areas/' + a.slug + '/', a.name])) +
+    g('Policies & help', Object.keys(POLICIES).map(k => ['/' + POLICIES[k].path + '/', POLICIES[k].title])) + '</div>' + legalNav('sitemap') + '</div></section>';
+  return { title: 'Site Map | ' + D.S.name, desc: 'All pages on the ' + D.S.name + ' website: services, furniture, areas, policies and help.', body, ld: [crumbLD(D, [['Site map', '/sitemap/']])] };
+};
+
 /* ── routing ── */
 function routes(D) {
   const R = [['/', 'home'], ['/services/', 'services'], ['/furniture/', 'furniture'], ['/our-work/', 'work'], ['/about/', 'about'], ['/contact/', 'contact'], ['/get-quote/', 'quote'], ['/quote-list/', 'list'], ['/thanks/', 'thanks']];
@@ -276,6 +374,8 @@ function routes(D) {
   D.CATS.forEach(c => R.push(['/furniture/' + c.slug + '/', 'category', c.slug]));
   D.PRODUCTS.forEach(p => R.push([p.url, 'product', p.category, p.slug]));
   D.AREAS.forEach(a => R.push(['/areas/' + a.slug + '/', 'area', a.slug]));
+  Object.keys(POLICIES).forEach(k => R.push(['/' + POLICIES[k].path + '/', 'legal_' + k]));
+  R.push(['/sitemap/', 'sitemap']);
   return R;
 }
 function resolve(D, path) {
@@ -289,7 +389,8 @@ function render(D, view, args) { return (V[view] && V[view].apply(null, [D].conc
 const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/about/', 'About'], ['/contact/', 'Contact']];
 function header(D, path) {
   const S = D.S;
-  return '<div class="top-note">' + esc(S.top_note || '') + ' <a href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a></div>' +
+  return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><span>' + esc(S.top_note || '') + ' <a href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a></span>' +
+    '<span class="a11y" role="group" aria-label="Text size and contrast"><button type="button" data-fs="-1" aria-label="Decrease text size">A−</button><button type="button" data-fs="0" aria-label="Normal text size">A</button><button type="button" data-fs="1" aria-label="Increase text size">A+</button><button type="button" data-hc aria-pressed="false" aria-label="High contrast">' + I.contrast + '</button></span></div>' +
     '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="38" height="38"/><span>' + esc(S.short || S.name) + '<small>Interiors · Furniture · Carpentry</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') + '<a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
     '<a class="listbtn" href="/quote-list/" aria-label="Quote list">' + I.list + '<b id="cartCount" hidden>0</b></a>' +
@@ -308,6 +409,7 @@ function footer(D) {
     (S.email ? '<li><a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>' + esc(S.email) + '</span></a></li>' : '') +
     locs.map(l => '<li><a href="https://maps.google.com/?q=' + encodeURIComponent(l) + '" target="_blank" rel="noopener">' + I.pin + '<span>' + esc(l) + '</span></a></li>').join('') + '</ul></div></div>' +
     '<div class="wrap fareas"><h3>Areas we serve</h3><p>' + D.AREAS.map(a => '<a href="/areas/' + a.slug + '/">' + esc(a.name) + '</a>').join('') + '</p></div>' +
+    '<nav class="wrap fpolicy" aria-label="Policies"><a href="/terms-of-use/">Terms of Use</a><a href="/privacy-policy/">Privacy Policy</a><a href="/copyright-policy/">Copyright Policy</a><a href="/hyperlinking-policy/">Hyperlinking Policy</a><a href="/disclaimer/">Disclaimer</a><a href="/refund-and-cancellation/">Refund & Cancellation</a><a href="/accessibility-statement/">Accessibility</a><a href="/grievance/">Grievance & Feedback</a><a href="/help/">Help</a><a href="/sitemap/">Site map</a></nav>' +
     '<div class="wrap fbottom"><span>© ' + new Date().getFullYear() + ' ' + esc(S.name) + '. All rights reserved.</span><span>Estimates are indicative · Photos are design references</span></div></footer>' +
     '<a class="wafab" href="' + esc(waLink(S, 'Hi, I have a question about interior / furniture work.')) + '" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">' + I.wa + '</a><div id="toast" role="status" aria-live="polite"></div>';
 }

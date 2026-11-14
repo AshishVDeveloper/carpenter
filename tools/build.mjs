@@ -58,7 +58,7 @@ ${p.body}
 
 // remove old generated folders (keep source folders)
 const KEEP = new Set(['assets', 'data', 'images', 'tools', '.github', '.git', 'node_modules']);
-for (const f of ['services', 'furniture', 'our-work', 'about', 'contact', 'get-quote', 'quote-list', 'thanks', 'areas']) fs.rmSync(path.join(ROOT, f), { recursive: true, force: true });
+for (const f of ['services', 'furniture', 'our-work', 'about', 'contact', 'get-quote', 'quote-list', 'thanks', 'areas', 'terms-of-use', 'privacy-policy', 'copyright-policy', 'hyperlinking-policy', 'disclaimer', 'refund-and-cancellation', 'accessibility-statement', 'grievance', 'help', 'sitemap']) fs.rmSync(path.join(ROOT, f), { recursive: true, force: true });
 
 const routes = VI.routes(D);
 for (const r of routes) {

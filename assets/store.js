@@ -16,6 +16,19 @@ let D = null;
   else if (a === 'p') window.__legacyProduct = b;
 })();
 
+/* text size & contrast (remembered) */
+const A11Y = 'vi_a11y';
+function a11y(set) {
+  let p; try { p = JSON.parse(localStorage.getItem(A11Y) || '{}'); } catch (e) { p = {}; }
+  if (set) { p = Object.assign(p, set); try { localStorage.setItem(A11Y, JSON.stringify(p)); } catch (e) {} }
+  const h = document.documentElement; h.classList.remove('fs-1', 'fs1', 'fs2'); if (p.fs) h.classList.add(p.fs < 0 ? 'fs-1' : 'fs' + p.fs);
+  h.classList.toggle('hc', !!p.hc); document.querySelectorAll('[data-hc]').forEach(b => b.setAttribute('aria-pressed', !!p.hc)); return p;
+}
+a11y();
+document.addEventListener('click', e => {
+  const f = e.target.closest('[data-fs]'); if (f) { const p = a11y(), v = +f.dataset.fs; a11y({ fs: v === 0 ? 0 : Math.max(-1, Math.min(2, (p.fs || 0) + v)) }); }
+  if (e.target.closest('[data-hc]')) a11y({ hc: !a11y().hc });
+});
 function toast(msg, err) { const t = $('toast'); if (!t) return; t.innerHTML = msg; t.className = 'show' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 4000); }
 const list = {
   get() { try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch (e) { return []; } },
@@ -104,7 +117,18 @@ function bindContact() {
     window.open(VI.waLink(D.S, 'Hi, I am ' + d.name + '.\n' + d.message), '_blank', 'noopener'); f.reset(); toast('Thanks! We will reply soon.');
   };
 }
-function bind() { bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
+function bindGrievance() {
+  const f = $('gf'); if (!f) return;
+  f.onsubmit = e => {
+    e.preventDefault(); const d = Object.fromEntries(new FormData(f)); if (d._honey) return;
+    if (!d.name.trim() || !okPhone(d.phone) || !d.message.trim()) { toast('Add your name, phone number and details.', true); return; }
+    emailCopy('Grievance / feedback — ' + d.type + ' — ' + d.name, { Name: d.name, Phone: d.phone, Type: d.type, Details: d.message });
+    save(Object.assign({}, d, { kind: 'enquiry', work: d.type }));
+    window.open(VI.waLink(D.S, d.type + '\n\nName: ' + d.name + '\nPhone: ' + d.phone + '\n\n' + d.message), '_blank', 'noopener');
+    f.reset(); toast('Sent. We will acknowledge it within 48 hours.');
+  };
+}
+function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
 function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(html)) { el.innerHTML = html; el.dataset.sig = VI.sig(html); return true; } return false; }
@@ -118,7 +142,7 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   if (window.__legacyProduct) { const p = D.PRODUCTS.find(x => String(x.id) === window.__legacyProduct); location.replace(p ? p.url : '/furniture/'); return; }
   const r = VI.resolve(D, location.pathname), p = VI.render(D, r.view, r.args);
   if (r.view !== 'list' && swap('app', p.body)) document.title = p.title;
-  swap('hdr', VI.header(D, r.view === 'notfound' ? '' : r.path)); swap('ftr', VI.footer(D));
+  swap('hdr', VI.header(D, r.view === 'notfound' ? '' : r.path)); swap('ftr', VI.footer(D)); a11y();
   if (r.view === 'notfound' || location.pathname === '/404.html') document.title = p.title;
   bind();
 })();

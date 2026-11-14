@@ -262,5 +262,17 @@
       "q": "Can you make furniture in my size and wood?",
       "a": "Yes. Every piece on this website can be made to your size in teak, sheesham or engineered wood, with the finish you choose."
     }
-  ]
+  ],
+  "legal": {
+    "legal_name": "Vishwakarma Interior",
+    "gstin": "",
+    "jurisdiction": "Thane, Maharashtra",
+    "updated": "15 November 2026",
+    "grievance": {
+      "name": "Asheesh Vishwakarma",
+      "role": "Director and Grievance Officer",
+      "email": "ashishvishwakarma7300@gmail.com",
+      "phone": "8169838790"
+    }
+  }
 }

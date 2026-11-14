@@ -1,0 +1,31 @@
+name: fetch-candidates
+on:
+  push:
+    branches: [img-cand]
+    paths: [list.txt, urls.txt, .github/workflows/fetch.yml]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: download
+        run: |
+          mkdir -p cand
+          sort -u list.txt | while read id; do [ -z "$id" ] && continue
+            curl -sfL -A "Mozilla/5.0" "https://images.pexels.com/photos/$id/pexels-photo-$id.jpeg?auto=compress&cs=tinysrgb&w=1600" -o "cand/p$id.jpg" || rm -f "cand/p$id.jpg"; done
+          while read name url; do [ -z "$name" ] && continue
+            curl -sfL -A "Mozilla/5.0" "$url" -o "cand/$name.jpg" || rm -f "cand/$name.jpg"; done < urls.txt
+          for f in cand/*.jpg; do file "$f" | grep -qi 'jpeg\|png' || rm -f "$f"; done
+          for f in cand/*.jpg; do mogrify -resize '1600x1600>' -quality 80 -strip "$f"; done
+          ls cand | wc -l
+      - name: sheets
+        run: |
+          mkdir -p sheets
+          montage -font DejaVu-Sans -pointsize 18 -label '%t' cand/*.jpg -geometry 320x220+4+4 -tile 5x4 -background white sheets/sheet-%02d.jpg
+          ls sheets
+      - name: commit
+        run: |
+          git config user.name "github-actions"; git config user.email "actions@github.com"
+          git add cand sheets; git commit -qm "candidates" && git push

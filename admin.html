@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Vishwakarma Interior — admin</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/doc/doc.css"/>
+<style>
+:root{--bg:#F2F3EE;--surface:#fff;--ink:#1F2A22;--muted:#5B675D;--line:#D9DDD2;--forest:#2F4A3A;--tape:#E9C46A;--red:#A3361A;--ok:#2E7D4F;--amber:#9A6A00;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Figtree',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:400 .95rem/1.55 var(--body)}
+a{color:var(--forest)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid #C8922A;outline-offset:2px;border-radius:4px}
+[hidden]{display:none!important}
+h1,h2{font-family:var(--display);letter-spacing:-.01em;line-height:1.15}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.6rem 1rem;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:.9rem;text-decoration:none;color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--forest);border-color:var(--forest);color:#fff}
+.btn.pri:hover{background:#253C2F}
+.btn.danger{color:var(--red);border-color:#E7C3B8}
+.btn.danger:hover{background:#FBEDE8}
+.btn.sm{padding:.35rem .65rem;font-size:.82rem;border-radius:7px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label{display:block;font-size:.86rem;font-weight:600;margin-bottom:.3rem}
+input,select,textarea{width:100%;padding:.6rem .75rem;border:1.5px solid var(--line);border-radius:9px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--forest)}
+textarea{min-height:90px;resize:vertical}
+.field{margin-bottom:1rem}
+.hint{font-size:.8rem;color:var(--muted);margin-top:.3rem;font-weight:400}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 1rem}
+.check{display:flex;align-items:center;gap:.55rem;margin-bottom:.8rem}
+.check input{width:18px;height:18px;accent-color:var(--forest)}
+.check label{margin:0;font-weight:500}
+.msg{border-radius:9px;padding:.65rem .9rem;font-size:.9rem;margin-bottom:1rem}
+.msg.err{background:#FBEDE8;border:1px solid #E7C3B8;color:var(--red)}
+.msg.ok{background:#E8F3EC;border:1px solid #BFDCC9;color:var(--ok)}
+.msg.info{background:#FBF6E8;border:1px solid #EEDFB6;color:#5b4a1d}
+#login{min-height:100vh;display:grid;place-items:center;padding:1.5rem}
+.lbox{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:2rem}
+.lbox h1{font-size:1.4rem;margin-bottom:.3rem}
+.lbox>div>p{color:var(--muted);margin-bottom:1.4rem}
+.lbox .btn.pri{width:100%;padding:.75rem}
+.linkbtn{background:none;border:0;color:var(--forest);font-size:.88rem;margin-top:1rem;padding:0;cursor:pointer;text-decoration:underline}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sb{background:var(--ink);color:#C8D2C9;padding:1.2rem .9rem;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:.8rem}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-weight:800;color:#fff;padding:0 .4rem}
+.brand img{width:30px;height:30px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav .grp{font-size:.76rem;color:#8B988D;padding:.9rem .7rem .3rem}
+.nav a{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;border-radius:8px;color:#C8D2C9;text-decoration:none;font-weight:500;border-left:3px solid transparent}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:rgba(233,196,106,.14);color:#fff;border-left-color:var(--tape)}
+.nav svg{width:18px;height:18px;flex-shrink:0}
+.nav .n{margin-left:auto;font-size:.74rem;background:rgba(255,255,255,.1);padding:0 .45rem;border-radius:6px}
+.nav .dirty{margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--tape)}
+.nav .dirty+.n{margin-left:.4rem}
+.sbfoot{margin-top:auto;display:flex;flex-direction:column;gap:.5rem}
+.sbfoot .btn{background:transparent;color:#C8D2C9;border-color:#3A473D}
+.sbfoot .who{font-size:.8rem;color:#8B988D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 .3rem}
+.main{min-width:0}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:1rem;padding:.9rem 1.6rem;background:rgba(242,243,238,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top h1{font-size:1.25rem}
+.top .sub{color:var(--muted);font-size:.85rem}
+.top .acts{margin-left:auto;display:flex;gap:.6rem;align-items:center}
+.conn{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--muted);text-decoration:none;padding:.35rem .65rem;border:1px solid var(--line);border-radius:999px;background:#fff}
+.conn i{width:8px;height:8px;border-radius:50%;background:#D99A1E}
+.conn.ok i{background:var(--ok)}
+.burger{display:none;width:38px;height:38px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:1.1rem;cursor:pointer}
+.content{padding:1.6rem;max-width:1100px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.3rem;margin-bottom:1.2rem}
+.card h2{font-family:var(--body);font-size:1.05rem;font-weight:700;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.bar{display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap;margin-top:.4rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:1.2rem}
+.stats a{background:#fff;padding:1.1rem 1.2rem;text-decoration:none;color:var(--ink)}
+.stats a:hover{background:#F8F9F5}
+.stats b{display:block;font-family:var(--display);font-size:1.7rem}
+.stats span{color:var(--muted);font-size:.85rem}
+.tw{overflow-x:auto;margin:0 -1.3rem -1.3rem}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.84rem;padding:.6rem 1.3rem;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:.65rem 1.3rem;border-bottom:1px solid #ECEEE7;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#FAFBF8}
+td img.th{width:64px;height:48px;object-fit:cover;border-radius:6px;background:#ECEDE6}
+td .t{font-weight:700}
+td .s{color:var(--muted);font-size:.82rem}
+.acts-cell{display:flex;gap:.35rem;justify-content:flex-end}
+.pill{display:inline-block;font-size:.76rem;font-weight:700;padding:.12rem .5rem;border-radius:6px;background:#ECEEE7;color:var(--muted)}
+.pill.ok{background:#E8F3EC;color:var(--ok)}.pill.warn{background:#FBF1DC;color:var(--amber)}.pill.star{background:#FBF1DC;color:var(--amber)}
+.tools{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.tools input,.tools select{width:auto;min-width:180px;padding:.45rem .7rem}
+.empty{padding:2rem 1.3rem;color:var(--muted);text-align:center}
+.mv{display:flex;flex-direction:column;gap:2px}
+.mv button{background:#fff;border:1px solid var(--line);color:var(--muted);border-radius:5px;font-size:.62rem;width:24px;height:17px;line-height:1;cursor:pointer}
+.imgs{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem}
+.imgs figure{position:relative;width:120px;height:90px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:#ECEDE6}
+.imgs img{width:100%;height:100%;object-fit:cover}
+.imgs figure button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(31,42,34,.8);color:#fff;cursor:pointer;font-size:.8rem}
+.imgs figure span{position:absolute;left:4px;bottom:4px;font-size:.68rem;background:var(--tape);padding:0 .35rem;border-radius:4px;font-weight:700}
+.imgs figure .mvl{left:4px;right:auto;top:4px;font-size:.7rem}
+.upl{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.upl input[type=file]{width:auto;padding:.4rem}
+.r{display:grid;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.r.cat{grid-template-columns:auto 1fr 1fr auto}
+.ord{border-top:1px solid var(--line);padding:1rem 0}
+.ord:first-child{border-top:0;padding-top:0}
+.ord pre{white-space:pre-wrap;font:inherit;color:var(--muted);margin:.4rem 0}
+.modal{position:fixed;inset:0;background:rgba(15,22,17,.55);display:grid;place-items:center;z-index:100;padding:1rem}
+.modal .box{background:#fff;border-radius:14px;padding:1.5rem;max-width:420px;width:100%}
+.modal h2{font-family:var(--body);font-size:1.1rem;margin-bottom:.5rem}
+.modal p{color:var(--muted);margin-bottom:1.2rem}
+#toast{position:fixed;right:1.2rem;bottom:1.2rem;background:var(--ink);color:#fff;padding:.75rem 1rem;border-radius:10px;font-weight:500;z-index:200;max-width:min(440px,90vw);opacity:0;visibility:hidden;transform:translateY(10px);transition:.25s}
+#toast.show{opacity:1;visibility:visible;transform:none}
+#toast.err{background:var(--red)}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* documents */
+.docwrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+.content:has(.docwrap){max-width:1500px}
+.docprev{position:sticky;top:84px}
+.prevhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.prevbox{overflow:hidden;border-radius:8px;box-shadow:0 10px 30px -12px rgba(0,0,0,.25);background:#fff}
+#prev{transform-origin:top left;width:794px}
+.itab{overflow-x:auto;margin:0 -.3rem .6rem}
+.irow{display:grid;grid-template-columns:90px minmax(150px,1.6fr) 92px 64px 48px 86px 76px 92px 74px;gap:4px;align-items:center;padding:3px .3rem;min-width:860px}
+.irow input,.irow select{padding:.42rem .45rem;font-size:.86rem;border-radius:7px}
+.irow .amt[readonly]{background:#F4F5F0;font-weight:700;text-align:right}
+.ihead{font-size:.76rem;font-weight:700;color:var(--muted)}
+.iacts{display:flex;gap:2px}
+.iacts button{width:22px;height:30px;border:1px solid var(--line);background:#fff;border-radius:5px;font-size:.62rem;cursor:pointer;color:var(--muted)}
+.iacts .x{color:var(--red)}
+.docbar{position:sticky;bottom:0;z-index:5;display:flex;gap:.5rem;flex-wrap:wrap;background:rgba(242,243,238,.96);padding:.8rem 0;border-top:1px solid var(--line)}
+.docbar select.btn{width:auto}
+.rhead{font-size:.8rem;font-weight:700;color:var(--muted)}
+@media (max-width:1150px){.docwrap{grid-template-columns:minmax(0,1fr)}.docprev{position:static;order:-1}.docprev.shut .prevbox{display:none}.prevhead{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.6rem .9rem;margin-bottom:.8rem}.prevtoggle{display:inline-flex!important}}
+.prevtoggle{display:none}
+@media (max-width:600px){.prevhead .hint{display:none}.docbar{gap:.35rem}.docbar .btn{padding:.5rem .7rem;font-size:.85rem}}
+.docform,.docprev{min-width:0}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sb{position:fixed;left:0;top:0;bottom:0;width:250px;z-index:60;transform:translateX(-100%);transition:transform .25s}
+  .sb.open{transform:none;box-shadow:0 0 0 100vmax rgba(15,22,17,.5)}
+  .burger{display:block}
+  .top{padding:.8rem 1rem}
+  .top .sub,.conn span{display:none}
+  .content{padding:1rem}
+  .g2,.g3{grid-template-columns:1fr}
+  th,td{padding-left:.8rem;padding-right:.8rem}
+  .hide-m{display:none}
+}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="lbox">
+    <div id="loginForm">
+      <h1>Vishwakarma Interior admin</h1>
+      <p>Sign in to manage your projects, services, furniture and contact details.</p>
+      <div class="msg err" id="lErr" hidden></div>
+      <form onsubmit="doLogin(event)">
+        <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required/></div>
+        <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" required/></div>
+        <button class="btn pri" id="lBtn">Sign in</button>
+      </form>
+      <button class="linkbtn" onclick="showReset(true)">Forgot password?</button>
+    </div>
+    <div id="resetForm" hidden>
+      <h1>Reset password</h1>
+      <p>Prove you own the shop with a GitHub token that can edit the <b>carpenter</b> repository, then choose a new password.</p>
+      <div class="msg err" id="rErr" hidden></div><div class="msg ok" id="rOk" hidden></div>
+      <form onsubmit="doReset(event)">
+        <div class="field"><label for="rToken">GitHub token</label><input id="rToken" type="password" autocomplete="off" required/></div>
+        <div class="field"><label for="rNew">New password</label><input id="rNew" type="password" autocomplete="new-password" minlength="8" required/></div>
+        <div class="field"><label for="rConf">Repeat new password</label><input id="rConf" type="password" autocomplete="new-password" required/></div>
+        <button class="btn pri" id="rBtn">Reset password</button>
+      </form>
+      <button class="linkbtn" onclick="showReset(false)">Back to sign in</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside class="sb" id="sb">
+    <div class="brand"><img src="assets/logo.svg" alt=""/>Vishwakarma admin</div>
+    <nav class="nav" id="nav" aria-label="Admin sections"></nav>
+    <div class="sbfoot"><a class="btn sm" href="index.html" target="_blank" rel="noopener">View shop</a><button class="btn sm" onclick="logout()">Sign out</button><div class="who" id="who"></div></div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Open menu">☰</button>
+      <div><h1 id="pTitle">Dashboard</h1><div class="sub" id="pSub"></div></div>
+      <div class="acts"><a class="conn" id="conn" href="#publishing"><i></i><span>Not connected</span></a><button class="btn pri" id="pubAll" onclick="publishAll()" hidden>Publish changes</button></div>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="modal" id="modal" hidden><div class="box" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle"></h2><p id="mText"></p><div class="bar"><button class="btn" id="mNo">Cancel</button><button class="btn danger" id="mYes">Delete</button></div></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/vendor/html2pdf.bundle.min.js" defer></script>
+<script src="assets/doc/doc.js"></script>
+<script src="assets/doc/admin-docs.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const FILES={settings:'settings.json',projects:'projects.json',categories:'categories.json',products:'products.json',testimonials:'testimonials.json'};
+const SESS='carpenter_admin', GHK='carpenter_github', ORD_KEY='carpenter_orders';
+let DB={}, ORIG={}, AUTH=null, DIRTY=new Set(), PAGE='dashboard';
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');
+const slugify=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'item';
+const nextId=a=>a.reduce((m,x)=>Math.max(m,+x.id||0),0)+1;
+const byOrder=a=>a.sort((x,y)=>(x.order||999)-(y.order||999));
+const renumber=a=>a.forEach((x,i)=>x.order=i+1);
+function toast(m,err){const t=$('toast');t.textContent=m;t.className='show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='',err?6000:3500)}
+function confirmBox(title,text,yes='Delete'){return new Promise(res=>{$('mTitle').textContent=title;$('mText').textContent=text;$('mYes').textContent=yes;$('modal').hidden=false;$('mYes').focus();const done=v=>{$('modal').hidden=true;res(v)};$('mYes').onclick=()=>done(true);$('mNo').onclick=()=>done(false);$('modal').onclick=e=>{if(e.target.id==='modal')done(false)}})}
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const randHex=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function fetchJSON(f){const r=await fetch('data/'+f+'?t='+Date.now());if(!r.ok)throw new Error(f);return r.json()}
+
+const ICON={dashboard:'<path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/>',projects:'<path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/>',products:'<path d="M4 10h16v8H4zM6 18v3M18 18v3M6 10V6h12v4"/>',categories:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',settings:'<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>',testimonials:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',orders:'<path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6.2"/>',publishing:'<path d="M12 3v12M7 8l5-5 5 5M5 15v4h14v-4"/>',documents:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',rates:'<path d="M4 6h16M4 12h16M4 18h10"/>',letterhead:'<path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h5"/>',account:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'};
+const svg=k=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[k]+'</svg>';
+const PAGES={dashboard:{t:'Dashboard',s:'Your business at a glance'},documents:{t:'Documents',s:'Quotations, agreements, bills and invoices'},rates:{t:'Rate list',s:'Your standard items and rates for quick quotations'},letterhead:{t:'Letterhead',s:'Name, intro, contact and payment details printed on every document'},projects:{t:'Our work',s:'Project sites shown in the Our work section',file:'projects'},products:{t:'Products',s:'Everything for sale in the shop',file:'products'},categories:{t:'Categories',s:'Rooms and furniture types used to group products',file:'categories'},settings:{t:'Business details',s:'Name, contact, locations, services and homepage text',file:'settings'},testimonials:{t:'Reviews',s:'Real customer reviews shown on the homepage',file:'testimonials'},orders:{t:'Orders & enquiries',s:'Orders arrive on WhatsApp and email'},publishing:{t:'Publishing',s:'Connect GitHub so changes go live instantly'},account:{t:'Password',s:'Change the admin password'}};
+
+/* ── GitHub ── */
+function gh(){try{return JSON.parse(localStorage.getItem(GHK)||'null')}catch(e){return null}}
+function ghDefaults(){const h=location.hostname,p=h.endsWith('.github.io');return{owner:p?h.split('.')[0]:'AshishVDeveloper',repo:p&&location.pathname.split('/').filter(Boolean)[0]||'carpenter',branch:'main'}}
+async function ghApi(cfg,path,opt={}){const r=await fetch('https://api.github.com/repos/'+cfg.owner+'/'+cfg.repo+path,{...opt,headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+cfg.token,'X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.message||'GitHub error '+r.status);e.status=r.status;throw e}return j}
+const b64=s=>{const b=new TextEncoder().encode(s);let o='';for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode(...b.subarray(i,i+0x8000));return btoa(o)};
+async function ghPutRaw(cfg,path,base64,msg){let sha;try{sha=(await ghApi(cfg,'/contents/'+path+'?ref='+encodeURIComponent(cfg.branch))).sha}catch(e){if(e.status!==404)throw e}
+  return ghApi(cfg,'/contents/'+path,{method:'PUT',body:JSON.stringify({message:msg,content:base64,branch:cfg.branch,...(sha?{sha}:{})})})}
+const ghPut=(cfg,file,data,msg)=>ghPutRaw(cfg,'data/'+file,b64(JSON.stringify(data,null,2)+'\n'),msg);
+async function ghCheck(cfg){const r=await ghApi(cfg,'');if(!r.permissions||!r.permissions.push)throw new Error('This token can read the repository but can\'t change it. Give it "Contents: Read and write" access.');return r}
+function errText(e){if(e.status===401)return'GitHub rejected the token. It may have expired — create a new one in Publishing.';if(e.status===404)return'Repository not found, or the token has no access to it. Check Publishing.';if(e.status===409)return'The file changed on GitHub at the same time. Publish again.';return e.message||'Something went wrong.'}
+function download(file,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'}));a.download=file;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+async function publish(key,btn){
+  const file=key==='auth'?'auth.json':FILES[key],data=key==='auth'?AUTH:DB[key],cfg=gh();
+  if(!cfg||!cfg.token){download(file,data);markClean(key);toast('Downloaded '+file+'. Upload it to the data folder on GitHub, or connect GitHub in Publishing to skip this.');return true}
+  const label=btn&&btn.innerHTML;if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span>Publishing…'}
+  try{await ghPut(cfg,file,data,'Update '+file+' from store admin');markClean(key);toast('Published. The shop updates in about a minute.');return true}
+  catch(e){toast(errText(e),true);return false}finally{if(btn){btn.disabled=false;btn.innerHTML=label}}}
+async function publishAll(){const b=$('pubAll');for(const k of [...DIRTY]){if(!await publish(k,b))return}}
+function markDirty(k){DIRTY.add(k);chrome()}
+function markClean(k){if(k==='auth')return;DIRTY.delete(k);ORIG[k]=JSON.stringify(DB[k]);chrome()}
+window.addEventListener('beforeunload',e=>{if(DIRTY.size){e.preventDefault();e.returnValue=''}});
+
+/* photo upload: resize in the browser, then commit to images/products/ */
+function resize(file,max=1400){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82).split(',')[1]);URL.revokeObjectURL(img.src)};img.onerror=()=>rej(new Error('That file isn\'t an image the browser can read.'));img.src=URL.createObjectURL(file)})}
+async function uploadPhotos(files,nameHint){
+  const cfg=gh(); if(!cfg||!cfg.token){toast('Connect GitHub in Publishing to upload photos, or paste an image link instead.',true);return[]}
+  const out=[];
+  for(const f of files){const path='images/'+(PAGE==='projects'?'work':'products')+'/'+slugify(nameHint)+'-'+Date.now().toString(36)+'.jpg';
+    try{await ghPutRaw(cfg,path,await resize(f),'Add product photo '+path);out.push(path)}catch(e){toast(e.status?errText(e):e.message,true)}}
+  return out}
+
+/* ── auth ── */
+async function loadAuth(){AUTH=await fetchJSON('auth.json')}
+async function checkPass(email,pass){if(!AUTH||email.trim().toLowerCase()!==String(AUTH.email).toLowerCase())return false;return await sha256(AUTH.salt+'|'+email.trim().toLowerCase()+'|'+pass)===AUTH.password_sha256}
+async function newAuth(pass){const salt=randHex();return{email:AUTH.email,salt,password_sha256:await sha256(salt+'|'+String(AUTH.email).toLowerCase()+'|'+pass)}}
+async function doLogin(e){e.preventDefault();$('lBtn').disabled=true;$('lErr').hidden=true;
+  try{if(!AUTH)await loadAuth();if(await checkPass($('lEmail').value,$('lPass').value)){const pw=$('lPass').value;try{await vaultOpen(pw)}catch(er){if(!er.locked)throw er;if(!window.confirm('Your saved documents were locked with an older password and can\'t be opened. Start a new, empty document store? (You can restore a backup file afterwards.)')){$('lBtn').disabled=false;return}await vaultFresh(pw)}sessionStorage.setItem(SESS,JSON.stringify({email:AUTH.email}));await openApp()}else{$('lErr').textContent='Email or password is incorrect.';$('lErr').hidden=false}}
+  catch(err){$('lErr').textContent='Couldn\'t load the login settings. Refresh and try again.';$('lErr').hidden=false}$('lBtn').disabled=false}
+function showReset(on){$('loginForm').hidden=on;$('resetForm').hidden=!on}
+async function doReset(e){e.preventDefault();$('rErr').hidden=$('rOk').hidden=true;if($('rNew').value!==$('rConf').value){$('rErr').textContent='The two passwords don\'t match.';$('rErr').hidden=false;return}
+  $('rBtn').disabled=true;try{if(!AUTH)await loadAuth();const cfg={...ghDefaults(),...(gh()||{}),token:$('rToken').value.trim()};await ghCheck(cfg);AUTH=await newAuth($('rNew').value);await ghPut(cfg,'auth.json',AUTH,'Reset admin password');$('rOk').textContent='Password changed. It works in about a minute.';$('rOk').hidden=false}
+  catch(err){$('rErr').textContent=errText(err);$('rErr').hidden=false}$('rBtn').disabled=false}
+function logout(){if(DIRTY.size&&!window.confirm('You have unpublished changes. Sign out anyway?'))return;DIRTY.clear();sessionStorage.removeItem(SESS);vaultForget();location.hash='';location.reload()}
+
+/* ── boot & routing ── */
+async function openApp(){
+  try{const ks=Object.keys(FILES),vs=await Promise.all(ks.map(k=>fetchJSON(FILES[k]).catch(()=>(k==='testimonials'||k==='projects')?[]:Promise.reject(k))));ks.forEach((k,i)=>{DB[k]=vs[i];ORIG[k]=JSON.stringify(vs[i])})}
+  catch(e){toast('Couldn\'t load the shop data. Refresh the page.',true);return}
+  byOrder(DB.products);byOrder(DB.categories);byOrder(DB.projects);
+  $('login').hidden=true;$('app').hidden=false;$('who').textContent=AUTH.email;route()}
+window.addEventListener('hashchange',route);
+function route(){if($('app').hidden)return;const[p,arg]=(location.hash.slice(1)||'dashboard').split('/');PAGE=PAGES[p]?p:'dashboard';$('sb').classList.remove('open');
+  $('pTitle').textContent=PAGES[PAGE].t;$('pSub').textContent=PAGES[PAGE].s;
+  ({dashboard:pgDash,documents:()=>arg?docRoute(arg):pgDocs(),rates:pgRates,letterhead:pgLetterhead,products:()=>arg?pgProduct(arg):pgProducts(),projects:()=>arg?pgProject(arg):pgProjects(),categories:pgCats,settings:pgSettings,testimonials:()=>arg?pgReview(arg):pgReviews(),orders:pgOrders,publishing:pgPublishing,account:pgAccount})[PAGE]();chrome();window.scrollTo(0,0)}
+function chrome(){const cnt={documents:window.vaultCount?vaultCount():'',projects:DB.projects?.length,products:DB.products?.length,categories:DB.categories?.length,testimonials:DB.testimonials?.length||'',orders:orders().length||''};
+  const G=[['','dashboard'],['Documents','documents','rates','letterhead'],['Business','settings','projects','testimonials'],['Furniture shop','products','categories'],['Customers','orders'],['Settings','publishing','account']];
+  $('nav').innerHTML=G.map(g=>(g[0]?'<div class="grp">'+g[0]+'</div>':'')+g.slice(1).map(k=>'<a href="#'+k+'" class="'+(k===PAGE?'on':'')+'"'+(k===PAGE?' aria-current="page"':'')+'>'+svg(k)+PAGES[k].t+(DIRTY.has(k)?'<span class="dirty" title="Unpublished changes"></span>':'')+(cnt[k]?'<span class="n">'+cnt[k]+'</span>':'')+'</a>').join('')).join('');
+  const c=gh();$('conn').className='conn'+(c&&c.token?' ok':'');$('conn').querySelector('span').textContent=c&&c.token?'Publishing to GitHub':'Not connected';
+  $('pubAll').hidden=!DIRTY.size;$('pubAll').textContent=DIRTY.size>1?'Publish all changes ('+DIRTY.size+')':'Publish changes'}
+$('burger').onclick=()=>$('sb').classList.toggle('open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('sb').classList.remove('open');if(!$('modal').hidden)$('mNo').click()}});
+const C=h=>$('content').innerHTML=h;
+const saveBar=k=>'<div class="bar">'+(DIRTY.has(k)?'<button class="btn" onclick="discard(\''+k+'\')">Discard changes</button>':'')+'<button class="btn pri" onclick="publish(\''+k+'\',this)">Publish '+PAGES[k].t.toLowerCase()+'</button></div>';
+async function discard(k){if(!await confirmBox('Discard changes?','Your unpublished edits will be lost.','Discard'))return;DB[k]=JSON.parse(ORIG[k]);DIRTY.delete(k);route()}
+function mv(k,i,d,redraw){const a=DB[k],j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];renumber(a);markDirty(k);redraw()}
+const catName=s=>(DB.categories.find(c=>c.slug===s)||{}).name||s||'—';
+
+/* ── dashboard ── */
+function pgDash(){const P=DB.products,c=gh(),S=DB.settings;
+  C((c&&c.token?'':'<div class="msg info"><b>Connect GitHub first.</b> Then every Publish button updates the live shop, and you can upload product photos. <a href="#publishing">Set up publishing</a></div>')+
+  (S.sample_data?'<div class="msg info"><b>Sample products are showing.</b> Replace them with your real furniture, photos and prices in <a href="#products">Products</a>, check your details in <a href="#settings">Shop details</a>, then untick "Sample data" there.</div>':'')+
+  (DIRTY.size?'<div class="msg info">Unpublished changes in: '+[...DIRTY].map(k=>'<a href="#'+k+'">'+PAGES[k].t+'</a>').join(', ')+'.</div>':'')+
+  '<div class="stats">'+[['projects',DB.projects.length,'Project sites'],['products',P.length,'Products'],['products',P.filter(p=>p.visible===false).length,'Hidden'],['categories',DB.categories.length,'Categories'],['testimonials',DB.testimonials.length,'Reviews'],['orders',orders().length,'Orders on this device']].map(s=>'<a href="#'+s[0]+'"><b>'+s[1]+'</b><span>'+s[2]+'</span></a>').join('')+'</div>'+
+  '<div class="card"><h2>Quick actions</h2><div class="bar" style="justify-content:flex-start"><a class="btn pri" href="#documents/new-quotation">New quotation</a><a class="btn" href="#documents">Documents</a><a class="btn" href="#projects/new">Add a project site</a><a class="btn" href="#products/new">Add a product</a><a class="btn" href="#settings">Edit business details</a><a class="btn" href="#testimonials/new">Add a review</a><a class="btn" href="index.html" target="_blank" rel="noopener">Open the shop</a></div></div>')}
+
+/* ── products ── */
+let PQ='',PC='';
+function pgProducts(){C('<div class="card"><h2>All products <a class="btn sm pri" href="#products/new">Add product</a></h2><div class="tools"><input type="search" placeholder="Search products" aria-label="Search products" value="'+esc(PQ)+'" oninput="PQ=this.value;drawProducts()"/><select aria-label="Category" onchange="PC=this.value;drawProducts()"><option value="">All categories</option>'+DB.categories.map(c=>'<option value="'+esc(c.slug)+'"'+(PC===c.slug?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div><div class="tw"><table><thead><tr><th>Order</th><th></th><th>Product</th><th>Price</th><th class="hide-m">Status</th><th><span hidden>Actions</span></th></tr></thead><tbody id="pRows"></tbody></table></div></div>'+saveBar('products'));drawProducts()}
+function drawProducts(){const q=PQ.toLowerCase(),R=DB.products.map((p,i)=>[p,i]).filter(([p])=>(!PC||p.category===PC)&&(!q||(p.name+' '+p.material).toLowerCase().includes(q)));
+  $('pRows').innerHTML=R.length?R.map(([p,i])=>'<tr><td><div class="mv"><button aria-label="Move up" onclick="mv(\'products\','+i+',-1,drawProducts)">▲</button><button aria-label="Move down" onclick="mv(\'products\','+i+',1,drawProducts)">▼</button></div></td><td><img class="th" src="'+esc((p.images||[])[0]||'assets/logo.svg')+'" alt=""/></td><td><div class="t">'+esc(p.name)+'</div><div class="s">'+esc(catName(p.category))+'</div></td><td><b>'+money(p.price)+'</b>'+(p.mrp>p.price?'<div class="s"><s>'+money(p.mrp)+'</s></div>':'')+'</td><td class="hide-m">'+(p.visible===false?'<span class="pill">Hidden</span> ':'')+(p.featured?'<span class="pill star">Featured</span> ':'')+(p.in_stock===false?'<span class="pill warn">Made to order</span>':'<span class="pill ok">In stock</span>')+'</td><td><div class="acts-cell"><a class="btn sm" href="#products/'+p.id+'">Edit</a><button class="btn sm danger" onclick="delProduct('+i+')">Delete</button></div></td></tr>').join(''):'<tr><td colspan="6" class="empty">No products match. <a href="#products/new">Add a product</a></td></tr>'}
+async function delProduct(i){if(!await confirmBox('Delete '+DB.products[i].name+'?','It disappears from the shop when you publish.'))return;DB.products.splice(i,1);renumber(DB.products);markDirty('products');drawProducts()}
+let IMGS=[];
+function pgProduct(id){const isNew=id==='new',p=isNew?{name:'',category:(DB.categories[0]||{}).slug||'',price:'',mrp:'',material:'',size:'',finish:'',description:'',images:[],featured:false,customizable:true,in_stock:true,visible:true}:DB.products.find(x=>String(x.id)===id);
+  if(!p){location.hash='products';return}$('pTitle').textContent=isNew?'Add product':'Edit product';IMGS=[...(p.images||[])];
+  C('<form class="card" id="pf" onsubmit="saveProduct(event,\''+id+'\')"><h2>Photos</h2><div class="imgs" id="imgs"></div><div class="upl"><label class="btn sm" for="pFiles" style="margin:0">Upload photos</label><input id="pFiles" type="file" accept="image/*" multiple hidden/><span class="hint" style="margin:0">or</span><input id="pUrl" type="url" placeholder="Paste an image link" style="max-width:280px;padding:.4rem .6rem"/><button type="button" class="btn sm" onclick="addUrl()">Add link</button></div><p class="hint">The first photo is the main one. Photos are resized automatically.</p>'+
+  '<h2 style="margin-top:1.4rem">Details</h2><div class="g2"><div class="field"><label for="p_name">Product name</label><input id="p_name" required value="'+esc(p.name)+'"/></div><div class="field"><label for="p_cat">Category</label><select id="p_cat">'+DB.categories.map(c=>'<option value="'+esc(c.slug)+'"'+(c.slug===p.category?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select></div>'+
+  '<div class="field"><label for="p_price">Price (₹)</label><input id="p_price" type="number" min="0" required value="'+esc(p.price)+'"/></div><div class="field"><label for="p_mrp">Old price / MRP (₹)</label><input id="p_mrp" type="number" min="0" value="'+esc(p.mrp||'')+'"/><div class="hint">Optional. Shows a discount when higher than the price.</div></div>'+
+  '<div class="field"><label for="p_mat">Material</label><input id="p_mat" value="'+esc(p.material)+'" placeholder="e.g. Sheesham wood"/></div><div class="field"><label for="p_size">Size</label><input id="p_size" value="'+esc(p.size)+'" placeholder="e.g. 200 × 85 × 82 cm"/></div>'+
+  '<div class="field"><label for="p_fin">Finish / colour</label><input id="p_fin" value="'+esc(p.finish)+'" placeholder="e.g. Honey polish"/></div></div>'+
+  '<div class="field"><label for="p_desc">Description</label><textarea id="p_desc" required>'+esc(p.description)+'</textarea></div>'+
+  '<div class="g2"><div><div class="check"><input type="checkbox" id="p_feat"'+(p.featured?' checked':'')+'/><label for="p_feat">Featured on the homepage</label></div><div class="check"><input type="checkbox" id="p_cust"'+(p.customizable?' checked':'')+'/><label for="p_cust">Can be made in a custom size</label></div></div><div><div class="check"><input type="checkbox" id="p_stock"'+(p.in_stock!==false?' checked':'')+'/><label for="p_stock">Ready stock (untick for made to order)</label></div><div class="check"><input type="checkbox" id="p_vis"'+(p.visible!==false?' checked':'')+'/><label for="p_vis">Show in the shop</label></div></div></div>'+
+  '<div class="bar"><a class="btn" href="#products">Cancel</a><button class="btn pri">'+(isNew?'Add product':'Save product')+'</button></div></form>');
+  drawImgs();$('pFiles').onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;toast('Uploading '+fs.length+' photo'+(fs.length>1?'s':'')+'…');const paths=await uploadPhotos(fs,$('p_name').value||'product');IMGS.push(...paths);drawImgs();if(paths.length)toast('Photo uploaded. Save the product, then publish.');e.target.value=''}}
+function drawImgs(){$('imgs').innerHTML=IMGS.map((s,i)=>'<figure><img src="'+esc(s)+'" alt=""/>'+(i===0?'<span>Main</span>':'<button type="button" class="mvl" title="Make main photo" aria-label="Make main photo" onclick="IMGS.unshift(IMGS.splice('+i+',1)[0]);drawImgs()">★</button>')+'<button type="button" aria-label="Remove photo" onclick="IMGS.splice('+i+',1);drawImgs()">✕</button></figure>').join('')||'<p class="hint">No photos yet.</p>'}
+function addUrl(){const u=$('pUrl').value.trim();if(!/^(https?:\/\/|images\/)/.test(u)){toast('Paste a full image link starting with https://',true);return}IMGS.push(u);$('pUrl').value='';drawImgs()}
+function saveProduct(e,id){e.preventDefault();const v=k=>$(k).value.trim();
+  const d={name:v('p_name'),category:$('p_cat').value,price:+v('p_price')||0,mrp:+v('p_mrp')||null,material:v('p_mat'),size:v('p_size'),finish:v('p_fin'),description:v('p_desc'),images:[...IMGS],featured:$('p_feat').checked,customizable:$('p_cust').checked,in_stock:$('p_stock').checked,visible:$('p_vis').checked};
+  if(id==='new'){DB.products.unshift({id:nextId(DB.products),order:1,...d});renumber(DB.products)}else Object.assign(DB.products.find(x=>String(x.id)===id),d);
+  markDirty('products');toast((id==='new'?'Product added':'Product saved')+'. Publish to show it in the shop.');location.hash='products'}
+
+/* ── categories ── */
+function pgCats(){C('<div class="card"><h2>Categories <button class="btn sm pri" onclick="addCat()">Add category</button></h2><p class="hint" style="margin:-.5rem 0 1rem">Categories with no products are hidden in the shop automatically.</p><div id="cRows"></div></div>'+saveBar('categories'));drawCats()}
+function drawCats(){$('cRows').innerHTML=DB.categories.map((c,i)=>{const n=DB.products.filter(p=>p.category===c.slug).length;return '<div class="r cat"><div class="mv"><button aria-label="Move up" onclick="mv(\'categories\','+i+',-1,drawCats)">▲</button><button aria-label="Move down" onclick="mv(\'categories\','+i+',1,drawCats)">▼</button></div><input aria-label="Category name" value="'+esc(c.name)+'" oninput="DB.categories['+i+'].name=this.value;markDirty(\'categories\')"/><span class="hint" style="margin:0">'+n+' product'+(n===1?'':'s')+' · /'+esc(c.slug)+'</span><button class="btn sm danger" onclick="delCat('+i+')">Delete</button></div>'}).join('')}
+function addCat(){const name=prompt('Category name, e.g. Shoe racks');if(!name)return;let s=slugify(name);while(DB.categories.some(c=>c.slug===s))s+='-2';DB.categories.push({id:nextId(DB.categories),order:DB.categories.length+1,name:name.trim(),slug:s});markDirty('categories');drawCats()}
+async function delCat(i){const c=DB.categories[i],n=DB.products.filter(p=>p.category===c.slug).length;if(n){toast('Move or delete the '+n+' product'+(n>1?'s':'')+' in '+c.name+' first.',true);return}if(!await confirmBox('Delete '+c.name+'?','It is removed from the shop when you publish.'))return;DB.categories.splice(i,1);renumber(DB.categories);markDirty('categories');drawCats()}
+
+/* ── settings ── */
+function pgSettings(){const S=DB.settings,f=(k,l,t='text',h='')=>'<div class="field"><label for="s_'+k+'">'+l+'</label><input id="s_'+k+'" type="'+t+'" data-k="'+k+'" value="'+esc(S[k]||'')+'"/>'+(h?'<div class="hint">'+h+'</div>':'')+'</div>',ta=(k,l,h='')=>'<div class="field"><label for="s_'+k+'">'+l+'</label><textarea id="s_'+k+'" data-k="'+k+'">'+esc(S[k]||'')+'</textarea>'+(h?'<div class="hint">'+h+'</div>':'')+'</div>';
+  C('<div class="card"><h2>Business</h2><div class="g2">'+f('name','Business name')+f('short','Short name (top-left logo)')+'</div>'+f('tagline','Tagline')+f('top_note','Strip at the very top','text','e.g. Diwali sale — 10% off all beds')+'</div>'+
+  '<div class="card"><h2>Homepage</h2>'+f('hero_title','Big headline')+ta('hero_text','Text under the headline')+ta('about','About the business','Shown on the About page and in the footer.')+'<div class="g3">'+f('years','Years in business','text','e.g. 10+')+f('warranty','Warranty line')+f('currency','Currency symbol')+'</div>'+ta('delivery_note','Delivery note')+'</div>'+
+  '<div class="card"><h2>Services <button type="button" class="btn sm" onclick="addRow(\'services\')">Add service</button></h2><div id="svcRows"></div></div>'+
+  '<div class="card"><h2>Ways to hire you <button type="button" class="btn sm" onclick="addRow(\'work_modes\')">Add</button></h2><div id="modeRows"></div></div>'+
+  '<div class="card"><h2>Locations <button type="button" class="btn sm" onclick="addLoc()">Add location</button></h2><div id="locRows"></div><p class="hint">The first location is shown as the main office.</p></div>'+
+  '<div class="card"><h2>Contact</h2><div class="g2">'+f('whatsapp','WhatsApp number with country code','tel','Orders go here. e.g. 918169838790')+f('phone','Phone','tel')+f('email','Email','email','Order copies are emailed here.')+f('hours','Opening hours')+'</div>'+f('map','Google Maps link for the main office','url')+'</div>'+
+  '<div class="card"><div class="check" style="margin:0"><input type="checkbox" id="s_sample"'+(S.sample_data?' checked':'')+'/><label for="s_sample">Sample data — show a reminder in the admin until real products are added</label></div></div>'+saveBar('settings'));
+  $('content').querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{S[el.dataset.k]=el.value;markDirty('settings')});$('s_sample').onchange=e=>{S.sample_data=e.target.checked;markDirty('settings')};drawLists()}
+function drawLists(){const S=DB.settings;S.services=S.services||[];S.work_modes=S.work_modes||[];S.locations=S.locations||[];
+  const pair=(key,i,o)=>'<div class="r" style="grid-template-columns:1fr 2fr auto"><input aria-label="Title" value="'+esc(o.title)+'" oninput="DB.settings.'+key+'['+i+'].title=this.value;markDirty(\'settings\')"/><input aria-label="Description" value="'+esc(o.desc)+'" oninput="DB.settings.'+key+'['+i+'].desc=this.value;markDirty(\'settings\')"/><button type="button" class="btn sm danger" onclick="DB.settings.'+key+'.splice('+i+',1);markDirty(\'settings\');drawLists()">Remove</button></div>';
+  $('svcRows').innerHTML=S.services.map((o,i)=>pair('services',i,o)).join('')||'<p class="hint">No services yet.</p>';
+  $('modeRows').innerHTML=S.work_modes.map((o,i)=>pair('work_modes',i,o)).join('')||'<p class="hint">None yet.</p>';
+  $('locRows').innerHTML=S.locations.map((l,i)=>'<div class="r" style="grid-template-columns:1fr auto"><input aria-label="Location" value="'+esc(l)+'" oninput="DB.settings.locations['+i+']=this.value;DB.settings.address=DB.settings.locations[0]||\'\';markDirty(\'settings\')"/><button type="button" class="btn sm danger" onclick="DB.settings.locations.splice('+i+',1);markDirty(\'settings\');drawLists()">Remove</button></div>').join('')||'<p class="hint">No locations yet.</p>'}
+function addRow(k){DB.settings[k].push({title:'',desc:''});markDirty('settings');drawLists()}
+function addLoc(){DB.settings.locations.push('');markDirty('settings');drawLists();const r=$('locRows').lastElementChild.querySelector('input');r&&r.focus()}
+
+/* ── our work (project sites) ── */
+function pgProjects(){C('<div class="card"><h2>Project sites <a class="btn sm pri" href="#projects/new">Add project</a></h2><div class="tw"><table><tbody id="wRows"></tbody></table></div></div>'+saveBar('projects'));drawProjects()}
+function drawProjects(){$('wRows').innerHTML=DB.projects.map((w,i)=>'<tr><td style="width:40px"><div class="mv"><button aria-label="Move up" onclick="mv(\'projects\','+i+',-1,drawProjects)">▲</button><button aria-label="Move down" onclick="mv(\'projects\','+i+',1,drawProjects)">▼</button></div></td><td style="width:80px"><img class="th" src="'+esc((w.images||[])[0]||'assets/logo.svg')+'" alt=""/></td><td><div class="t">'+esc(w.title)+'</div><div class="s">'+esc(w.area)+' · '+esc(w.type)+' · '+((w.images||[]).length)+' photo'+((w.images||[]).length===1?'':'s')+'</div></td><td><div class="acts-cell"><a class="btn sm" href="#projects/'+w.id+'">Edit</a><button class="btn sm danger" onclick="delProject('+i+')">Delete</button></div></td></tr>').join('')||'<tr><td class="empty">No projects yet. <a href="#projects/new">Add one</a></td></tr>'}
+async function delProject(i){if(!await confirmBox('Delete '+DB.projects[i].title+'?','It is removed from Our work when you publish.'))return;DB.projects.splice(i,1);renumber(DB.projects);markDirty('projects');drawProjects()}
+function pgProject(id){const isNew=id==='new',w=isNew?{title:'',area:'',type:'Home interiors',description:'',images:[]}:DB.projects.find(x=>String(x.id)===id);if(!w){location.hash='projects';return}
+  $('pTitle').textContent=isNew?'Add project site':'Edit project site';IMGS=[...(w.images||[])];
+  C('<form class="card" onsubmit="saveProject(event,\''+id+'\')"><h2>Photos</h2><div class="imgs" id="imgs"></div><div class="upl"><label class="btn sm" for="pFiles" style="margin:0">Upload photos</label><input id="pFiles" type="file" accept="image/*" multiple hidden/><span class="hint" style="margin:0">or</span><input id="pUrl" type="url" placeholder="Paste an image link" style="max-width:280px;padding:.4rem .6rem"/><button type="button" class="btn sm" onclick="addUrl()">Add link</button></div><p class="hint">Before-and-after and finished-site photos work best.</p>'+
+  '<h2 style="margin-top:1.4rem">Details</h2><div class="g3"><div class="field"><label for="w_title">Project / building</label><input id="w_title" required value="'+esc(w.title)+'" placeholder="e.g. Dreams building A1"/></div><div class="field"><label for="w_area">Area</label><input id="w_area" value="'+esc(w.area)+'" placeholder="e.g. Bhandup, Mumbai"/></div><div class="field"><label for="w_type">Type</label><input id="w_type" list="wtypes" value="'+esc(w.type)+'"/><datalist id="wtypes"><option value="Home interiors"><option value="Office"><option value="Shop / showroom"><option value="Mall"><option value="Commercial"><option value="Homes & shops"></datalist></div></div>'+
+  '<div class="field"><label for="w_desc">What you did</label><textarea id="w_desc">'+esc(w.description)+'</textarea></div><div class="bar"><a class="btn" href="#projects">Cancel</a><button class="btn pri">'+(isNew?'Add project':'Save project')+'</button></div></form>');
+  drawImgs();$('pFiles').onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;toast('Uploading '+fs.length+' photo'+(fs.length>1?'s':'')+'…');const paths=await uploadPhotos(fs,$('w_title').value||'site');IMGS.push(...paths);drawImgs();if(paths.length)toast('Photo uploaded. Save the project, then publish.');e.target.value=''}}
+function saveProject(e,id){e.preventDefault();const d={title:$('w_title').value.trim(),area:$('w_area').value.trim(),type:$('w_type').value.trim(),description:$('w_desc').value.trim(),images:[...IMGS]};
+  if(id==='new'){DB.projects.unshift({id:nextId(DB.projects),order:1,...d});renumber(DB.projects)}else Object.assign(DB.projects.find(x=>String(x.id)===id),d);markDirty('projects');toast('Project saved. Publish to show it.');location.hash='projects'}
+
+/* ── reviews ── */
+function pgReviews(){C('<div class="msg info">Only add reviews real customers gave you — with their permission to show their name.</div><div class="card"><h2>Reviews <a class="btn sm pri" href="#testimonials/new">Add review</a></h2><div class="tw"><table><tbody id="tRows"></tbody></table></div></div>'+saveBar('testimonials'));drawReviews()}
+function drawReviews(){$('tRows').innerHTML=DB.testimonials.map((r,i)=>'<tr><td><div class="t">'+esc(r.name)+' <span class="pill star">'+'★'.repeat(r.rating||5)+'</span></div><div class="s">'+esc(r.text)+'</div></td><td><div class="acts-cell"><a class="btn sm" href="#testimonials/'+i+'">Edit</a><button class="btn sm danger" onclick="delReview('+i+')">Delete</button></div></td></tr>').join('')||'<tr><td class="empty">No reviews yet. The homepage hides this section until you add one.</td></tr>'}
+async function delReview(i){if(!await confirmBox('Delete this review?','It is removed from the shop when you publish.'))return;DB.testimonials.splice(i,1);markDirty('testimonials');drawReviews()}
+function pgReview(id){const isNew=id==='new',r=isNew?{name:'',place:'',rating:5,text:''}:DB.testimonials[+id];if(!r){location.hash='testimonials';return}
+  $('pTitle').textContent=isNew?'Add review':'Edit review';
+  C('<form class="card" onsubmit="saveReview(event,\''+id+'\')"><div class="g3"><div class="field"><label for="r_name">Customer name</label><input id="r_name" required value="'+esc(r.name)+'"/></div><div class="field"><label for="r_place">Area / what they bought</label><input id="r_place" value="'+esc(r.place)+'" placeholder="e.g. Airoli · King bed"/></div><div class="field"><label for="r_rate">Rating</label><select id="r_rate">'+[5,4,3,2,1].map(n=>'<option'+(n===(r.rating||5)?' selected':'')+'>'+n+'</option>').join('')+'</select></div></div><div class="field"><label for="r_text">What they said</label><textarea id="r_text" required>'+esc(r.text)+'</textarea></div><div class="bar"><a class="btn" href="#testimonials">Cancel</a><button class="btn pri">'+(isNew?'Add review':'Save review')+'</button></div></form>')}
+function saveReview(e,id){e.preventDefault();const d={name:$('r_name').value.trim(),place:$('r_place').value.trim(),rating:+$('r_rate').value,text:$('r_text').value.trim()};if(id==='new')DB.testimonials.push(d);else DB.testimonials[+id]=d;markDirty('testimonials');toast('Review saved. Publish to show it.');location.hash='testimonials'}
+
+/* ── orders ── */
+function orders(){try{return JSON.parse(localStorage.getItem(ORD_KEY)||'[]')}catch(e){return[]}}
+function pgOrders(){const A=orders(),S=DB.settings;
+  C('<div class="msg info">Every order and enquiry opens on WhatsApp (<b>+'+esc(S.whatsapp)+'</b>) and a copy is emailed to <b>'+esc(S.email)+'</b>. The first time, FormSubmit sends you an <b>Activate</b> email — click it or the copies won\'t arrive.</div>'+
+  '<div class="card"><h2>Placed from this browser ('+A.length+')'+(A.length?'<button class="btn sm danger" onclick="clearOrders()">Clear</button>':'')+'</h2><p class="hint" style="margin:-.5rem 0 1rem">Useful for testing the checkout. Real customer orders are in your WhatsApp and email.</p>'+
+  (A.length?A.map(o=>'<div class="ord"><div class="t"><b>'+(o.kind==='order'?'Order':o.kind==='custom'?'Quote request':'Enquiry')+'</b> — '+esc(o.name)+' · '+esc(o.phone||'')+' <span class="s">'+esc(o.date)+'</span></div><pre>'+(o.items?o.items.map(i=>esc(i.name)+' × '+i.q+' — '+money(i.price*i.q)).join('\n')+'\nTotal: '+money(o.total)+'\n'+esc(o.address||''):esc([o.work&&'Work: '+o.work,o.mode&&'Basis: '+o.mode,o.area&&'Site: '+o.area,o.size&&'Size: '+o.size,o.wood&&'Material: '+o.wood,o.budget&&'Budget: '+o.budget,o.details,o.message].filter(Boolean).join('\n')))+'</pre></div>').join(''):'<p class="empty">Nothing yet.</p>')+'</div>')}
+async function clearOrders(){if(!await confirmBox('Clear the list?','This only clears this browser.','Clear'))return;localStorage.removeItem(ORD_KEY);pgOrders();chrome()}
+
+/* ── publishing ── */
+function pgPublishing(){const c={...ghDefaults(),...(gh()||{})};
+  C('<div class="card"><h2>Connect GitHub</h2>'+(c.token?'<div class="msg ok">Connected. Publish buttons and photo uploads go to <b>'+esc(c.owner+'/'+c.repo)+'</b>.</div>':'')+
+  '<ol style="margin:0 0 1.2rem 1.2rem;color:var(--muted)"><li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → New fine-grained token</a>.</li><li>Name it "Store admin", choose an expiry, and under <b>Repository access</b> pick <b>Only select repositories → '+esc(c.repo)+'</b>.</li><li>Under <b>Permissions → Contents</b> choose <b>Read and write</b>, generate the token and paste it below.</li></ol>'+
+  '<form onsubmit="saveGh(event)"><div class="g3"><div class="field"><label for="g_owner">GitHub username</label><input id="g_owner" required value="'+esc(c.owner)+'"/></div><div class="field"><label for="g_repo">Repository</label><input id="g_repo" required value="'+esc(c.repo)+'"/></div><div class="field"><label for="g_branch">Branch</label><input id="g_branch" required value="'+esc(c.branch)+'"/></div></div>'+
+  '<div class="field"><label for="g_token">Token</label><input id="g_token" type="password" autocomplete="off" placeholder="'+(c.token?'Saved — paste a new one to replace it':'github_pat_…')+'"/><div class="hint">Stored only in this browser. Sign out on shared computers.</div></div><div class="bar">'+(c.token?'<button type="button" class="btn danger" onclick="disconnectGh()">Disconnect</button>':'')+'<button class="btn pri" id="gBtn">'+(c.token?'Save and test':'Connect')+'</button></div></form></div>')}
+async function saveGh(e){e.preventDefault();const old=gh()||{},cfg={owner:$('g_owner').value.trim(),repo:$('g_repo').value.trim(),branch:$('g_branch').value.trim(),token:$('g_token').value.trim()||old.token};if(!cfg.token){toast('Paste a token first.',true);return}
+  $('gBtn').disabled=true;$('gBtn').textContent='Testing…';try{await ghCheck(cfg);localStorage.setItem(GHK,JSON.stringify(cfg));toast('GitHub connected.');pgPublishing();chrome()}catch(err){toast(errText(err),true);$('gBtn').disabled=false;$('gBtn').textContent='Connect'}}
+async function disconnectGh(){if(!await confirmBox('Disconnect GitHub?','Publish buttons will download files instead.','Disconnect'))return;localStorage.removeItem(GHK);pgPublishing();chrome()}
+
+/* ── account ── */
+function pgAccount(){C('<form class="card" style="max-width:480px" onsubmit="changePw(event)"><h2>Change password</h2><div class="msg err" id="aErr" hidden></div><input type="text" autocomplete="username" value="'+esc(AUTH.email)+'" hidden/><div class="field"><label for="a_cur">Current password</label><input id="a_cur" type="password" autocomplete="current-password" required/></div><div class="field"><label for="a_new">New password</label><input id="a_new" type="password" autocomplete="new-password" minlength="8" required/><div class="hint">At least 8 characters.</div></div><div class="field"><label for="a_conf">Repeat new password</label><input id="a_conf" type="password" autocomplete="new-password" required/></div><div class="bar"><button class="btn pri" id="aBtn">Change password</button></div></form>')}
+async function changePw(e){e.preventDefault();const err=m=>{$('aErr').textContent=m;$('aErr').hidden=false};$('aErr').hidden=true;
+  if(!await checkPass(AUTH.email,$('a_cur').value))return err('Current password is incorrect.');if($('a_new').value!==$('a_conf').value)return err('The two new passwords don\'t match.');
+  const prev=AUTH,np=$('a_new').value;AUTH=await newAuth(np);if(await publish('auth',$('aBtn'))){await vaultRekey(np);e.target.reset();toast(gh()?'Password changed. It works in about a minute.':'Downloaded auth.json — upload it to the data folder to activate the new password.')}else AUTH=prev}
+
+(async()=>{try{await loadAuth()}catch(e){}const s=sessionStorage.getItem(SESS);if(s&&AUTH&&JSON.parse(s).email===AUTH.email&&await vaultResume())openApp();else $('lEmail').focus()})();
+</script>
+</body>
+</html>

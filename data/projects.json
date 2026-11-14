@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "order": 1,
+    "title": "Dreams building — A1, A2 and other wings",
+    "area": "Bhandup, Mumbai",
+    "type": "Home interiors",
+    "description": "Interior work for several flats across the Dreams complex.",
+    "images": []
+  },
+  {
+    "id": 2,
+    "order": 2,
+    "title": "Usha Nagar homes",
+    "area": "Bhandup, Mumbai",
+    "type": "Home interiors",
+    "description": "Home interior projects in Usha Nagar.",
+    "images": []
+  },
+  {
+    "id": 3,
+    "order": 3,
+    "title": "Hiranandani complex",
+    "area": "Thane",
+    "type": "Home interiors",
+    "description": "Interior work in the Hiranandani complex, Thane.",
+    "images": []
+  },
+  {
+    "id": 4,
+    "order": 4,
+    "title": "Homes and shops in Thane",
+    "area": "Thane",
+    "type": "Homes & shops",
+    "description": "Residential and commercial interior work across Thane.",
+    "images": []
+  },
+  {
+    "id": 5,
+    "order": 5,
+    "title": "Mira Bhayandar projects",
+    "area": "Mira Bhayandar",
+    "type": "Homes & shops",
+    "description": "Interior and carpentry work in Mira Bhayandar.",
+    "images": []
+  },
+  {
+    "id": 6,
+    "order": 6,
+    "title": "Showrooms, malls and offices",
+    "area": "Mumbai & Thane",
+    "type": "Commercial",
+    "description": "Showroom, mall store, shop and business office fit-outs.",
+    "images": []
+  }
+]

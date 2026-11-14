@@ -1,0 +1,76 @@
+{
+  "name": "Vishwakarma Interior",
+  "short": "Vishwakarma Interior",
+  "tagline": "Interiors and furniture, built by our own carpenters",
+  "hero_title": "Interiors and furniture, built by our own carpenters.",
+  "hero_text": "Home interiors, offices, shops, showrooms and mall fit-outs — plus ready and made-to-measure furniture. Hire us on labour basis or as a full contract.",
+  "about": "Vishwakarma Interior is a team of carpenters and interior workers serving Mumbai, Thane, Navi Mumbai and Uttar Pradesh. We take on complete interior contracts and labour-basis work for homes, offices, shops, showrooms and malls, and we make furniture to measure in our own workshop.",
+  "phone": "8169838790",
+  "whatsapp": "918169838790",
+  "email": "ashishvishwakarma7300@gmail.com",
+  "address": "Airoli, Navi Mumbai",
+  "hours": "",
+  "map": "https://maps.google.com/?q=Airoli%2C+Navi+Mumbai",
+  "years": "",
+  "delivery_note": "Delivery and fitting by our own team. We confirm any delivery charge before you order.",
+  "warranty": "",
+  "currency": "₹",
+  "instagram": "",
+  "facebook": "",
+  "sample_data": true,
+  "top_note": "Labour basis & contract basis · Mumbai, Thane, Navi Mumbai and Uttar Pradesh",
+  "locations": [
+    "Airoli, Navi Mumbai",
+    "Bhandup, Mumbai",
+    "Kunda, Pratapgarh (Uttar Pradesh)",
+    "Prayagraj (Uttar Pradesh)"
+  ],
+  "work_modes": [
+    {
+      "title": "Contract basis",
+      "desc": "We handle the full job — design help, material, labour, finishing and fitting — for one agreed price."
+    },
+    {
+      "title": "Labour basis",
+      "desc": "You buy the material; our skilled carpenters and workers do the work at labour rates."
+    }
+  ],
+  "services": [
+    {
+      "title": "Home interiors",
+      "desc": "Wardrobes, beds, TV units, false ceilings, wall panelling and full flat interiors."
+    },
+    {
+      "title": "Modular kitchens",
+      "desc": "Kitchens with laminate or acrylic shutters, soft-close hardware and lofts."
+    },
+    {
+      "title": "Office interiors",
+      "desc": "Workstations, cabins, reception counters, storage and conference rooms."
+    },
+    {
+      "title": "Shops & showrooms",
+      "desc": "Display racks, counters, shelving and complete shop fit-outs."
+    },
+    {
+      "title": "Mall work",
+      "desc": "Store fit-outs and fixtures built to mall timelines and rules."
+    },
+    {
+      "title": "Furniture to measure",
+      "desc": "Sofas, beds, dining sets and storage made in our workshop."
+    }
+  ],
+  "letterhead": {
+    "title": "Ramkumar Vishwakarma",
+    "intro": "Sliding Aluminium Window, Teakwood Furniture, Sofa, Kapat",
+    "address": "Room No. 36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708",
+    "phones": [
+      "+91 8169838790",
+      "+91 9833583310"
+    ],
+    "email": "ashishvishwakarma7300@gmail.com",
+    "website": "www.mumbai-interior.in",
+    "footer_note": "Thank you for your business!"
+  }
+}

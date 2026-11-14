@@ -2,8 +2,8 @@
   "name": "Vishwakarma Interior",
   "short": "Vishwakarma Interior",
   "tagline": "Interiors and furniture, built by our own carpenters",
-  "hero_title": "Interiors and furniture, built by our own carpenters.",
-  "hero_text": "Home interiors, offices, shops, showrooms and mall fit-outs — plus ready and made-to-measure furniture. Hire us on labour basis or as a full contract.",
+  "hero_title": "Interiors and furniture for Mumbai homes, offices and shops",
+  "hero_text": "Built by our own carpenters — on contract or labour basis, across Mumbai, Thane, Navi Mumbai and Uttar Pradesh.",
   "about": "Vishwakarma Interior is a team of carpenters and interior workers serving Mumbai, Thane, Navi Mumbai and Uttar Pradesh. We take on complete interior contracts and labour-basis work for homes, offices, shops, showrooms and malls, and we make furniture to measure in our own workshop.",
   "phone": "8169838790",
   "whatsapp": "918169838790",
@@ -28,37 +28,192 @@
   "work_modes": [
     {
       "title": "Contract basis",
-      "desc": "We handle the full job — design help, material, labour, finishing and fitting — for one agreed price."
+      "desc": "We handle the full job — design help, material, labour, finishing and fitting — for one agreed price.",
+      "est": "Priced per sq ft or per item, material included"
     },
     {
       "title": "Labour basis",
-      "desc": "You buy the material; our skilled carpenters and workers do the work at labour rates."
+      "desc": "You buy the material; our skilled carpenters and workers do the work at labour rates.",
+      "est": "Labour from ₹250 – ₹450 per sq ft, or per-day rates"
     }
   ],
   "services": [
     {
       "title": "Home interiors",
-      "desc": "Wardrobes, beds, TV units, false ceilings, wall panelling and full flat interiors."
+      "slug": "home-interiors",
+      "image": "images/site/home-interiors.webp",
+      "desc": "Wardrobes, beds, TV units, false ceilings, wall panelling and full flat interiors.",
+      "intro": "From a single wardrobe to a complete 2BHK, we plan, build and finish home interiors with our own carpenters. We work in new possessions and lived-in flats across Mumbai, Thane and Navi Mumbai, and keep the site clean while we work.",
+      "points": [
+        "Full flat interiors for 1, 2 and 3 BHK",
+        "Wardrobes, lofts and storage beds",
+        "TV units and wall panelling",
+        "False ceiling and cove lighting",
+        "Pooja units and shoe racks",
+        "Sliding aluminium windows"
+      ],
+      "est": [
+        {
+          "item": "1 BHK complete interior",
+          "range": "₹3.5 – 6 lakh"
+        },
+        {
+          "item": "2 BHK complete interior",
+          "range": "₹6 – 11 lakh"
+        },
+        {
+          "item": "Wardrobe (per sq ft)",
+          "range": "₹1,200 – ₹2,200"
+        },
+        {
+          "item": "False ceiling (per sq ft)",
+          "range": "₹90 – ₹160"
+        },
+        {
+          "item": "Wall panelling (per sq ft)",
+          "range": "₹350 – ₹900"
+        }
+      ]
     },
     {
       "title": "Modular kitchens",
-      "desc": "Kitchens with laminate or acrylic shutters, soft-close hardware and lofts."
+      "slug": "modular-kitchens",
+      "image": "images/site/modular-kitchens.webp",
+      "desc": "Kitchens with laminate or acrylic shutters, soft-close hardware and lofts.",
+      "intro": "Kitchens built to your wall sizes, with laminate or acrylic shutters, soft-close hinges and channels, tall units and lofts. We measure on site and plan the kitchen around your sink, plumbing and gas line.",
+      "points": [
+        "Straight, L-shaped, U-shaped and parallel layouts",
+        "Waterproof (BWP) plywood for wet areas",
+        "Laminate, acrylic or PU shutters",
+        "Soft-close hinges and drawer channels",
+        "Tall units, lofts and tandem baskets",
+        "Removal of the old kitchen"
+      ],
+      "est": [
+        {
+          "item": "Kitchen cabinets (per sq ft)",
+          "range": "₹1,400 – ₹2,600"
+        },
+        {
+          "item": "Typical L-shaped kitchen",
+          "range": "₹1.5 – 3 lakh"
+        },
+        {
+          "item": "Kitchen loft (per sq ft)",
+          "range": "₹900 – ₹1,400"
+        }
+      ]
     },
     {
       "title": "Office interiors",
-      "desc": "Workstations, cabins, reception counters, storage and conference rooms."
+      "slug": "office-interiors",
+      "image": "images/site/office-interiors.webp",
+      "desc": "Workstations, cabins, reception counters, storage and conference rooms.",
+      "intro": "Workstations, cabins and storage for offices of every size, planned around how your team works. We can work after hours and on weekends so your office keeps running.",
+      "points": [
+        "Linear and cluster workstations",
+        "Manager cabins with glass partitions",
+        "Reception counters",
+        "Conference tables",
+        "File storage and pedestal units",
+        "Gypsum partitions and false ceiling"
+      ],
+      "est": [
+        {
+          "item": "Workstation (per seat)",
+          "range": "₹12,000 – ₹25,000"
+        },
+        {
+          "item": "Manager cabin",
+          "range": "₹1.5 – 3.5 lakh"
+        },
+        {
+          "item": "Complete office fit-out (per sq ft)",
+          "range": "₹1,200 – ₹2,500"
+        }
+      ]
     },
     {
       "title": "Shops & showrooms",
-      "desc": "Display racks, counters, shelving and complete shop fit-outs."
+      "slug": "shops-showrooms",
+      "image": "images/site/shops-showrooms.webp",
+      "desc": "Display racks, counters, shelving and complete shop fit-outs.",
+      "intro": "Display racks, counters and complete fit-outs for shops and showrooms that need to look good and open on time.",
+      "points": [
+        "Wall display racks and shelving",
+        "Cash and display counters",
+        "Glass showcases",
+        "Branding walls and signage frames",
+        "Storage and back-office units",
+        "Furniture showroom fit-outs"
+      ],
+      "est": [
+        {
+          "item": "Shop fit-out (per sq ft)",
+          "range": "₹1,000 – ₹2,200"
+        },
+        {
+          "item": "Display racks (per sq ft)",
+          "range": "₹600 – ₹1,200"
+        },
+        {
+          "item": "Cash counter",
+          "range": "₹25,000 – ₹70,000"
+        }
+      ]
     },
     {
       "title": "Mall work",
-      "desc": "Store fit-outs and fixtures built to mall timelines and rules."
+      "slug": "mall-work",
+      "image": "images/site/mall-work.webp",
+      "desc": "Store fit-outs and fixtures built to mall timelines and rules.",
+      "intro": "Store fit-outs and fixtures inside malls, built to the brand's drawings and the mall's timelines and night-work rules.",
+      "points": [
+        "Work to brand and mall drawings",
+        "Night shifts and tight handover dates",
+        "Fixtures, counters and trial rooms",
+        "Wall cladding and ceiling work",
+        "Coordination with mall fit-out teams"
+      ],
+      "est": [
+        {
+          "item": "Store fit-out (per sq ft)",
+          "range": "₹1,500 – ₹3,000"
+        },
+        {
+          "item": "Trial room (each)",
+          "range": "₹35,000 – ₹80,000"
+        }
+      ]
     },
     {
       "title": "Furniture to measure",
-      "desc": "Sofas, beds, dining sets and storage made in our workshop."
+      "slug": "furniture-to-measure",
+      "image": "images/site/furniture-to-measure.webp",
+      "desc": "Sofas, beds, dining sets and storage made in our workshop.",
+      "intro": "Sofas, beds, dining sets, wardrobes and storage made in our workshop to your size, wood and finish — plus repair and re-polishing of furniture you already own.",
+      "points": [
+        "Solid teak and sheesham furniture",
+        "Sofas made to your room size",
+        "Beds with hydraulic or drawer storage",
+        "Dining sets for 4, 6 or 8",
+        "Repair and re-polishing",
+        "Delivery and fitting by our team"
+      ],
+      "est": [
+        {
+          "item": "3-seater sofa",
+          "range": "₹35,000 – ₹55,000"
+        },
+        {
+          "item": "King bed with storage",
+          "range": "₹45,000 – ₹75,000"
+        },
+        {
+          "item": "6-seater dining set",
+          "range": "₹50,000 – ₹85,000"
+        }
+      ]
     }
   ],
   "letterhead": {
@@ -72,5 +227,40 @@
     "email": "ashishvishwakarma7300@gmail.com",
     "website": "www.mumbai-interior.in",
     "footer_note": "Thank you for your business!"
-  }
+  },
+  "site_url": "https://mumbai-interior.in",
+  "team": [
+    {
+      "name": "Ramkumar Vishwakarma",
+      "role": "Founder",
+      "bio": "Started Vishwakarma Interior as a carpenter. Teakwood furniture, sofas, kapat (wardrobes) and sliding aluminium windows have been at the heart of the work from the start."
+    },
+    {
+      "name": "Asheesh Vishwakarma",
+      "role": "Director",
+      "bio": "Runs projects, quotations and client communication, and keeps every site moving to schedule."
+    }
+  ],
+  "faqs": [
+    {
+      "q": "How do you decide the final price?",
+      "a": "The prices on this website are estimates. We give you a final quote after a site visit, once we know the exact size, wood or board, hardware and finish you want."
+    },
+    {
+      "q": "What is the difference between contract basis and labour basis?",
+      "a": "On contract basis we supply the material and do the work for one agreed price. On labour basis you buy the material and pay us only for the work."
+    },
+    {
+      "q": "Which areas do you work in?",
+      "a": "Mumbai, Thane, Navi Mumbai and Mira Bhayandar in Maharashtra, and Kunda (Pratapgarh) and Prayagraj in Uttar Pradesh."
+    },
+    {
+      "q": "Do you visit the site before quoting?",
+      "a": "Yes. Call or WhatsApp us on 8169838790 to book a site visit and measurement."
+    },
+    {
+      "q": "Can you make furniture in my size and wood?",
+      "a": "Yes. Every piece on this website can be made to your size in teak, sheesham or engineered wood, with the finish you choose."
+    }
+  ]
 }

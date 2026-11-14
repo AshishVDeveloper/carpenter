@@ -26,3 +26,9 @@ Admin → **Publishing** → paste a GitHub fine-grained token with *Contents: R
 After that, every **Publish** button and photo upload updates the live site in about a minute.
 
 Hosted free on GitHub Pages.
+
+## Pages and SEO (Nov 2026)
+- Every section has its own page: `/services/<service>/`, `/furniture/<category>/<product>/`, `/our-work/`, `/about/`, `/contact/`, `/get-quote/`, and local pages under `/areas/<area>/`.
+- Pages are generated from `data/*.json` by `node tools/build.mjs` (titles, descriptions, structured data, `sitemap.xml`, `robots.txt`). The **Rebuild pages** GitHub Action runs this automatically after you publish from the admin panel.
+- Furniture shows an **estimated price range** (`price_min`–`price_max`), set in Admin → Products. Service estimates and the founder/team are in Admin → Business details.
+- Photos in `images/site` and `images/products` are free-licence stock photos from Pexels used as design references. Replace them with photos of your own work when you can.

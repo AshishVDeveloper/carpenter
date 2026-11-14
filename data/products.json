@@ -2,235 +2,261 @@
   {
     "id": 1,
     "order": 1,
-    "name": "Teak 3-Seater Sofa",
+    "name": "Emerald Velvet 3-Seater Sofa",
     "category": "sofas",
-    "price": 38500,
+    "price": 35000,
     "mrp": null,
-    "material": "Teak wood frame, fabric cushions",
+    "material": "Teak wood frame, velvet upholstery",
     "size": "200 × 85 × 82 cm",
-    "finish": "Natural teak, olive fabric",
-    "description": "A deep-seated three-seater on a solid teak frame with removable, washable cushion covers.",
+    "finish": "Teak legs, emerald velvet",
+    "description": "A deep-seated three-seater on a solid teak frame, upholstered in soft velvet. Size and fabric can be changed to suit your room.",
     "images": [
-      "images/products/sofa-3-seater.svg"
+      "images/products/sofa-3-seater.webp"
     ],
     "featured": true,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 35000,
+    "price_max": 55000
   },
   {
     "id": 2,
     "order": 2,
-    "name": "Walnut L-Shape Sofa",
+    "name": "Grey L-Shape Sofa",
     "category": "sofas",
-    "price": 62000,
+    "price": 55000,
     "mrp": null,
     "material": "Hardwood frame, high-density foam",
     "size": "260 × 170 × 84 cm",
-    "finish": "Walnut stain, mustard fabric",
-    "description": "Corner sofa with a left or right chaise. Size and fabric can be changed to fit your room.",
+    "finish": "Grey fabric, walnut legs",
+    "description": "Corner sofa with a left or right chaise. We make it to the exact length of your wall.",
     "images": [
-      "images/products/sofa-l-shape.svg"
+      "images/products/sofa-l-shape.webp"
     ],
     "featured": true,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 55000,
+    "price_max": 95000
   },
   {
     "id": 3,
     "order": 3,
-    "name": "Sheesham King Bed with Storage",
+    "name": "King Bed with Upholstered Headboard",
     "category": "beds",
-    "price": 54000,
+    "price": 45000,
     "mrp": null,
-    "material": "Sheesham wood",
+    "material": "Sheesham frame, upholstered headboard",
     "size": "Fits 72 × 78 in mattress",
-    "finish": "Honey sheesham",
-    "description": "King bed with hydraulic lift-up storage and a padded headboard.",
+    "finish": "Beige fabric, natural wood",
+    "description": "King-size bed with a padded headboard and hydraulic or drawer storage underneath.",
     "images": [
-      "images/products/bed-king-storage.svg"
+      "images/products/bed-king-storage.webp"
     ],
     "featured": true,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 45000,
+    "price_max": 75000
   },
   {
     "id": 4,
     "order": 4,
-    "name": "Oak Queen Bed",
+    "name": "Sheesham Queen Bed",
     "category": "beds",
-    "price": 32000,
+    "price": 28000,
     "mrp": null,
-    "material": "Engineered wood with oak veneer",
+    "material": "Solid sheesham wood",
     "size": "Fits 60 × 78 in mattress",
-    "finish": "Light oak",
-    "description": "A clean, low queen bed with rounded edges and a slatted base.",
+    "finish": "Natural honey polish",
+    "description": "A clean, solid-wood queen bed. Add drawers or a hydraulic lift for extra storage.",
     "images": [
-      "images/products/bed-queen.svg"
+      "images/products/bed-queen.webp"
     ],
     "featured": false,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 28000,
+    "price_max": 45000
   },
   {
     "id": 5,
     "order": 5,
-    "name": "Sheesham 6-Seater Dining Set",
+    "name": "6-Seater Dining Set",
     "category": "dining",
-    "price": 58000,
+    "price": 50000,
     "mrp": null,
-    "material": "Sheesham wood",
+    "material": "Solid wood table, upholstered chairs",
     "size": "Table 180 × 90 × 76 cm",
-    "finish": "Walnut sheesham, cream seats",
-    "description": "Six chairs with cushioned seats and a solid-top table that seats six comfortably.",
+    "finish": "Light oak, olive and beige fabric",
+    "description": "A round or rectangular six-seater with comfortable upholstered chairs.",
     "images": [
-      "images/products/dining-6-seater.svg"
+      "images/products/dining-6-seater.webp"
     ],
     "featured": true,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 50000,
+    "price_max": 85000
   },
   {
     "id": 6,
     "order": 6,
-    "name": "Oak 4-Seater Dining Set",
+    "name": "4-Seater Dining Set",
     "category": "dining",
-    "price": 29500,
+    "price": 25000,
     "mrp": null,
-    "material": "Rubber wood with oak finish",
+    "material": "Engineered wood top, solid wood legs",
     "size": "Table 120 × 75 × 76 cm",
-    "finish": "Light oak, teal seats",
-    "description": "Compact dining set for apartments, with easy-clean seat covers.",
+    "finish": "White top, natural legs",
+    "description": "A compact dining set for smaller flats — table and four wooden chairs.",
     "images": [
-      "images/products/dining-4-seater.svg"
+      "images/products/dining-4-seater.webp"
     ],
     "featured": false,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 25000,
+    "price_max": 40000
   },
   {
     "id": 7,
     "order": 7,
-    "name": "2-Door Walnut Wardrobe",
+    "name": "Walnut Full-Height Wardrobe",
     "category": "wardrobes",
-    "price": 27500,
+    "price": 22000,
     "mrp": null,
-    "material": "Engineered wood, walnut laminate",
+    "material": "BWR plywood, laminate finish",
     "size": "90 × 55 × 200 cm",
-    "finish": "Walnut with mirror panel",
-    "description": "Two-door wardrobe with hanging space, three shelves and a locker drawer.",
+    "finish": "Walnut laminate, black handles",
+    "description": "Floor-to-ceiling wardrobe with hanging space, shelves and a loft. Priced for a two-door unit.",
     "images": [
-      "images/products/wardrobe-2-door.svg"
+      "images/products/wardrobe-2-door.webp"
     ],
     "featured": false,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 22000,
+    "price_max": 38000
   },
   {
     "id": 8,
     "order": 8,
-    "name": "3-Door White Wardrobe",
+    "name": "Sliding Mirror Wardrobe",
     "category": "wardrobes",
-    "price": 36000,
+    "price": 32000,
     "mrp": null,
-    "material": "Engineered wood, matte laminate",
+    "material": "Plywood carcass, aluminium sliding track",
     "size": "135 × 55 × 210 cm",
-    "finish": "Off-white matte",
-    "description": "Three-door wardrobe with a full-length mirror, drawers and a loft option.",
+    "finish": "Mirror and white laminate",
+    "description": "Three-panel sliding wardrobe with a full-length mirror — saves space in smaller bedrooms.",
     "images": [
-      "images/products/wardrobe-3-door.svg"
+      "images/products/wardrobe-3-door.webp"
     ],
     "featured": true,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 32000,
+    "price_max": 55000
   },
   {
     "id": 9,
     "order": 9,
-    "name": "Teak Accent Chair",
+    "name": "Printed Accent Chair",
     "category": "chairs",
-    "price": 12500,
+    "price": 9000,
     "mrp": null,
-    "material": "Teak wood, fabric seat",
+    "material": "Solid wood legs, printed fabric",
     "size": "70 × 75 × 90 cm",
-    "finish": "Natural teak, mustard",
-    "description": "A high-back reading chair with wide armrests.",
+    "finish": "Teak legs, printed fabric",
+    "description": "A light, comfortable accent chair. Choose any fabric — price is per chair.",
     "images": [
-      "images/products/accent-chair.svg"
+      "images/products/accent-chair.webp"
     ],
     "featured": false,
     "customizable": false,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 9000,
+    "price_max": 16000
   },
   {
     "id": 10,
     "order": 10,
-    "name": "Walnut TV Unit",
+    "name": "Wall-Mounted TV Unit",
     "category": "tv-units",
-    "price": 18900,
+    "price": 15000,
     "mrp": null,
-    "material": "Sheesham wood",
+    "material": "Plywood with laminate and shelves",
     "size": "180 × 40 × 50 cm",
-    "finish": "Dark walnut",
-    "description": "Low TV unit with three closed cabinets and space for a set-top box.",
+    "finish": "Light wood and white",
+    "description": "TV unit with drawers, open shelves and space for a set-top box and speakers.",
     "images": [
-      "images/products/tv-unit.svg"
+      "images/products/tv-unit.webp"
     ],
     "featured": false,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 15000,
+    "price_max": 35000
   },
   {
     "id": 11,
     "order": 11,
     "name": "Oak Study Table",
     "category": "study",
-    "price": 11500,
+    "price": 9000,
     "mrp": null,
-    "material": "Engineered wood, oak finish",
+    "material": "Engineered wood, solid wood frame",
     "size": "120 × 60 × 75 cm",
-    "finish": "Light oak",
-    "description": "Study or work-from-home desk with two lockable drawers and a cable hole.",
+    "finish": "Natural oak finish",
+    "description": "Study or work-from-home table with a drawer and cable cut-out.",
     "images": [
-      "images/products/study-table.svg"
+      "images/products/study-table.webp"
     ],
     "featured": false,
     "customizable": true,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 9000,
+    "price_max": 18000
   },
   {
     "id": 12,
     "order": 12,
-    "name": "Sheesham Bookshelf",
+    "name": "Chest of Drawers with Bookshelves",
     "category": "storage",
-    "price": 15800,
+    "price": 12000,
     "mrp": null,
-    "material": "Sheesham wood",
+    "material": "Engineered wood, laminate finish",
     "size": "80 × 35 × 180 cm",
-    "finish": "Honey sheesham",
-    "description": "Five-tier open bookshelf with adjustable shelves.",
+    "finish": "Walnut and dark brown",
+    "description": "A low chest of drawers with tall bookshelves on either side. Build one or all three.",
     "images": [
-      "images/products/bookshelf.svg"
+      "images/products/bookshelf.webp"
     ],
     "featured": false,
     "customizable": false,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 12000,
+    "price_max": 24000
   },
   {
     "id": 13,
     "order": 13,
-    "name": "Teak Round Coffee Table",
+    "name": "Round Coffee Table",
     "category": "tables",
-    "price": 9800,
+    "price": 7500,
     "mrp": null,
-    "material": "Teak wood",
+    "material": "Solid teak wood",
     "size": "90 cm diameter × 42 cm",
     "finish": "Natural teak",
-    "description": "Round coffee table with tapered legs.",
+    "description": "A round solid-wood coffee table for the centre of your living room.",
     "images": [
-      "images/products/coffee-table.svg"
+      "images/products/coffee-table.webp"
     ],
     "featured": false,
     "customizable": false,
-    "in_stock": true
+    "in_stock": true,
+    "price_min": 7500,
+    "price_max": 14000
   }
 ]

@@ -1,0 +1,63 @@
+/* A4 document template: quotation, agreement, bill, invoice. Everything is scoped to .docpage. */
+.docpage{--maroon:#7A1F1F;--saffron:#D9822B;--ink:#1d1d1d;--muted:#5d5d5d;--rule:#e3d6cc;--tint:#FBF4EE;
+  width:794px;min-height:1066px;background:#fff;color:var(--ink);font:400 12.5px/1.45 'Figtree',Arial,sans-serif;padding:10px 40px 4px;box-sizing:border-box;display:flex;flex-direction:column;position:relative}
+.docpage *{box-sizing:border-box}
+.docpage .lh{display:grid;grid-template-columns:86px 1fr 86px;align-items:center;gap:14px}
+.docpage .lh img{width:86px;height:96px;object-fit:contain}
+.docpage .lh .mid{text-align:center}
+.docpage .lh h1{font:800 31px/1.05 'Bricolage Grotesque','Figtree',Arial,sans-serif;letter-spacing:.4px;color:var(--maroon);margin:0;text-transform:uppercase}
+.docpage .lh .intro{font-weight:700;font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);margin:7px 0 4px}
+.docpage .lh .addr{font-size:11.5px;color:var(--muted)}
+.docpage .lh .ph{font-size:11.5px;font-weight:700;margin-top:3px;color:var(--ink)}
+.docpage .rule{height:4px;background:var(--maroon);margin:14px 0 2px;border-radius:2px}
+.docpage .rule2{height:2px;background:var(--saffron);margin-bottom:16px}
+.docpage .dtitle{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
+.docpage .dtitle::before,.docpage .dtitle::after{content:"";flex:1;height:1px;background:var(--rule)}
+.docpage .dtitle span{font:800 17px 'Bricolage Grotesque','Figtree',Arial,sans-serif;letter-spacing:2.5px;color:var(--maroon);text-transform:uppercase}
+.docpage .meta{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:14px}
+.docpage .box{border:1px solid var(--rule);border-radius:6px;padding:9px 12px;background:var(--tint)}
+.docpage .box b.k{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--maroon);margin-bottom:3px}
+.docpage .box .nm{font-weight:700;font-size:14px}
+.docpage .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.docpage .kv dt{color:var(--muted)}
+.docpage .kv dd{margin:0;font-weight:700;text-align:right}
+.docpage table.items{width:100%;border-collapse:collapse;margin-bottom:12px}
+.docpage table.items th{background:var(--maroon);color:#fff;font-weight:700;font-size:11px;text-align:left;padding:7px 7px}
+.docpage table.items th.n,.docpage table.items td.n{text-align:right;white-space:nowrap}
+.docpage table.items td{padding:4.5px 7px;border-bottom:1px solid var(--rule);vertical-align:top}
+.docpage table.items tr:nth-child(even) td{background:#FDFAF7}
+.docpage table.items td.room{font-weight:700}
+.docpage table.items tr.grp td{background:#F5EADF!important;font-weight:800;color:var(--maroon);font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;padding:5px 7px}
+.docpage tr{page-break-inside:avoid;break-inside:avoid}
+.docpage .sum{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start;margin-bottom:14px}
+.docpage .words{font-size:12px;border-left:3px solid var(--saffron);padding:6px 10px;background:var(--tint)}
+.docpage .words b{display:block;font-size:10px;letter-spacing:1px;color:var(--maroon);text-transform:uppercase}
+.docpage .tot{border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.docpage .tot div{display:flex;justify-content:space-between;padding:5px 12px;border-bottom:1px solid var(--rule)}
+.docpage .tot div:last-child{border-bottom:0}
+.docpage .tot .grand{background:var(--maroon);color:#fff;font-weight:800;font-size:15px;padding:8px 12px}
+.docpage .tot .bal{font-weight:800;color:var(--maroon)}
+.docpage h3.sec{font:800 12px 'Figtree',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--maroon);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--rule)}
+.docpage ol.terms,.docpage ul.terms{margin:0 0 6px 18px;padding:0}
+.docpage ol.terms li,.docpage ul.terms li{margin-bottom:3px}
+.docpage .bank{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12px}
+.docpage .bank dt{color:var(--muted)}.docpage .bank dd{margin:0;font-weight:700}
+.docpage .para{margin:0 0 8px;text-align:justify}
+.docpage table.sched{width:100%;border-collapse:collapse;margin:4px 0 8px}
+.docpage table.sched td,.docpage table.sched th{border:1px solid var(--rule);padding:5px 8px;text-align:left}
+.docpage table.sched th{background:var(--tint);font-size:11px}
+.docpage .signs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:26px;page-break-inside:avoid;break-inside:avoid}
+.docpage .signs.three{grid-template-columns:1fr 1fr 1fr;gap:24px}
+.docpage .sign{padding-top:46px;border-bottom:0}
+.docpage .sign .line{border-top:1.5px solid var(--ink);padding-top:5px;font-weight:700}
+.docpage .sign small{display:block;color:var(--muted);font-weight:400}
+.docpage .grow{flex:1}
+.docpage .foot{margin-top:18px;border-top:3px solid var(--maroon);padding-top:8px;display:flex;justify-content:space-between;gap:12px;font-size:10.5px;color:var(--muted);page-break-inside:avoid;break-inside:avoid}
+.docpage .foot b{color:var(--maroon)}
+.docpage .foot .thanks{font-weight:700;color:var(--ink);font-size:11.5px}
+.docpage .stamp{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%) rotate(-24deg);font:800 90px 'Bricolage Grotesque',Arial;color:rgba(122,31,31,.06);pointer-events:none;letter-spacing:6px}
+@media print{
+  @page{size:A4;margin:10mm 0}
+  html,body{margin:0;background:#fff}
+  .docpage{min-height:auto}
+}

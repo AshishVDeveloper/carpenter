@@ -60,5 +60,17 @@
       "title": "Furniture to measure",
       "desc": "Sofas, beds, dining sets and storage made in our workshop."
     }
-  ]
+  ],
+  "letterhead": {
+    "title": "Ramkumar Vishwakarma",
+    "intro": "Sliding Aluminium Window, Teakwood Furniture, Sofa, Kapat",
+    "address": "Room No. 36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708",
+    "phones": [
+      "+91 8169838790",
+      "+91 9833583310"
+    ],
+    "email": "ashishvishwakarma7300@gmail.com",
+    "website": "ashishvdeveloper.github.io/carpenter",
+    "footer_note": "Thank you for your business!"
+  }
 }

@@ -31,7 +31,7 @@ const I = {
 /* ── data ── */
 function prep(raw) {
   const S = Object.assign({}, raw.S || {});
-  S.site_url = (S.site_url || 'https://mumbai-interior.in').replace(/\/$/, '');
+  S.site_url = (S.site_url || 'https://www.mumbai-interior.in').replace(/\/$/, '');
   S.services = (S.services || []).map((s, i) => Object.assign({}, s, { slug: s.slug || slugify(s.title) || 'service-' + i, est: s.est || [], points: s.points || [] }));
   const CATS = (raw.CATS || []).slice().sort((a, b) => (a.order || 99) - (b.order || 99));
   const seen = {};

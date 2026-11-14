@@ -4,4 +4,4 @@ Disallow: /admin.html
 Disallow: /quote-list/
 Disallow: /thanks/
 
-Sitemap: https://mumbai-interior.in/sitemap.xml
+Sitemap: https://www.mumbai-interior.in/sitemap.xml

@@ -273,6 +273,21 @@ T = {
 "Press Tab to move between links and buttons; the first link skips to the main content.": ["लिंक और बटन के बीच जाने के लिए Tab दबाएँ; पहला लिंक मुख्य सामग्री पर ले जाता है।", "लिंक आणि बटणांमध्ये जाण्यासाठी Tab दाबा; पहिली लिंक मुख्य मजकुराकडे नेते."],
 "No plug-ins or PDF reader are needed to use this website. Quotations and invoices we send you are PDF files and open in any PDF reader or browser.": ["इस वेबसाइट के लिए कोई प्लग-इन या PDF रीडर नहीं चाहिए। हमारे भेजे कोटेशन और इनवॉइस PDF फ़ाइलें हैं, जो किसी भी PDF रीडर या ब्राउज़र में खुलती हैं।", "ही वेबसाइट वापरण्यासाठी कोणतेही प्लग-इन किंवा PDF रीडर लागत नाही. आम्ही पाठवलेली कोटेशन आणि इनव्हॉइस PDF फाइल्स आहेत, ज्या कोणत्याही PDF रीडर किंवा ब्राउझरमध्ये उघडतात."],
 "Still need help?": ["अब भी मदद चाहिए?", "अजून मदत हवी आहे?"], "Call or WhatsApp +91 9004200401, or see the": ["कॉल या WhatsApp करें +91 9004200401, या देखें", "कॉल किंवा WhatsApp करा +91 9004200401, किंवा पाहा"], "site map": ["साइट मैप", "साइट मॅप"], "for every page.": ["सभी पेजों के लिए।", "सर्व पानांसाठी."],
+
+# ── guides ──
+"Guides": ["गाइड", "मार्गदर्शक"], "Guides and price advice": ["गाइड और कीमत सलाह", "मार्गदर्शक आणि किंमत सल्ला"], "All guides": ["सभी गाइड", "सर्व मार्गदर्शक"], "Read guide": ["गाइड पढ़ें", "मार्गदर्शक वाचा"],
+"Read next": ["आगे पढ़ें", "पुढे वाचा"], "More guides": ["और गाइड", "आणखी मार्गदर्शक"], "Helpful guides": ["उपयोगी गाइड", "उपयुक्त मार्गदर्शक"], "{0} service": ["{0} सेवा", "{0} सेवा"],
+"Free, honest guides to help you plan your budget.": ["बजट बनाने में मदद के लिए मुफ़्त, सच्ची गाइड।", "बजेट ठरवण्यासाठी मोफत, प्रामाणिक मार्गदर्शक."],
+"Plain-language guides on interior and furniture costs in Mumbai, Thane and Navi Mumbai — written by our team.": ["मुंबई, ठाणे और नवी मुंबई में इंटीरियर और फर्नीचर खर्च पर सरल गाइड — हमारी टीम द्वारा।", "मुंबई, ठाणे आणि नवी मुंबईतील इंटीरियर आणि फर्निचर खर्चावर सोपे मार्गदर्शक — आमच्या टीमकडून."],
+"This guide is in English.": ["यह गाइड अंग्रेज़ी में है।", "हे मार्गदर्शक इंग्रजीत आहे."],
+"Have a question we haven't covered?": ["कोई सवाल जो यहाँ नहीं है?", "इथे नसलेला एखादा प्रश्न आहे?"], "Ask us on WhatsApp — we reply with honest advice and an estimate.": ["WhatsApp पर पूछें — हम सच्ची सलाह और अनुमान देंगे।", "WhatsApp वर विचारा — आम्ही प्रामाणिक सल्ला आणि अंदाज देऊ."],
+"Interior & Furniture Cost Guides for Mumbai": ["मुंबई के लिए इंटीरियर और फर्नीचर खर्च गाइड", "मुंबईसाठी इंटीरियर आणि फर्निचर खर्च मार्गदर्शक"],
+"Modular kitchen cost in Mumbai: a 2026 price guide": ["मुंबई में मॉड्यूलर किचन का खर्च: 2026 कीमत गाइड", "मुंबईत मॉड्युलर किचनचा खर्च: 2026 किंमत मार्गदर्शक"],
+"Wardrobe cost per sq ft in Mumbai (sliding, hinged and loft)": ["मुंबई में वॉर्डरोब का प्रति वर्ग फुट खर्च (स्लाइडिंग, हिंज्ड और लॉफ्ट)", "मुंबईत वॉर्डरोबचा प्रति चौ. फूट खर्च (स्लायडिंग, हिंज्ड आणि लॉफ्ट)"],
+"Contract basis vs labour basis: which is better for your interior work?": ["कॉन्ट्रैक्ट बेसिस या लेबर बेसिस: आपके इंटीरियर के लिए क्या बेहतर है?", "कॉन्ट्रॅक्ट बेसिस की लेबर बेसिस: तुमच्या इंटीरियरसाठी काय चांगले?"],
+"2BHK interior cost in Mumbai and Thane: what to budget": ["मुंबई और ठाणे में 2BHK इंटीरियर खर्च: कितना बजट रखें", "मुंबई आणि ठाण्यात 2BHK इंटीरियर खर्च: किती बजेट ठेवावे"],
+"Plywood, MDF or solid wood: choosing material for your furniture": ["प्लाईवुड, MDF या ठोस लकड़ी: फर्नीचर के लिए मटीरियल कैसे चुनें", "प्लायवूड, MDF की भक्कम लाकूड: फर्निचरसाठी मटेरियल कसे निवडावे"],
+"False ceiling cost in Mumbai: gypsum vs POP": ["मुंबई में फॉल्स सीलिंग का खर्च: जिप्सम या POP", "मुंबईत फॉल्स सीलिंगचा खर्च: जिप्सम की POP"],
 # ── runtime (quote list, toasts) ──
 "Added to your quote list.": ["आपकी कोटेशन सूची में जोड़ा गया।", "तुमच्या कोटेशन यादीत जोडले."], "View list": ["सूची देखें", "यादी पाहा"], "Your quote list is empty.": ["आपकी कोटेशन सूची खाली है।", "तुमची कोटेशन यादी रिकामी आहे."], "and tap": ["और दबाएँ", "आणि दाबा"],
 "Remove": ["हटाएँ", "काढा"], "Quantity": ["संख्या", "संख्या"], "{0} each": ["{0} प्रति नग", "{0} प्रति नग"], "Estimated total": ["अनुमानित कुल", "अंदाजे एकूण"],

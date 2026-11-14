@@ -145,7 +145,7 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   badge();
   let raw;
   try { const [S, CATS, PRODUCTS] = await Promise.all(['settings.json', 'categories.json', 'products.json'].map(get));
-    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []) };
+    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []) };
     if (LANG !== 'en') VI.setLang(LANG, await get('i18n.json'));
   } catch (e) { return; }
   D = VI.prep(raw);

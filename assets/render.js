@@ -44,7 +44,7 @@ function prep(raw) {
   const areaNames = [];
   (S.locations || []).concat(WORK.map(w => w.area)).forEach(a => { a = String(a || '').trim(); if (a && !/&/.test(a) && !areaNames.some(x => slugify(x) === slugify(a))) areaNames.push(a); });
   const AREAS = areaNames.map(n => ({ name: n, short: n.split(',')[0].replace(/\s*\(.*\)/, '').trim(), slug: slugify(n) }));
-  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [] };
+  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [] };
 }
 const catName = (D, slug) => (D.CATS.find(c => c.slug === slug) || {}).name || slug;
 const waNum = S => String(S.whatsapp || S.phone || '').replace(/\D/g, '');
@@ -136,6 +136,7 @@ V.home = D => {
 
     (D.QUOTES.length ? '<section class="sec"><div class="wrap"><h2>What customers say</h2><div class="quotes">' + D.QUOTES.map(q => '<figure class="quote"><div class="stars" aria-label="' + (q.rating || 5) + ' out of 5">' + '★'.repeat(q.rating || 5) + '</div><p>' + esc(q.text) + '</p><figcaption><b>' + esc(q.name) + '</b><small>' + esc(q.place || '') + '</small></figcaption></figure>').join('') + '</div></div></section>' : '') +
 
+    (D.GUIDES.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>Guides and price advice</h2><p class="lede">Free, honest guides to help you plan your budget.</p></div><a class="link" href="/guides/">All guides</a></div><div class="svcs">' + D.GUIDES.slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
     ((S.faqs || []).length ? '<section class="sec"><div class="wrap split"><div><h2>Questions people ask</h2><p class="lede">Still unsure? Call <a class="link" href="' + tel(S) + '">' + esc(S.phone) + '</a> — we are happy to explain.</p></div>' + faqHTML(D) + '</div></section>' : '') +
     ctaBand(D, 'Planning an interior or furniture project?', 'Tell us what you need. We will visit, measure and give you a clear estimate on contract or labour basis.');
   return { title: S.name + ' — World-Class Custom Furniture Made in India | Interiors in Mumbai & Thane', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
@@ -160,6 +161,7 @@ V.service = (D, slug) => {
     (rel.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><h2>Related furniture</h2><a class="link" href="/furniture/">All furniture</a></div><div class="grid">' + rel.map(p => card(D, p)).join('') + '</div></div></section>' : '') +
     '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede" style="margin-bottom:1.4rem">Hire us for the complete job, or just for the labour.</p>' + modesHTML(D) + '</div></section>' +
     '<section class="sec alt"><div class="wrap"><h2>' + esc(s.title) + ' near you</h2><p class="lede" style="margin-bottom:1rem">Our teams work in these areas.</p>' + areasHTML(D) + '</div></section>' +
+    (D.GUIDES.some(g => g.service === slug) ? '<section class="sec"><div class="wrap"><h2>Helpful guides</h2><div class="svcs" style="margin-top:1.2rem">' + D.GUIDES.filter(g => g.service === slug).slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
     '<section class="sec"><div class="wrap"><h2>Other services</h2><div class="svcs" style="margin-top:1.2rem">' + others.slice(0, 3).map(svcTile).join('') + '</div></div></section>' +
     ctaBand(D, 'Get an estimate for ' + s.title.toLowerCase(), 'Share your sizes or photos — we will reply with a price range and a date for a site visit.');
   const ld = [crumbLD(D, [['Services', '/services/'], [s.title, '/services/' + s.slug + '/']]), { '@context': 'https://schema.org', '@type': 'Service', name: s.title, serviceType: s.title, description: s.intro || s.desc, provider: { '@type': 'HomeAndConstructionBusiness', name: S.name, telephone: '+91' + S.phone }, areaServed: D.AREAS.map(a => a.name), image: S.site_url + src(s.image) }];
@@ -274,6 +276,36 @@ V.notfound = D => ({ title: 'Page not found | ' + D.S.name, desc: 'This page doe
   body: '<section class="sec"><div class="wrap narrow center"><h1>Page not found</h1><p class="lede">This page may have moved. Try our services or furniture, or call <a class="link" href="' + tel(D.S) + '">' + esc(D.S.phone) + '</a>.</p><div class="ctas center"><a class="btn btn-primary" href="/services/">Services</a><a class="btn btn-ghost" href="/furniture/">Furniture</a></div></div></section>' });
 
 
+
+/* ── guides (free articles for search) ── */
+function block(b) {
+  const [t, v] = b;
+  if (t === 'h2') return '<h2>' + esc(v) + '</h2>';
+  if (t === 'p') return '<p>' + esc(v) + '</p>';
+  if (t === 'ul') return '<ul>' + v.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  if (t === 'table') return '<div class="esttable"><table><thead><tr>' + v[0].map(h => '<th scope="col">' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + v.slice(1).map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  return '';
+}
+function guideCard(g) {
+  return '<a class="svc" href="/guides/' + g.slug + '/"><span class="svc-ph"><img src="' + esc(small(g.image)) + '" alt="" loading="lazy" width="600" height="450"/></span><span class="svc-body"><h3>' + esc(g.title) + '</h3><p>' + esc(g.desc) + '</p><span class="svc-go">Read guide ' + I.arrow + '</span></span></a>';
+}
+V.guides = D => {
+  const body = pageHead('Guides and price advice', 'Plain-language guides on interior and furniture costs in Mumbai, Thane and Navi Mumbai — written by our team.', crumbs([['Guides']])) +
+    '<section class="sec tight"><div class="wrap"><div class="svcs">' + D.GUIDES.map(guideCard).join('') + '</div></div></section>' + ctaBand(D, 'Have a question we haven\'t covered?', 'Ask us on WhatsApp — we reply with honest advice and an estimate.');
+  return { title: 'Interior & Furniture Cost Guides for Mumbai | ' + D.S.name, desc: 'Free guides on modular kitchen cost, wardrobe price per sq ft, 2BHK interior budget, false ceiling cost and choosing materials in Mumbai and Thane.', body, ld: [crumbLD(D, [['Guides', '/guides/']])] };
+};
+V.guide = (D, slug) => {
+  const S = D.S, g = D.GUIDES.find(x => x.slug === slug); if (!g) return null;
+  const svc = S.services.find(x => x.slug === g.service), more = D.GUIDES.filter(x => x.slug !== slug).slice(0, 3);
+  const body = photoHead(g.image, g.title, g.desc, crumbs([['Guides', '/guides/'], [g.title]])) +
+    '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal guide">' + (CUR.lang !== 'en' ? '<p class="note">This guide is in English.</p>' : '') + (g.body || []).map(block).join('') +
+    '<div class="ctas" style="margin-top:1.4rem"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I read your guide "' + g.title + '" and want an estimate.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div></article>' +
+    '<nav class="legal-nav" aria-label="More guides"><h2>More guides</h2>' + D.GUIDES.map(x => '<a href="/guides/' + x.slug + '/"' + (x.slug === slug ? ' aria-current="page"' : '') + '>' + esc(x.title) + '</a>').join('') + (svc ? '<a href="/services/' + svc.slug + '/">' + esc(svc.title) + ' service</a>' : '') + '</nav></div></section>' +
+    '<section class="sec alt"><div class="wrap"><h2>Read next</h2><div class="svcs" style="margin-top:1.2rem">' + more.map(guideCard).join('') + '</div></div></section>';
+  const ld = [crumbLD(D, [['Guides', '/guides/'], [g.title, '/guides/' + slug + '/']]), { '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.desc, image: S.site_url + src(g.image), datePublished: g.date, dateModified: g.date, author: { '@type': 'Organization', name: S.name, url: S.site_url + '/' }, publisher: { '@type': 'Organization', name: S.name, logo: { '@type': 'ImageObject', url: S.site_url + '/assets/logo.png' } }, mainEntityOfPage: S.site_url + '/guides/' + slug + '/' }];
+  return { title: g.title + ' | ' + S.name, desc: g.desc, body, ld, image: src(g.image) };
+};
+
 /* ── legal & citizen pages ── */
 const P = s => '<p>' + s + '</p>', UL = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
 function legalInfo(D) {
@@ -365,6 +397,7 @@ V.sitemap = D => {
     g('Services', D.S.services.map(s => ['/services/' + s.slug + '/', s.title])) +
     g('Furniture', D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).map(c => ['/furniture/' + c.slug + '/', c.name]).concat(D.PRODUCTS.map(p => [p.url, p.name]))) +
     g('Areas', D.AREAS.map(a => ['/areas/' + a.slug + '/', a.name])) +
+    (D.GUIDES.length ? g('Guides', [['/guides/', 'All guides']].concat(D.GUIDES.map(x => ['/guides/' + x.slug + '/', x.title]))) : '') +
     g('Policies & help', Object.keys(POLICIES).map(k => ['/' + POLICIES[k].path + '/', POLICIES[k].title])) + '</div>' + legalNav('sitemap') + '</div></section>';
   return { title: 'Site Map | ' + D.S.name, desc: 'All pages on the ' + D.S.name + ' website: services, furniture, areas, policies and help.', body, ld: [crumbLD(D, [['Site map', '/sitemap/']])] };
 };
@@ -407,6 +440,7 @@ function routes(D) {
   D.PRODUCTS.forEach(p => R.push([p.url, 'product', p.category, p.slug]));
   D.AREAS.forEach(a => R.push(['/areas/' + a.slug + '/', 'area', a.slug]));
   Object.keys(POLICIES).forEach(k => R.push(['/' + POLICIES[k].path + '/', 'legal_' + k]));
+  if (D.GUIDES.length) { R.push(['/guides/', 'guides']); D.GUIDES.forEach(g => R.push(['/guides/' + g.slug + '/', 'guide', g.slug])); }
   R.push(['/sitemap/', 'sitemap']);
   return R;
 }
@@ -448,7 +482,7 @@ function footer(D) {
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +
-    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/our-work/">Our work</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
+    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/our-work/">Our work</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
     '<div class="fcol"><h3>Reach us</h3><ul class="flist">' + (S.phone ? '<li><a href="' + tel(S) + '">' + I.phone + '<span>+91 ' + esc(S.phone) + '</span></a></li>' : '') +
     (waNum(S) ? '<li><a href="' + esc(waLink(S, 'Hi, I want a quote for interior / furniture work.')) + '" target="_blank" rel="noopener">' + I.wa + '<span>WhatsApp us</span></a></li>' : '') +
     (S.email ? '<li><a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>' + esc(S.email) + '</span></a></li>' : '') +

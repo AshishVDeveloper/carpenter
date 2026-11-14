@@ -4,7 +4,7 @@
     "order": 1,
     "name": "Emerald Velvet 3-Seater Sofa",
     "category": "sofas",
-    "price": 35000,
+    "price": 35999,
     "mrp": null,
     "material": "Teak wood frame, velvet upholstery",
     "size": "200 × 85 × 82 cm",
@@ -16,8 +16,9 @@
     "featured": true,
     "customizable": true,
     "in_stock": true,
-    "price_min": 35000,
-    "price_max": 55000
+    "price_min": 35999,
+    "price_max": 55999,
+    "visible": true
   },
   {
     "id": 2,

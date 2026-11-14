@@ -91,7 +91,7 @@ function nextNo(type){ V.counters = V.counters || {}; const n = (V.counters[type
 function letterheadData(){ const L = {...(DB.settings.letterhead || {})}; L.gstin = V.gstin || ''; return L; }
 function fileName(d){ return (DT[d.type].label + '-' + d.no + '-' + (d.client || '')).replace(/[^\w\-]+/g, '-').replace(/-+/g, '-').replace(/-$/, '') + '.pdf'; }
 async function makePDF(d, btn){
-  const host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px';
+  const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:0;top:0;width:794px;z-index:-1;pointer-events:none';
   host.innerHTML = D.render(d, letterheadData(), {bank: V.bank});
   document.body.appendChild(host);
   const label = btn && btn.innerHTML; if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Making PDF…'; }
@@ -99,7 +99,7 @@ async function makePDF(d, btn){
     await document.fonts.ready;
     await Promise.all([...host.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
     await html2pdf().set({margin: [28, 0, 26, 0], filename: fileName(d), image: {type: 'jpeg', quality: .96},
-      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff'}, jsPDF: {unit: 'px', format: [794, 1123], hotfixes: ['px_scaling']},
+      html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 794, x: 0, y: 0}, jsPDF: {unit: 'px', format: [794, 1123], hotfixes: ['px_scaling']},
       pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.signs', '.foot', '.sum', '.meta', 'h3.sec']}}).from(host.firstElementChild).save();
     toast('PDF downloaded.');
   } catch (e) { toast('Couldn\'t make the PDF. Try Print → Save as PDF instead.', true); }
@@ -167,7 +167,7 @@ window.pgDoc = function(arg, preset){
     '<div class="docbar"><a class="btn" href="#documents">Back</a><button class="btn pri" onclick="docSave(this)">Save</button><button class="btn" onclick="docPDFcur(this)">Download PDF</button><button class="btn" onclick="docPrint()">Print</button>' +
       (E.type === 'quotation' ? '<select class="btn" aria-label="Convert" onchange="docConvert(this.value);this.value=\'\'"><option value="">Make from this…</option><option value="agreement">Agreement</option><option value="bill">Bill</option><option value="invoice">Invoice</option></select>' : '') +
       (!E.isNew ? '<button class="btn" onclick="docDup()">Duplicate</button>' : '') + '</div>' +
-    '</div><div class="docprev"><div class="prevhead"><b>Preview</b><span class="hint" style="margin:0">A4 · updates as you type</span></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
+    '</div><div class="docprev' + (innerWidth <= 1150 ? ' shut' : '') + '" id="docprev"><div class="prevhead"><b>Preview</b><span class="hint" style="margin:0">A4 · updates as you type</span><button type="button" class="btn sm prevtoggle" aria-expanded="' + (innerWidth > 1150) + '" aria-controls="prevbox" onclick="togglePrev(this)">' + (innerWidth <= 1150 ? 'Show preview' : 'Hide preview') + '</button></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
   document.querySelectorAll('[data-e]').forEach(el => el.oninput = el.onchange = () => { E[el.dataset.e] = el.value; dirtyDoc(); });
   document.getElementById('e_terms').oninput = e => { E.terms = e.target.value.split('\n'); dirtyDoc(); };
   document.getElementById('e_group').onchange = e => { E.group_rooms = e.target.checked; dirtyDoc(); };
@@ -186,6 +186,8 @@ function preview(){
   fitPreview();
 }
 function fitPreview(){ const box = document.getElementById('prevbox'), p = document.getElementById('prev'); if (!box || !p) return; const s = Math.min(1, box.clientWidth / 794); p.style.transform = 'scale(' + s + ')'; box.style.height = (p.firstElementChild ? p.firstElementChild.offsetHeight * s : 0) + 'px'; }
+
+window.togglePrev = b => { const p = document.getElementById('docprev'), open = p.classList.toggle('shut') === false; b.textContent = open ? 'Hide preview' : 'Show preview'; b.setAttribute('aria-expanded', open); if (open) fitPreview(); };
 
 /* items */
 function drawItems(){
@@ -275,7 +277,7 @@ window.pgLetterhead = function(){
     '<div class="card"><h2>Private details <span class="hint" id="syncState" style="font-weight:500"></span></h2><p class="hint" style="margin:-.5rem 0 1rem">Shown only on bills and invoices. Stored encrypted, never on the public website.</p>' +
       '<div class="field"><label for="v_gstin">Your GSTIN (optional)</label><input id="v_gstin" value="' + esc(V.gstin || '') + '"/></div><div class="g2">' + b('name', 'Account name') + b('bank', 'Bank') + b('account', 'Account number') + b('ifsc', 'IFSC') + b('upi', 'UPI ID') + '</div><div class="bar"><button class="btn pri" onclick="lhSavePriv(this)">Save private details</button></div></div>' +
     '<div class="card"><h2>Default terms for new documents</h2>' + Object.entries(DT).map(([k, t]) => '<div class="field"><label for="t_' + k + '">' + t.label + ' — one per line</label><textarea id="t_' + k + '" data-t="' + k + '" style="min-height:' + (k === 'agreement' ? 160 : 90) + 'px">' + esc(((V.terms || DEF_TERMS)[k] || []).join('\n')) + '</textarea></div>').join('') + '<div class="bar"><button class="btn pri" onclick="lhSavePriv(this)">Save default terms</button></div></div></div>' +
-    '<div class="docprev"><div class="prevhead"><b>Preview</b></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
+    '<div class="docprev' + (innerWidth <= 1150 ? ' shut' : '') + '" id="docprev"><div class="prevhead"><b>Preview</b><button type="button" class="btn sm prevtoggle" aria-expanded="' + (innerWidth > 1150) + '" aria-controls="prevbox" onclick="togglePrev(this)">' + (innerWidth <= 1150 ? 'Show preview' : 'Hide preview') + '</button></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
   const sample = () => { const s = V.docs.find(d => d.type === 'quotation') || sampleQuote(); document.getElementById('prev').innerHTML = D.render(s, letterheadData(), {bank: V.bank}); fitPreview(); };
   document.querySelectorAll('[data-l]').forEach(el => el.oninput = () => { const k = el.dataset.l; if (k === 'phone1' || k === 'phone2') { L.phones = L.phones || ['', '']; L.phones[k === 'phone1' ? 0 : 1] = el.value; } else L[k] = el.value; markDirty('settings'); sample(); });
   document.querySelectorAll('[data-b]').forEach(el => el.oninput = () => { B[el.dataset.b] = el.value; setSync('Unsaved changes'); });

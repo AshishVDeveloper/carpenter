@@ -1,6 +1,7 @@
 /* A4 document template: quotation, agreement, bill, invoice. Everything is scoped to .docpage. */
 .docpage{--maroon:#7A1F1F;--saffron:#D9822B;--ink:#1d1d1d;--muted:#5d5d5d;--rule:#e3d6cc;--tint:#FBF4EE;
-  width:794px;min-height:1066px;background:#fff;color:var(--ink);font:400 12.5px/1.45 'Figtree',Arial,sans-serif;padding:10px 40px 4px;box-sizing:border-box;display:flex;flex-direction:column;position:relative}
+  width:794px;min-height:1066px;background:#fff;color:var(--ink);font:400 12.5px/1.45 'Figtree',Arial,sans-serif;padding:10px 40px 4px;box-sizing:border-box;display:flex;flex-direction:column;position:relative;
+  background:#fff url(watermark.png) center top/794px 1069px repeat-y}
 .docpage *{box-sizing:border-box}
 .docpage .lh{display:grid;grid-template-columns:86px 1fr 86px;align-items:center;gap:14px}
 .docpage .lh img{width:86px;height:96px;object-fit:contain}

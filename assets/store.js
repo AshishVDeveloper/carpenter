@@ -65,7 +65,7 @@ function services(){
 }
 function work(){
   return '<section class="sec" style="padding-top:2rem"><div class="wrap"><h1 style="font-size:clamp(2rem,4vw,3rem)">Our work</h1><p class="lede" style="margin:1rem 0 2rem">Homes, offices, shops, showrooms and mall stores we have worked on.</p>' + (WORK.length ? workHTML(WORK) : '<div class="empty">Project photos are coming soon.</div>') +
-    '<div class="band" style="margin-top:3rem"><div><h2>Want this for your place?</h2><p class="lede">Tell us about your home, office or shop and we\'ll visit the site.</p></div><div class="ctas"><a class="btn btn-primary" href="#/custom">Get a quote</a><a class="btn btn-wa" href="' + esc(waLink('Hi, I saw your work and want an interior quote.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div></div></div></section>';
+    '</div></section>';
 }
 
 /* ── pages ── */
@@ -95,13 +95,12 @@ function home(){
       .map(s => '<div class="step"><h3>' + s[0] + '</h3><p>' + s[1] + '</p></div>').join('') + '</div></div></section>' +
 
     '<section class="sec" style="padding-top:0"><div class="wrap"><div class="feats">' +
-    [[I.tree,'Real wood','Sheesham, teak, plywood and laminates — we tell you exactly what goes in.'],[I.ruler,'Made to measure','Built to your exact space, corner or wall.'],[I.truck,'Delivery & fitting',S.delivery_note||'Delivered and fitted by our own team.'],[I.pin,'Mumbai to UP',(S.locations||[]).join(' · ')]].concat(S.warranty?[[I.shield,'Warranty',S.warranty]]:[]).slice(0,4)
+    [[I.tree,'Real wood','Sheesham, teak, plywood and laminates — we tell you exactly what goes in.'],[I.ruler,'Made to measure','Built to your exact space, corner or wall.'],[I.truck,'Delivery & fitting',S.delivery_note||'Delivered and fitted by our own team.'],[I.pin,'Mumbai to UP','Teams in Mumbai, Thane, Navi Mumbai and Uttar Pradesh.']].concat(S.warranty?[[I.shield,'Warranty',S.warranty]]:[]).slice(0,4)
       .map(f => '<div class="feat">' + f[0] + '<h3>' + f[1] + '</h3><p>' + esc(f[2]) + '</p></div>').join('') + '</div></div></section>' +
 
     (QUOTES.length ? '<section class="sec" style="padding-top:0"><div class="wrap"><h2>What customers say</h2><div class="quotes" style="margin-top:1.4rem">' +
-      QUOTES.map(q => '<figure class="quote"><div class="stars" aria-label="' + (q.rating||5) + ' out of 5">' + '★'.repeat(q.rating||5) + '</div><p>' + esc(q.text) + '</p><figcaption><b>' + esc(q.name) + '</b><small>' + esc(q.place||'') + '</small></figcaption></figure>').join('') + '</div></div></section>' : '') +
+      QUOTES.map(q => '<figure class="quote"><div class="stars" aria-label="' + (q.rating||5) + ' out of 5">' + '★'.repeat(q.rating||5) + '</div><p>' + esc(q.text) + '</p><figcaption><b>' + esc(q.name) + '</b><small>' + esc(q.place||'') + '</small></figcaption></figure>').join('') + '</div></div></section>' : '');
 
-    '<section class="sec" style="padding-top:0"><div class="wrap"><div class="band"><div><h2>Planning an interior or a piece of furniture?</h2><p class="lede">Send us photos of your space or a design you like — we\'ll quote on contract or labour basis.</p></div><div class="ctas"><a class="btn btn-primary" href="#/custom">Get a quote</a><a class="btn btn-wa" href="' + esc(waLink('Hi, I would like a quote for custom furniture.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div></div></div></section>';
 }
 
 function shop(slug){
@@ -261,11 +260,19 @@ $('menuBtn').onclick = () => { const o = $('nav').classList.toggle('open'); $('m
   WORK = (await get('projects.json').catch(() => [])).sort((a, b) => (a.order || 99) - (b.order || 99));
   CATS.sort((a, b) => (a.order || 99) - (b.order || 99)); PRODUCTS.sort((a, b) => (a.order || 99) - (b.order || 99));
   PRODUCTS = PRODUCTS.filter(p => p.visible !== false);
-  $('brandName').textContent = S.short || S.name; $('fName').textContent = S.name; $('fAbout').textContent = S.about || '';
+  $('brandName').textContent = S.short || S.name; $('fName').textContent = S.name; $('fTag').textContent = S.tagline || '';
   $('topNote').textContent = S.top_note || ''; $('topNote').hidden = !S.top_note;
+  $('fModes').innerHTML = (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('');
   $('fCats').innerHTML = CATS.filter(c => PRODUCTS.some(p => p.category === c.slug)).map(c => '<a href="#/shop/' + esc(c.slug) + '">' + esc(c.name) + '</a>').join('');
-  $('fContact').innerHTML = [...(S.locations && S.locations.length ? S.locations : [S.address]), S.phone && '<a href="tel:' + esc(S.phone) + '">' + esc(S.phone) + '</a>', S.email && '<a href="mailto:' + esc(S.email) + '">' + esc(S.email) + '</a>', S.hours].filter(Boolean).map(x => x.startsWith('<a') ? x : '<span style="display:block;padding:.15rem 0">' + esc(x) + '</span>').join('');
-  $('fCopy').textContent = '© ' + new Date().getFullYear() + ' ' + S.name;
+  const locs = (S.locations && S.locations.length ? S.locations : [S.address]).filter(Boolean);
+  $('fContact').innerHTML = (S.phone ? '<li><a href="tel:+91' + esc(String(S.phone).replace(/\D/g, '').slice(-10)) + '">' + I.phone + '<span>+91 ' + esc(S.phone) + '</span></a></li>' : '') +
+    (S.email ? '<li><a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>' + esc(S.email) + '</span></a></li>' : '') +
+    (S.hours ? '<li>' + I.clock + '<span>' + esc(S.hours) + '</span></li>' : '') +
+    locs.map(l => '<li><a href="https://maps.google.com/?q=' + encodeURIComponent(l) + '" target="_blank" rel="noopener">' + I.pin + '<span>' + esc(l) + '</span></a></li>').join('');
+  $('fWa').href = waLink('Hi, I want a quote for interior / furniture work.');
+  $('fCall').href = 'tel:+91' + String(S.phone || '').replace(/\D/g, '').slice(-10); $('fCall').hidden = !S.phone;
+  $('fCopy').textContent = '© ' + new Date().getFullYear() + ' ' + S.name + '. All rights reserved.';
+  $('fAreas').textContent = 'Serving ' + locs.map(l => l.split(',')[0].replace(/\s*\(.*\)/, '')).join(' · ');
   $('waFab').href = waLink('Hi, I have a question about your furniture.');
   badge(); route();
 })();

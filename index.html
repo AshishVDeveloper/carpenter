@@ -32,12 +32,21 @@
 <main id="app" tabindex="-1"></main>
 
 <footer class="site">
-  <div class="wrap">
-    <div><h3 id="fName">Vishwakarma Interior</h3><p id="fAbout" style="max-width:42ch"></p></div>
-    <div><h3>Explore</h3><a href="#/services">Services</a><a href="#/work">Our work</a><a href="#/about">About</a><a href="#/custom">Get a quote</a><h3 style="margin-top:1.2rem">Furniture</h3><div id="fCats"></div></div>
-    <div><h3>Locations & contact</h3><div id="fContact"></div></div>
-    <div class="copy" id="fCopy"></div>
+  <div class="wrap fcta">
+    <div><h2>Planning an interior or furniture project?</h2><p>Tell us what you need — we'll visit the site and quote on contract or labour basis.</p></div>
+    <div class="fcta-btns"><a class="btn fbtn-quote" href="#/custom">Get a quote</a><a class="btn fbtn-wa" id="fWa" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>WhatsApp</a><a class="btn fbtn-call" id="fCall" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Call</a></div>
   </div>
+  <div class="wrap fgrid">
+    <div class="fbrand">
+      <a class="fbrand-name" href="#/"><img src="assets/logo.svg" alt="" width="40" height="40"/><span id="fName">Vishwakarma Interior</span></a>
+      <p id="fTag"></p>
+      <ul class="fmodes" id="fModes"></ul>
+    </div>
+    <nav class="fcol" aria-label="Explore"><h3>Explore</h3><a href="#/services">Services</a><a href="#/work">Our work</a><a href="#/shop">Furniture</a><a href="#/about">About us</a><a href="#/custom">Get a quote</a><a href="#/contact">Contact</a></nav>
+    <nav class="fcol" aria-label="Furniture categories"><h3>Furniture</h3><div class="fcats" id="fCats"></div></nav>
+    <div class="fcol"><h3>Reach us</h3><ul class="flist" id="fContact"></ul></div>
+  </div>
+  <div class="wrap fbottom"><span id="fCopy"></span><span id="fAreas"></span></div>
 </footer>
 <a class="wafab" id="waFab" href="#" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg></a>
 <div id="toast" role="status" aria-live="polite"></div>

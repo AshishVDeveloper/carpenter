@@ -1,0 +1,27 @@
+{
+ "name": "Mumbai Interior",
+ "short_name": "Mumbai Interior",
+ "description": "World-class furniture made in India \u2014 custom furniture and interiors.",
+ "start_url": "/",
+ "display": "standalone",
+ "background_color": "#F2F3EE",
+ "theme_color": "#2F4A3A",
+ "icons": [
+  {
+   "src": "/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

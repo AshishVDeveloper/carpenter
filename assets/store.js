@@ -1,4 +1,4 @@
-/* Vishwakarma Interior — browser runtime. Pages arrive pre-rendered; this refreshes them from /data/*.json
+/* Mumbai Interior — browser runtime. Pages arrive pre-rendered; this refreshes them from /data/*.json
    (so admin changes show at once) and wires up the quote list, filters and forms. */
 (function () {
 'use strict';
@@ -35,7 +35,7 @@ const list = {
   set(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (e) {} badge(); },
   add(id) { const c = list.get(), l = c.find(x => x.id === id); if (l) l.q += 1; else c.push({ id, q: 1 }); list.set(c); }
 };
-function badge() { const n = list.get().reduce((a, l) => a + l.q, 0), b = $('cartCount'); if (b) { b.textContent = n; b.hidden = !n; } }
+function badge() { const n = list.get().reduce((a, l) => a + l.q, 0); document.querySelectorAll('[data-count]').forEach(b => { b.textContent = n; b.hidden = !n; }); }
 function save(rec) { try { const a = JSON.parse(localStorage.getItem(ORD_KEY) || '[]'); a.unshift(Object.assign({ id: Date.now(), date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }, rec)); localStorage.setItem(ORD_KEY, JSON.stringify(a.slice(0, 100))); } catch (e) {} }
 function emailCopy(subject, fields) {
   if (!D || !D.S.email) return;

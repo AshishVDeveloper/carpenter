@@ -1,4 +1,4 @@
-/* Vishwakarma Interior — page renderer shared by the static build (tools/build.mjs) and the browser (assets/store.js).
+/* Mumbai Interior — page renderer shared by the static build (tools/build.mjs) and the browser (assets/store.js).
    Every page is pre-rendered into its own folder for search engines, then refreshed in the browser from /data/*.json. */
 (function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.VI = factory(); })(this, function () {
 'use strict';
@@ -112,7 +112,7 @@ V.home = D => {
   const ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (S.faqs || []).map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }];
   const body =
     '<section class="hero"><picture><source media="(max-width:700px)" srcset="/images/site/hero-sm.webp"/><img src="/images/site/hero.webp" alt="Living and dining room interior with an L-shaped sofa, dining table and wall panelling" fetchpriority="high" width="1920" height="1080"/></picture>' +
-    '<div class="wrap"><div class="hero-in"><p class="hero-k">Interior contractor and carpenters in Mumbai, Thane and Navi Mumbai</p>' +
+    '<div class="wrap"><div class="hero-in"><p class="hero-k">World-class furniture, made in India · Custom furniture</p>' +
     '<h1>' + esc(S.hero_title) + '</h1><p class="lede">' + esc(S.hero_text) + '</p>' +
     '<div class="ctas"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-light" href="/services/">Our services</a></div>' +
     '<div class="tape" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => '<span style="left:' + (i * 10) + '%">' + (i * 10) + '</span>').join('') + '</div>' +
@@ -136,7 +136,7 @@ V.home = D => {
 
     ((S.faqs || []).length ? '<section class="sec"><div class="wrap split"><div><h2>Questions people ask</h2><p class="lede">Still unsure? Call <a class="link" href="' + tel(S) + '">' + esc(S.phone) + '</a> — we are happy to explain.</p></div>' + faqHTML(D) + '</div></section>' : '') +
     ctaBand(D, 'Planning an interior or furniture project?', 'Tell us what you need. We will visit, measure and give you a clear estimate on contract or labour basis.');
-  return { title: S.name + ' — Interior Contractor & Carpenters in Mumbai, Thane, Navi Mumbai', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
+  return { title: S.name + ' — World-Class Custom Furniture Made in India | Interiors in Mumbai & Thane', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
 };
 
 V.services = D => {
@@ -213,7 +213,7 @@ V.about = D => {
   const S = D.S;
   const body = pageHead('About ' + S.name, S.about, crumbs([['About us']])) +
     '<section class="sec tight"><div class="wrap split"><figure class="photo"><img src="/images/site/furniture-to-measure-sm.webp" alt="Carpenter cutting and drilling wood on a workbench" loading="lazy" width="600" height="450"/></figure>' +
-    '<div><h2>A family of carpenters</h2><p class="lede">' + esc(S.name) + ' grew out of hands-on carpentry — ' + esc((S.letterhead && S.letterhead.intro || 'teakwood furniture, sofas and wardrobes').toLowerCase()) + '. Today we take on complete interior contracts as well as labour-basis work, and we still make furniture in our own workshop.</p>' +
+    '<div><h2>A family of carpenters</h2><p class="lede">' + esc(S.name) + ' is run by the Vishwakarma family and grew out of hands-on carpentry — ' + esc((S.letterhead && S.letterhead.intro || 'teakwood furniture, sofas and wardrobes').toLowerCase()) + '. Today we take on complete interior contracts as well as labour-basis work, and we still make furniture in our own workshop.</p>' +
     '<ul class="ticks">' + ['Our own carpenters on every job', 'Clear contract or labour-basis pricing', 'Free site visit and measurement', 'Teams in Mumbai, Thane, Navi Mumbai and Uttar Pradesh'].map(t => '<li>' + I.check + t + '</li>').join('') + '</ul></div></div></section>' +
     ((S.team || []).length ? '<section class="sec alt"><div class="wrap"><h2>Our people</h2><p class="lede" style="margin-bottom:1.4rem">The family that runs ' + esc(S.name) + '.</p>' + teamHTML(D) + '</div></section>' : '') +
     '<section class="sec"><div class="wrap"><h2>How we work</h2><p class="lede" style="margin-bottom:1.6rem">From your first message to the finished space.</p>' + stepsHTML() + '</div></section>' +
@@ -391,10 +391,10 @@ function header(D, path) {
   const S = D.S;
   return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><span>' + esc(S.top_note || '') + ' <a href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a></span>' +
     '<span class="a11y" role="group" aria-label="Text size and contrast"><button type="button" data-fs="-1" aria-label="Decrease text size">A−</button><button type="button" data-fs="0" aria-label="Normal text size">A</button><button type="button" data-fs="1" aria-label="Increase text size">A+</button><button type="button" data-hc aria-pressed="false" aria-label="High contrast">' + I.contrast + '</button></span></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="38" height="38"/><span>' + esc(S.short || S.name) + '<small>Interiors · Furniture · Carpentry</small></span></a>' +
-    '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') + '<a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
-    '<a class="listbtn" href="/quote-list/" aria-label="Quote list">' + I.list + '<b id="cartCount" hidden>0</b></a>' +
-    '<button class="menubtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button></div></header>';
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.svg" alt="" width="38" height="38"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') + '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
+    '<a class="listbtn" href="/quote-list/" aria-label="Quote list">' + I.list + '<b id="cartCount" data-count hidden>0</b></a>' +
+    '<button class="menubtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span><b class="mdot" data-count hidden>0</b></button></div></header>';
 }
 function footer(D) {
   const S = D.S, locs = (S.locations || []).filter(Boolean);

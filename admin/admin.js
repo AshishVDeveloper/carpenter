@@ -51,10 +51,22 @@ async function uploadPhotos(files,nameHint){
 
 /* ── auth ── */
 async function loadAuth(){AUTH=await fetchJSON('auth.json')}
-async function checkPass(email,pass){if(!AUTH||email.trim().toLowerCase()!==String(AUTH.email).toLowerCase())return false;return await sha256(AUTH.salt+'|'+email.trim().toLowerCase()+'|'+pass)===AUTH.password_sha256}
-async function newAuth(pass){const salt=randHex();return{email:AUTH.email,salt,password_sha256:await sha256(salt+'|'+String(AUTH.email).toLowerCase()+'|'+pass)}}
-async function doLogin(e){e.preventDefault();$('lBtn').disabled=true;$('lErr').hidden=true;
-  try{if(!AUTH)await loadAuth();if(await checkPass($('lEmail').value,$('lPass').value)){const pw=$('lPass').value;try{await vaultOpen(pw)}catch(er){if(!er.locked)throw er;if(!window.confirm('Your saved documents were locked with an older password and can\'t be opened. Start a new, empty document store? (You can restore a backup file afterwards.)')){$('lBtn').disabled=false;return}await vaultFresh(pw)}sessionStorage.setItem(SESS,JSON.stringify({email:AUTH.email}));location.replace('/admin/'+location.hash);return}else{$('lErr').textContent='Email or password is incorrect.';$('lErr').hidden=false}}
+const PBKDF2_ITER=600000;
+async function pbkdf2Hex(pass,salt,iter){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveBits']);const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:iter,hash:'SHA-256'},k,256);return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function checkPass(email,pass){if(!AUTH||email.trim().toLowerCase()!==String(AUTH.email).toLowerCase())return false;const e=email.trim().toLowerCase();
+  if(AUTH.kdf==='pbkdf2')return await pbkdf2Hex(e+'|'+pass,AUTH.salt,AUTH.iter)===AUTH.hash;
+  return await sha256(AUTH.salt+'|'+e+'|'+pass)===AUTH.password_sha256}
+async function newAuth(pass){const salt=randHex(),e=String(AUTH.email).toLowerCase();return{email:AUTH.email,kdf:'pbkdf2',iter:PBKDF2_ITER,salt,hash:await pbkdf2Hex(e+'|'+pass,salt,PBKDF2_ITER)}}
+const LOCK='carpenter_login_lock';
+function lockState(){try{return JSON.parse(localStorage.getItem(LOCK)||'{}')}catch(e){return{}}}
+function lockWait(){const l=lockState();return Math.max(0,Math.ceil(((l.until||0)-Date.now())/1000))}
+function lockFail(){const l=lockState();l.n=(l.n||0)+1;if(l.n>=5)l.until=Date.now()+Math.min(900,30*2**(l.n-5))*1000;localStorage.setItem(LOCK,JSON.stringify(l))}
+async function doLogin(e){e.preventDefault();$('lErr').hidden=true;
+  const w=lockWait();if(w){$('lErr').textContent='Too many wrong tries. Wait '+(w>90?Math.ceil(w/60)+' minutes':w+' seconds')+' and try again.';$('lErr').hidden=false;return}
+  $('lBtn').disabled=true;
+  try{if(!AUTH)await loadAuth();if(await checkPass($('lEmail').value,$('lPass').value)){const pw=$('lPass').value;try{await vaultOpen(pw)}catch(er){if(!er.locked)throw er;if(!window.confirm('Your saved documents were locked with an older password and can\'t be opened. Start a new, empty document store? (You can restore a backup file afterwards.)')){$('lBtn').disabled=false;return}await vaultFresh(pw)}localStorage.removeItem(LOCK);
+    if(AUTH.kdf!=='pbkdf2'&&gh()&&gh().token){try{const up=await newAuth(pw);await ghPut({...ghDefaults(),...gh()},'auth.json',up,'Upgrade admin password protection')}catch(er){}}
+    sessionStorage.setItem(SESS,JSON.stringify({email:AUTH.email,t:Date.now()}));location.replace('/admin/'+location.hash);return}else{lockFail();const w2=lockWait();$('lErr').textContent=w2?'Too many wrong tries. Wait '+w2+' seconds and try again.':'Email or password is incorrect.';$('lErr').hidden=false}}
   catch(err){$('lErr').textContent='Couldn\'t load the login settings. Refresh and try again.';$('lErr').hidden=false}$('lBtn').disabled=false}
 function showReset(on){$('loginForm').hidden=on;$('resetForm').hidden=!on}
 async function doReset(e){e.preventDefault();$('rErr').hidden=$('rOk').hidden=true;if($('rNew').value!==$('rConf').value){$('rErr').textContent='The two passwords don\'t match.';$('rErr').hidden=false;return}
@@ -194,6 +206,9 @@ async function changePw(e){e.preventDefault();const err=m=>{$('aErr').textConten
   const prev=AUTH,np=$('a_new').value;AUTH=await newAuth(np);if(await publish('auth',$('aBtn'))){await vaultRekey(np);e.target.reset();toast(gh()?'Password changed. It works in about a minute.':'Downloaded auth.json — upload it to the data folder to activate the new password.')}else AUTH=prev}
 
 (async()=>{try{await loadAuth()}catch(e){}let ok=false;try{const s=sessionStorage.getItem(SESS);ok=!!(s&&AUTH&&JSON.parse(s).email===AUTH.email&&await vaultResume())}catch(e){}
-  const onLogin=!!$('loginForm');
+  const onLogin=!!$('loginForm');if(onLogin&&/[?&]timeout=1/.test(location.search)){$('lErr').textContent='You were signed out after 30 minutes without activity.';$('lErr').hidden=false}
   if(onLogin){if(ok){location.replace('/admin/'+location.hash);return}document.documentElement.classList.remove('checking');$('lEmail').focus()}
-  else{if(ok)openApp();else{sessionStorage.removeItem(SESS);location.replace('/admin/login/'+location.hash)}}})();
+  else{if(ok){openApp();idleWatch()}else{sessionStorage.removeItem(SESS);location.replace('/admin/login/'+location.hash)}}})();
+function idleWatch(){let last=Date.now();const bump=()=>last=Date.now();['pointerdown','keydown','scroll','touchstart'].forEach(ev=>addEventListener(ev,bump,{passive:true}));
+  setInterval(()=>{if(Date.now()-last<30*60*1000)return;if(DIRTY.size){toast('You have unpublished changes. Publish them — you will be signed out soon for safety.',true);last=Date.now()-25*60*1000;return}
+    sessionStorage.removeItem(SESS);vaultForget();location.replace('/admin/login/?timeout=1')},60000)}

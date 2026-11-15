@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="/"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Sign in — Mumbai Interior admin</title>
+<link rel="icon" href="/admin/icon-192.png" type="image/png"/>
+<link rel="manifest" href="/admin/manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="/admin/icon-192.png"/>
+<meta name="apple-mobile-web-app-title" content="MI Admin"/>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/doc/doc.css"/>
+<script>if(sessionStorage.getItem('carpenter_admin'))document.documentElement.classList.add('checking')</script>
+<link rel="stylesheet" href="/admin/admin.css"/>
+</head>
+<body>
+<div class="boot" aria-live="polite"><img src="/admin/icon-192.png" alt=""/><span>Checking sign-in…</span></div>
+<div id="login">
+  <div class="lbox">
+    <div id="loginForm">
+      <h1>Mumbai Interior admin</h1>
+      <p>Sign in to manage your projects, services, furniture and contact details.</p>
+      <div class="msg err" id="lErr" hidden></div>
+      <form onsubmit="doLogin(event)">
+        <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required/></div>
+        <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" required/></div>
+        <button class="btn pri" id="lBtn">Sign in</button>
+      </form>
+      <button class="linkbtn" onclick="showReset(true)">Forgot password?</button>
+    </div>
+    <div id="resetForm" hidden>
+      <h1>Reset password</h1>
+      <p>Prove you own the shop with a GitHub token that can edit the <b>carpenter</b> repository, then choose a new password.</p>
+      <div class="msg err" id="rErr" hidden></div><div class="msg ok" id="rOk" hidden></div>
+      <form onsubmit="doReset(event)">
+        <div class="field"><label for="rToken">GitHub token</label><input id="rToken" type="password" autocomplete="off" required/></div>
+        <div class="field"><label for="rNew">New password</label><input id="rNew" type="password" autocomplete="new-password" minlength="8" required/></div>
+        <div class="field"><label for="rConf">Repeat new password</label><input id="rConf" type="password" autocomplete="new-password" required/></div>
+        <button class="btn pri" id="rBtn">Reset password</button>
+      </form>
+      <button class="linkbtn" onclick="showReset(false)">Back to sign in</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="assets/doc/doc.js"></script>
+<script src="assets/doc/admin-docs.js"></script>
+<script src="/admin/admin.js"></script>
+</body>
+</html>

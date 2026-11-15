@@ -284,6 +284,7 @@ async function openApp(){
   catch(e){toast('Couldn\'t load the shop data. Refresh the page.',true);return}
   byOrder(DB.products);byOrder(DB.categories);byOrder(DB.projects);
   $('login').hidden=true;$('app').hidden=false;$('who').textContent=AUTH.email;route()}
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();const h=a.getAttribute('href');if(location.hash!==h)location.hash=h;else route()});
 window.addEventListener('hashchange',route);
 function route(){if($('app').hidden)return;const[p,arg]=(location.hash.slice(1)||'dashboard').split('/');PAGE=PAGES[p]?p:'dashboard';$('sb').classList.remove('open');
   $('pTitle').textContent=PAGES[PAGE].t;$('pSub').textContent=PAGES[PAGE].s;

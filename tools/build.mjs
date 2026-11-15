@@ -59,7 +59,7 @@ ${alts}
 @media (prefers-reduced-motion:reduce){#ldr .lt,#ldr img{animation:none}}</style>
 </head>
 <body>
-<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-96.png" alt="" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
+<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-96.png" alt="${esc(S.name)}" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
 <script>(function(){var l=document.getElementById('ldr'),t0=Date.now(),h=function(){setTimeout(function(){l.classList.add('done');setTimeout(function(){l.remove()},600)},Math.max(0,700-(Date.now()-t0)))};if(document.readyState==='complete')h();else{addEventListener('load',h);setTimeout(h,3500)}})()</script>
 <div id="hdr" data-sig="${VI.sig(hdr)}">${hdr}</div>
 <main id="app" tabindex="-1" data-sig="${VI.sig(p.body)}">
@@ -75,7 +75,7 @@ ${p.body}
 }
 
 // remove old generated folders (keep source folders)
-const KEEP = new Set(['assets', 'data', 'images', 'tools', '.github', '.git', 'node_modules']);
+const KEEP = new Set(['admin', 'assets', 'data', 'images', 'tools', '.github', '.git', 'node_modules']);
 for (const f of ['hi', 'mr', 'services', 'furniture', 'our-work', 'about', 'contact', 'get-quote', 'quote-list', 'thanks', 'areas', 'terms-of-use', 'privacy-policy', 'copyright-policy', 'hyperlinking-policy', 'disclaimer', 'refund-and-cancellation', 'accessibility-statement', 'grievance', 'help', 'sitemap', 'guides']) fs.rmSync(path.join(ROOT, f), { recursive: true, force: true });
 
 const routes = VI.routes(D);
@@ -102,6 +102,7 @@ ${index.flatMap(r => ['', '/hi', '/mr'].map(pre => `  <url><loc>${S.site_url}${p
 fs.writeFileSync(path.join(ROOT, 'robots.txt'), `User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /admin/
 Disallow: /quote-list/
 Disallow: /thanks/
 

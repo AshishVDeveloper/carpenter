@@ -107,7 +107,7 @@ async function makePDF(d, btn){
 }
 function printDoc(d){
   const w = window.open('', '_blank'); if (!w) { toast('Allow pop-ups to print.', true); return; }
-  const base = location.href.replace(/[^/]*$/, '');
+  const base = location.origin + '/';
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(fileName(d).replace('.pdf', '')) + '</title><base href="' + base + '"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@400;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/doc/doc.css"><style>body{margin:0}</style></head><body>' + D.render(d, letterheadData(), {bank: V.bank}) + '<script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>');
   w.document.close();
 }

@@ -101,7 +101,7 @@ function ctaBand(D, title, text) {
 const crumbs = list => '<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a>' + list.map(c => ' <span aria-hidden="true">/</span> ' + (c[1] ? '<a href="' + c[1] + '">' + esc(c[0]) + '</a>' : '<span aria-current="page">' + esc(c[0]) + '</span>')).join('') + '</nav>';
 const pageHead = (title, lede, cr) => '<section class="phead"><div class="wrap">' + (cr || '') + '<h1>' + esc(title) + '</h1>' + (lede ? '<p class="lede">' + esc(lede) + '</p>' : '') + '</div></section>';
 function photoHead(img, title, lede, cr, extra) {
-  return '<section class="phero"><img src="' + esc(src(img)) + '" alt="" fetchpriority="high" width="1200" height="900"/><div class="wrap">' + (cr || '') + '<h1>' + esc(title) + '</h1>' + (lede ? '<p class="lede">' + esc(lede) + '</p>' : '') + (extra || '') + '</div></section>';
+  return '<section class="phero"><img src="' + esc(src(img)) + '" alt="' + esc(title) + '" fetchpriority="high" width="1200" height="900"/><div class="wrap">' + (cr || '') + '<h1>' + esc(title) + '</h1>' + (lede ? '<p class="lede">' + esc(lede) + '</p>' : '') + (extra || '') + '</div></section>';
 }
 function crumbLD(D, list) {
   return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [['Home', '/']].concat(list).map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: D.S.site_url + (c[1] || '') })) };
@@ -139,7 +139,7 @@ V.home = D => {
     (D.GUIDES.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>Guides and price advice</h2><p class="lede">Free, honest guides to help you plan your budget.</p></div><a class="link" href="/guides/">All guides</a></div><div class="svcs">' + D.GUIDES.slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
     ((S.faqs || []).length ? '<section class="sec"><div class="wrap split"><div><h2>Questions people ask</h2><p class="lede">Still unsure? Call <a class="link" href="' + tel(S) + '">' + esc(S.phone) + '</a> — we are happy to explain.</p></div>' + faqHTML(D) + '</div></section>' : '') +
     ctaBand(D, 'Planning an interior or furniture project?', 'Tell us what you need. We will visit, measure and give you a clear estimate on contract or labour basis.');
-  return { title: S.name + ' — World-Class Custom Furniture Made in India | Interiors in Mumbai & Thane', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
+  return { title: S.name + ' — Custom Furniture & Interiors in Mumbai', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
 };
 
 V.services = D => {
@@ -192,7 +192,7 @@ V.product = (D, cat, slug) => {
   const imgs = p.images && p.images.length ? p.images : ['assets/logo.svg'];
   const rel = D.PRODUCTS.filter(x => x.category === p.category && x.id !== p.id).concat(D.PRODUCTS.filter(x => x.category !== p.category && x.featured)).slice(0, 4);
   const body = '<section class="sec tight"><div class="wrap">' + crumbs([['Furniture', '/furniture/'], [catName(D, p.category), '/furniture/' + p.category + '/'], [p.name]]) + '<div class="pd">' +
-    '<div class="gallery"><div class="main"><img id="mainImg" src="' + esc(src(imgs[0])) + '" alt="' + esc(p.name) + '" width="1200" height="900"/></div>' + (imgs.length > 1 ? '<div class="thumbs" id="thumbs">' + imgs.map((s, i) => '<button type="button" data-src="' + esc(src(s)) + '" aria-pressed="' + (i === 0) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(small(s)) + '" alt=""/></button>').join('') + '</div>' : '') + '<p class="hint">Photo is a design reference. We make it to your size and finish.</p></div>' +
+    '<div class="gallery"><div class="main"><img id="mainImg" src="' + esc(src(imgs[0])) + '" alt="' + esc(p.name) + '" width="1200" height="900"/></div>' + (imgs.length > 1 ? '<div class="thumbs" id="thumbs">' + imgs.map((s, i) => '<button type="button" data-src="' + esc(src(s)) + '" aria-pressed="' + (i === 0) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(small(s)) + '" alt="' + esc(p.name) + ' photo ' + (i + 1) + '"/></button>').join('') + '</div>' : '') + '<p class="hint">Photo is a design reference. We make it to your size and finish.</p></div>' +
     '<div class="pd-info"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h1>' + esc(p.name) + '</h1>' + priceHTML(p, true) +
     '<p class="pd-desc">' + esc(p.description) + '</p>' +
     '<dl class="specs">' + [['Material', p.material], ['Size', p.size], ['Finish', p.finish], ['Made to size', p.customizable ? 'Yes — any size, wood or finish' : 'Standard size only']].filter(r => r[1]).map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' +
@@ -287,7 +287,7 @@ function block(b) {
   return '';
 }
 function guideCard(g) {
-  return '<a class="svc" href="/guides/' + g.slug + '/"><span class="svc-ph"><img src="' + esc(small(g.image)) + '" alt="" loading="lazy" width="600" height="450"/></span><span class="svc-body"><h3>' + esc(g.title) + '</h3><p>' + esc(g.desc) + '</p><span class="svc-go">Read guide ' + I.arrow + '</span></span></a>';
+  return '<a class="svc" href="/guides/' + g.slug + '/"><span class="svc-ph"><img src="' + esc(small(g.image)) + '" alt="' + esc(g.title) + '" loading="lazy" width="600" height="450"/></span><span class="svc-body"><h3>' + esc(g.title) + '</h3><p>' + esc(g.desc) + '</p><span class="svc-go">Read guide ' + I.arrow + '</span></span></a>';
 }
 V.guides = D => {
   const body = pageHead('Guides and price advice', 'Plain-language guides on interior and furniture costs in Mumbai, Thane and Navi Mumbai — written by our team.', crumbs([['Guides']])) +
@@ -423,7 +423,7 @@ function trText(s) {
   for (const [re, out] of D.p) { const m = core.match(re); if (m) return lead + out.replace(/\{(\d)\}/g, (_, i) => trText(esc(m[+i + 1])).trim()) + trail; }
   return s;
 }
-const LOCAL_SKIP = /^\/(assets|images|data|admin\.html|favicon|icon-|apple-touch|site\.webmanifest|hi\/|mr\/|en\/)/;
+const LOCAL_SKIP = /^\/(assets|images|data|admin\.html|admin\/|favicon|icon-|apple-touch|site\.webmanifest|hi\/|mr\/|en\/)/;
 function localize(html) {
   if (CUR.lang === 'en') return html;
   html = html.replace(/<a([^>]*?)\shref="(\/[^"]*)"/g, (m, pre, href) => /data-nolocal/.test(m) || LOCAL_SKIP.test(href) ? m : '<a' + pre + ' href="/' + CUR.lang + href + '"');
@@ -431,6 +431,15 @@ function localize(html) {
 }
 const tr = s => CUR.lang === 'en' ? s : String(s).split(/( \| | — |: )/).map(x => /^( \| | — |: )$/.test(x) ? x : trText(esc(x)).replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"')).join('');
 function langOf(path) { const m = String(path || '').match(/^\/(hi|mr)(\/|$)/); return m ? m[1] : 'en'; }
+
+/* search-result friendly lengths: titles about 60 characters, descriptions about 155 */
+function fitTitle(t, brand) {
+  t = String(t || ''); if (t.length <= 60) return t;
+  const parts = t.split(' | '); if (parts.length > 1 && parts[parts.length - 1] === brand) t = parts.slice(0, -1).join(' | ');
+  if (t.length <= 60) return t;
+  t = t.split(' — ')[0]; return t.length <= 60 ? t : clip(t, 60);
+}
+function clip(s, n) { s = String(s || ''); if (s.length <= n) return s; const c = s.slice(0, n - 1); return c.slice(0, Math.max(c.lastIndexOf(' '), n - 20)).replace(/[\s,.;:—–-]+$/, '') + '…'; }
 
 /* ── routing ── */
 function routes(D) {
@@ -453,6 +462,7 @@ function resolve(D, path) {
 function render(D, view, args) {
   const p = (V[view] && V[view].apply(null, [D].concat(args || []))) || V.notfound(D);
   if (CUR.lang !== 'en') { p.body = localize(p.body); p.title = tr(p.title); p.desc = tr(p.desc); }
+  p.title = fitTitle(p.title, D.S.name); p.desc = clip(p.desc, 155);
   return p;
 }
 const headerL = (D, path) => localize(header(D, path)), footerL = D => localize(footer(D));
@@ -468,7 +478,7 @@ function header(D, path) {
   const theme = '<button type="button" class="themebtn" data-theme aria-pressed="false" aria-label="Dark mode">' + I.moon + I.sun + '</button>';
   return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><div class="wrap"><span class="tn-text">' + esc(S.top_note || '') + '</span>' +
     '<a class="tn-phone" href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a><span class="tools">' + langLinks(path) + fs + theme + '</span></div></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.png" alt="" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.png" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
     '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
     '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
@@ -478,7 +488,7 @@ function header(D, path) {
 function footer(D) {
   const S = D.S, locs = (S.locations || []).filter(Boolean);
   return '<footer class="site"><div class="wrap fgrid">' +
-    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo.png" alt="" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
+    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo.png" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +

@@ -69,7 +69,7 @@ ${alts}
 ${p.body}
 </main>
 <div id="ftr" data-sig="${VI.sig(ftr)}">${ftr}</div>
-<script>window.VI_LANG=${JSON.stringify(lang)}</script>
+<script>window.VI_LANG=${view === 'notfound' ? "(location.pathname.match(/^\\/(hi|mr)(?=\\/|$)/)||[])[1]||'en'" : JSON.stringify(lang)}</script>
 <script src="/assets/render.js?v=${V}"></script>
 <script src="/assets/store.js?v=${V}"></script>
 </body>
@@ -93,6 +93,60 @@ for (const r of routes) {
   }
 }
 fs.writeFileSync(path.join(ROOT, '404.html'), page('/404/', 'notfound', [], 'en'));
+
+// offline page (served by /sw.js when there is no internet) — standalone, works without other files
+fs.mkdirSync(path.join(ROOT, 'offline'), { recursive: true });
+fs.writeFileSync(path.join(ROOT, 'offline', 'index.html'), `<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#242421"/>
+<title>You're offline | ${esc(S.name)}</title>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<style>
+:root{--bg:#F2F3EE;--surface:#fff;--ink:#1F2A22;--muted:#56635A;--line:#D9DDD2;--forest:#2F4A3A;--tape:#E9C46A}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1511;--surface:#18211B;--ink:#E6ECE6;--muted:#A5B3A8;--line:#2A372E;--forest:#3B6A4E}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:400 1rem/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;padding:1.5rem}
+main{max-width:440px;text-align:center}img{width:72px;height:72px}
+.tape{height:14px;max-width:220px;margin:1.2rem auto;border-radius:3px;background:repeating-linear-gradient(90deg,#3a3016 0 1.5px,transparent 1.5px 9px) bottom/100% 6px no-repeat,var(--tape);opacity:.9}
+h1{font-size:1.7rem;line-height:1.2;margin:.2rem 0 .6rem}p{color:var(--muted);margin:0 0 1.4rem}
+.b{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+a,button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:.8rem 1.3rem;border-radius:12px;font:700 .97rem system-ui,sans-serif;text-decoration:none;cursor:pointer;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+button{background:var(--forest);border-color:var(--forest);color:#fff}
+</style>
+</head>
+<body>
+<main>
+<img src="/assets/logo-96.png" alt="${esc(S.name)}" width="72" height="72"/>
+<div class="tape" aria-hidden="true"></div>
+<h1 id="h">You're offline</h1>
+<p id="t">This page needs the internet. Check your mobile data or Wi-Fi, then try again. You can still call us — calls don't need internet.</p>
+<div class="b"><button type="button" id="r">Try again</button><a id="c" href="tel:+91${String(S.phone).replace(/\D/g, '').slice(-10)}">Call ${esc(S.phone)}</a></div>
+</main>
+<script>
+(function(){var L=(location.pathname.match(/^\\/(hi|mr)(?=\\/|$)/)||[])[1],T={
+hi:["आप ऑफ़लाइन हैं","इस पेज के लिए इंटरनेट चाहिए। मोबाइल डेटा या वाई-फ़ाई जाँचें और फिर कोशिश करें। आप हमें कॉल कर सकते हैं — कॉल के लिए इंटरनेट नहीं चाहिए।","फिर कोशिश करें","कॉल करें"],
+mr:["तुम्ही ऑफलाइन आहात","या पानासाठी इंटरनेट हवे. मोबाइल डेटा किंवा वाय-फाय तपासा आणि पुन्हा प्रयत्न करा. तुम्ही आम्हाला कॉल करू शकता — कॉलसाठी इंटरनेट लागत नाही.","पुन्हा प्रयत्न करा","कॉल करा"]}[L];
+if(T){document.documentElement.lang=L+'-IN';h.textContent=T[0];t.textContent=T[1];r.textContent=T[2];c.textContent=T[3]+' ${esc(S.phone)}';document.title=T[0]+' | ${esc(S.name)}'}
+r.onclick=function(){location.reload()};addEventListener('online',function(){location.reload()})})();
+</script>
+</body>
+</html>
+`);
+
+// service worker: only shows /offline/ when a page can't load; it caches nothing else, so updates are never stale
+fs.writeFileSync(path.join(ROOT, 'sw.js'), `const C = 'mi-offline-${V}', OFF = '/offline/';
+self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll([OFF, '/assets/logo-96.png', '/favicon.ico']))); self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== C).map(n => caches.delete(n)))).then(() => self.clients.claim())); });
+self.addEventListener('fetch', e => {
+  const r = e.request, u = new URL(r.url);
+  if (u.origin !== location.origin) return;
+  if (r.mode === 'navigate') { e.respondWith(fetch(r).catch(() => caches.match(OFF))); return; }
+  if (u.pathname === '/assets/logo-96.png' || u.pathname === '/favicon.ico') e.respondWith(fetch(r).catch(() => caches.match(u.pathname)));
+});
+`);
 
 const today = new Date().toISOString().slice(0, 10);
 const index = routes.filter(r => !['list', 'thanks'].includes(r[1]));

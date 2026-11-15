@@ -273,7 +273,14 @@ V.area = (D, slug) => {
 };
 
 V.notfound = D => ({ title: 'Page not found | ' + D.S.name, desc: 'This page does not exist.', noindex: true,
-  body: '<section class="sec"><div class="wrap narrow center"><h1>Page not found</h1><p class="lede">This page may have moved. Try our services or furniture, or call <a class="link" href="' + tel(D.S) + '">' + esc(D.S.phone) + '</a>.</p><div class="ctas center"><a class="btn btn-primary" href="/services/">Services</a><a class="btn btn-ghost" href="/furniture/">Furniture</a></div></div></section>' });
+  body: '<section class="sec nf"><div class="wrap narrow center">' +
+    '<div class="nf-mark" aria-hidden="true"><b>404</b><div class="nf-tape">' + Array.from({ length: 24 }, (_, i) => '<i' + (i % 4 ? '' : ' class="l"') + '></i>').join('') + '</div></div>' +
+    '<h1>Page not found</h1><p class="lede">We measured twice, but this page isn\'t here. It may have moved, or the link has a typo.</p>' +
+    '<p class="nf-path" id="nfPath" hidden></p><p class="nf-sug" id="nfSug" hidden></p>' +
+    '<form class="nf-search" id="nfForm" action="/furniture/" method="get" role="search"><label class="sr" for="nfq">Search furniture</label><input id="nfq" name="q" type="search" placeholder="Search furniture, e.g. wardrobe" autocomplete="off"/><button class="btn btn-primary">Search</button></form>' +
+    '<div class="ctas center"><a class="btn btn-ghost" href="/">Home</a><a class="btn btn-ghost" href="/services/">Services</a><a class="btn btn-ghost" href="/furniture/">Furniture</a><a class="btn btn-ghost" href="/get-quote/">Get a quote</a></div>' +
+    '<p class="nf-help">Need help? Call <a class="link" href="' + tel(D.S) + '">' + esc(D.S.phone) + '</a> or <a class="link" href="' + waLink(D.S, 'Hi, I was looking for a page on your website.') + '" target="_blank" rel="noopener">WhatsApp us</a>.</p>' +
+    '</div></section>' });
 
 
 

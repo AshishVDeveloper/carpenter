@@ -77,7 +77,7 @@ function logout(){if(DIRTY.size&&!window.confirm('You have unpublished changes. 
 /* ── boot & routing ── */
 async function openApp(){
   try{const ks=Object.keys(FILES),vs=await Promise.all(ks.map(k=>fetchJSON(FILES[k]).catch(()=>(k==='testimonials'||k==='projects')?[]:Promise.reject(k))));ks.forEach((k,i)=>{DB[k]=vs[i];ORIG[k]=JSON.stringify(vs[i])})}
-  catch(e){toast('Couldn\'t load the shop data. Refresh the page.',true);return}
+  catch(e){showLoadError();return}
   byOrder(DB.products);byOrder(DB.categories);byOrder(DB.projects);
   document.documentElement.classList.remove('booting');$('who').textContent=AUTH.email;route()}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();const h=a.getAttribute('href');if(location.hash!==h)location.hash=h;else route()});
@@ -207,8 +207,11 @@ async function changePw(e){e.preventDefault();const err=m=>{$('aErr').textConten
 
 (async()=>{try{await loadAuth()}catch(e){}let ok=false;try{const s=sessionStorage.getItem(SESS);ok=!!(s&&AUTH&&JSON.parse(s).email===AUTH.email&&await vaultResume())}catch(e){}
   const onLogin=!!$('loginForm');if(onLogin&&/[?&]timeout=1/.test(location.search)){$('lErr').textContent='You were signed out after 30 minutes without activity.';$('lErr').hidden=false}
-  if(onLogin){if(ok){location.replace('/admin/'+location.hash);return}document.documentElement.classList.remove('checking');$('lEmail').focus()}
+  if(onLogin){if(ok){location.replace('/admin/'+location.hash);return}document.documentElement.classList.remove('checking');if(!AUTH){$('lErr').textContent=navigator.onLine?'Couldn\'t reach the server. Refresh in a minute.':'You\'re offline. Connect to the internet to sign in.';$('lErr').hidden=false}$('lEmail').focus()}
   else{if(ok){openApp();idleWatch()}else{sessionStorage.removeItem(SESS);location.replace('/admin/login/'+location.hash)}}})();
+function showLoadError(){document.documentElement.classList.remove('booting');$('pTitle').textContent='Connection problem';$('nav').innerHTML='';
+  $('content').innerHTML='<div class="card" style="max-width:520px"><h2>Couldn\'t load your shop data</h2><p>'+(navigator.onLine?'GitHub didn\'t answer. Wait a minute and try again.':'You\'re offline. Check your mobile data or Wi-Fi.')+' Nothing was lost — your saved work is safe.</p><div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="location.reload()">Try again</button><a class="btn" href="/" target="_blank" rel="noopener">Open the website</a></div></div>'}
 function idleWatch(){let last=Date.now();const bump=()=>last=Date.now();['pointerdown','keydown','scroll','touchstart'].forEach(ev=>addEventListener(ev,bump,{passive:true}));
   setInterval(()=>{if(Date.now()-last<30*60*1000)return;if(DIRTY.size){toast('You have unpublished changes. Publish them — you will be signed out soon for safety.',true);last=Date.now()-25*60*1000;return}
     sessionStorage.removeItem(SESS);vaultForget();location.replace('/admin/login/?timeout=1')},60000)}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));

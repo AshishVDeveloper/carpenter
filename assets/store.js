@@ -70,6 +70,7 @@ function bindShop() {
     $('count').textContent = tt(Li.length + (Li.length === 1 ? ' design' : ' designs'));
     box.innerHTML = L(Li.length ? '<div class="grid">' + Li.map(p => VI.card(D, p)).join('') + '</div>' : '<div class="empty">Nothing matches. Try another word, or <a class="link" href="/get-quote/">ask us to make it</a>.</div>');
   };
+  const q0 = new URLSearchParams(location.search).get('q'); if (q0) { $('search').value = q0; draw(); }
   $('search').oninput = draw; $('sort').onchange = draw;
 }
 function bindProduct() {
@@ -137,6 +138,20 @@ function bindGrievance() {
     f.reset(); toast(tt('Sent. We will acknowledge it within 48 hours.'));
   };
 }
+function notFound() {
+  const raw = decodeURIComponent(location.pathname), pp = $('nfPath'), sg = $('nfSug'), f = $('nfForm');
+  if (f) f.action = home('/furniture/');
+  if (pp && raw !== '/404.html') { pp.innerHTML = tt('You opened') + ' <code>' + esc(raw) + '</code>'; pp.hidden = false; }
+  const words = raw.replace(/^\/(hi|mr)(?=\/)/, '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2 && !['html', 'www', 'index'].includes(w));
+  if (!sg || !words.length) return;
+  const lev = (x, y) => { const d = Array.from({ length: x.length + 1 }, (_, i) => [i].concat(Array(y.length).fill(0))); for (let j = 0; j <= y.length; j++) d[0][j] = j; for (let i = 1; i <= x.length; i++) for (let j = 1; j <= y.length; j++) { d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1)); if (i > 1 && j > 1 && x[i - 1] === y[j - 2] && x[i - 2] === y[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1); } return d[x.length][y.length]; };
+  const sim = (w, u) => { if (u.includes(w)) return 1; let b = 0; for (const s of u.split(/[^a-z0-9]+/)) if (s.length > 2) b = Math.max(b, 1 - lev(w, s) / Math.max(w.length, s.length)); return b >= .6 ? b : 0; };
+  let best = null, score = 0;
+  for (const rt of VI.routes(D)) { const u = rt[0].toLowerCase(), sc = words.reduce((t, w) => t + sim(w, u), 0) / words.length - rt[0].split('/').length * .001; if (sc > score) { score = sc; best = rt; } }
+  if (!best || score < .5) return;
+  const t = String((VI.render(D, best[1], best.slice(2)) || {}).title || best[0]).split(' | ')[0].split(' — ')[0];
+  sg.innerHTML = tt('Were you looking for') + ' <a class="link" href="' + home(best[0]) + '">' + esc(tt(t)) + '</a>?'; sg.hidden = false;
+}
 function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
@@ -154,6 +169,8 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   if (r.view !== 'list' && swap('app', p.body)) document.title = p.title;
   swap('hdr', VI.header(D, r.view === 'notfound' ? '' : r.path)); swap('ftr', VI.footer(D)); a11y(); theme();
   if (r.view === 'notfound' || location.pathname === '/404.html') document.title = p.title;
+  if (r.view === 'notfound') notFound();
   bind();
 })();
 })();
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));

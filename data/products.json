@@ -1,7 +1,27 @@
 [
   {
-    "id": 1,
+    "id": 2,
     "order": 1,
+    "name": "Grey L-Shape Sofa",
+    "category": "sofas",
+    "price": 55000,
+    "mrp": null,
+    "material": "Hardwood frame, high-density foam",
+    "size": "260 × 170 × 84 cm",
+    "finish": "Grey fabric, walnut legs",
+    "description": "Corner sofa with a left or right chaise. We make it to the exact length of your wall.",
+    "images": [
+      "images/products/sofa-l-shape.webp"
+    ],
+    "featured": true,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 55000,
+    "price_max": 95000
+  },
+  {
+    "id": 1,
+    "order": 2,
     "name": "Emerald Velvet 3-Seater Sofa",
     "category": "sofas",
     "price": 35999,
@@ -19,26 +39,6 @@
     "price_min": 35999,
     "price_max": 55999,
     "visible": true
-  },
-  {
-    "id": 2,
-    "order": 2,
-    "name": "Grey L-Shape Sofa",
-    "category": "sofas",
-    "price": 55000,
-    "mrp": null,
-    "material": "Hardwood frame, high-density foam",
-    "size": "260 × 170 × 84 cm",
-    "finish": "Grey fabric, walnut legs",
-    "description": "Corner sofa with a left or right chaise. We make it to the exact length of your wall.",
-    "images": [
-      "images/products/sofa-l-shape.webp"
-    ],
-    "featured": true,
-    "customizable": true,
-    "in_stock": true,
-    "price_min": 55000,
-    "price_max": 95000
   },
   {
     "id": 3,

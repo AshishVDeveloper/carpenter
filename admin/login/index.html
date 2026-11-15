@@ -3,7 +3,7 @@
 <head>
 <base href="/"/>
 <meta charset="UTF-8"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com https://*.workers.dev; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"/>
 <meta name="referrer" content="no-referrer"/>
 <script>if(location.protocol==='http:'&&/(^|\.)mumbai-interior\.in$/.test(location.hostname))location.replace('https://www.mumbai-interior.in'+location.pathname+location.search+location.hash);if(top!==self){document.documentElement.style.display='none';try{top.location=self.location.href}catch(e){}}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -54,6 +54,7 @@
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="assets/doc/doc.js"></script>
 <script src="assets/doc/admin-docs.js"></script>
+<script src="/admin/secure.js"></script>
 <script src="/admin/admin.js"></script>
 </body>
 </html>

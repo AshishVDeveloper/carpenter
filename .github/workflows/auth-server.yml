@@ -1,0 +1,86 @@
+# Publishes the admin sign-in server (worker/) to Cloudflare Workers.
+# Needs repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+name: Deploy sign-in server
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', '.github/workflows/auth-server.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: auth-server
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT_RAW: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check secrets
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::Secret CLOUDFLARE_API_TOKEN is missing"; exit 1; }
+          ACC=$(printf '%s' "$CF_ACCOUNT_RAW" | grep -oE '[0-9a-f]{32}' | head -1)
+          [ -n "$ACC" ] || { echo "::error::Secret CLOUDFLARE_ACCOUNT_ID is missing or not a 32-character account ID"; exit 1; }
+          echo "::add-mask::$ACC"
+          echo "CLOUDFLARE_ACCOUNT_ID=$ACC" >> "$GITHUB_ENV"
+          R=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)
+          echo "Token check: $(echo "$R" | jq -c '{success, status: .result.status, errors: [.errors[]?.message]}')"
+          [ "$(echo "$R" | jq -r .success)" = true ] || { echo "::error::Cloudflare rejected CLOUDFLARE_API_TOKEN"; exit 1; }
+
+      - name: workers.dev subdomain
+        run: |
+          API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID"
+          AUTH="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          SUB=$(curl -s -H "$AUTH" "$API/workers/subdomain" | jq -r '.result.subdomain // empty')
+          if [ -z "$SUB" ]; then
+            for c in mumbai-interior mumbai-interior-in mi-admin-$RANDOM; do
+              R=$(curl -s -X PUT -H "$AUTH" -H "Content-Type: application/json" "$API/workers/subdomain" -d "{\"subdomain\":\"$c\"}")
+              if [ "$(echo "$R" | jq -r .success)" = true ]; then SUB=$c; break; fi
+              echo "Subdomain $c not available: $(echo "$R" | jq -c '[.errors[]?.message]')"
+            done
+          fi
+          [ -n "$SUB" ] || { echo "::error::Could not set up a workers.dev subdomain"; exit 1; }
+          echo "workers.dev subdomain: $SUB"
+          echo "SUB=$SUB" >> "$GITHUB_ENV"
+
+      - name: Storage (KV)
+        run: |
+          API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces"
+          AUTH="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          KV=$(curl -s -H "$AUTH" "$API?per_page=100" | jq -r '.result[]? | select(.title=="mi-admin-auth") | .id' | head -1)
+          if [ -z "$KV" ]; then
+            R=$(curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" "$API" -d '{"title":"mi-admin-auth"}')
+            KV=$(echo "$R" | jq -r '.result.id // empty')
+            [ -n "$KV" ] || { echo "::error::Could not create KV storage: $(echo "$R" | jq -c '[.errors[]?.message]')"; exit 1; }
+          fi
+          sed "s/__KV_ID__/$KV/" worker/wrangler.template.toml > worker/wrangler.toml
+
+      - name: Deploy
+        working-directory: worker
+        run: npx -y wrangler@4 deploy
+
+      - name: Check it answers and save its address
+        run: |
+          URL="https://mi-admin.$SUB.workers.dev"
+          ok=""
+          for i in $(seq 1 24); do
+            if curl -sf "$URL/" | jq -e '.ok' >/dev/null; then ok=1; break; fi
+            sleep 5
+          done
+          [ -n "$ok" ] || { echo "::error::$URL is not answering yet"; exit 1; }
+          echo "Sign-in server is live at $URL"
+          printf '{\n  "url": "%s"\n}\n' "$URL" > data/api.json
+          if ! git diff --quiet -- data/api.json || ! git ls-files --error-unmatch data/api.json >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/api.json
+            git commit -m "Connect admin to sign-in server"
+            for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
+          fi

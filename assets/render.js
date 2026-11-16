@@ -6,6 +6,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const slugify = s => String(s || '').toLowerCase().replace(/&/g, ' ').replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 const src = s => !s ? '/assets/logo.svg' : /^(https?:|data:|\/)/.test(s) ? s : '/' + s;
+/* responsive photos: 400 px and 600 px versions; if a fresh upload has no small copy yet, fall back to the original */
+const RS = u => /^\/images\/(products|site)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
 const small = s => { const u = src(s); return /^\/images\/(products|site)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
 
 const I = {
@@ -57,13 +59,13 @@ function priceHTML(p, big) {
   return '<div class="est' + (big ? ' big' : '') + '"><small>Estimated price</small><b>' + range(p) + '</b></div>';
 }
 function card(D, p) {
-  return '<article class="card"><a class="ph" href="' + p.url + '"><img src="' + esc(small((p.images || [])[0])) + '" alt="' + esc(p.name) + '" loading="lazy" width="600" height="450"/>' +
+  return '<article class="card"><a class="ph" href="' + p.url + '"><img src="' + esc(small((p.images || [])[0])) + '"' + RS(small((p.images || [])[0])) + ' alt="' + esc(p.name) + '" loading="lazy" width="600" height="450"/>' +
     (p.customizable ? '<span class="badge">Made to your size</span>' : '') + '</a>' +
     '<div class="body"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h3><a href="' + p.url + '">' + esc(p.name) + '</a></h3>' + priceHTML(p) +
     '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote</button><a class="btn btn-ghost btn-sm" href="' + p.url + '">Details</a></div></div></article>';
 }
 function svcTile(s) {
-  return '<a class="svc" href="/services/' + s.slug + '/"><span class="svc-ph"><img src="' + esc(small(s.image || 'images/site/home-interiors.webp')) + '" alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></span>' +
+  return '<a class="svc" href="/services/' + s.slug + '/"><span class="svc-ph"><img src="' + esc(small(s.image || 'images/site/home-interiors.webp')) + '"' + RS(small(s.image || 'images/site/home-interiors.webp')) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></span>' +
     '<span class="svc-body"><h3>' + esc(s.title) + '</h3><p>' + esc(s.desc) + '</p>' + (s.est[0] ? '<span class="svc-est">' + esc(s.est[0].item) + ': <b>' + esc(s.est[0].range) + '</b></span>' : '') +
     '<span class="svc-go">View details ' + I.arrow + '</span></span></a>';
 }
@@ -85,7 +87,7 @@ function areasHTML(D, current) {
 }
 function teamHTML(D) {
   const T = D.S.team || []; if (!T.length) return '';
-  return '<div class="team">' + T.map(t => '<figure class="person' + (t.photo ? ' has-photo' : '') + '">' + (t.photo ? '<img class="pphoto" src="' + esc(src(t.photo)) + '" alt="' + esc(t.name) + ', ' + esc(t.role) + '" loading="lazy" width="600" height="600"/>' : '<span class="mono" aria-hidden="true">' + esc(String(t.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('')) + '</span>') + '<figcaption><b>' + esc(t.name) + '</b><span class="role">' + esc(t.role) + '</span>' + (t.bio ? '<p>' + esc(t.bio) + '</p>' : '') + '</figcaption></figure>').join('') + '</div>';
+  return '<div class="team">' + T.map(t => '<figure class="person' + (t.photo ? ' has-photo' : '') + '">' + (t.photo ? '<img class="pphoto" src="' + esc(src(t.photo)) + '"' + (/^\/images\/team\/[a-z0-9-]+\.webp$/.test(src(t.photo)) ? ' srcset="' + src(t.photo).replace(/\.webp$/, '-xs.webp') + ' 320w, ' + src(t.photo) + ' 600w" sizes="(max-width:700px) 80vw, 300px"' : '') + ' alt="' + esc(t.name) + ', ' + esc(t.role) + '" loading="lazy" width="600" height="600"/>' : '<span class="mono" aria-hidden="true">' + esc(String(t.name || '').split(/\s+/).map(w => w[0]).slice(0, 2).join('')) + '</span>') + '<figcaption><b>' + esc(t.name) + '</b><span class="role">' + esc(t.role) + '</span>' + (t.bio ? '<p>' + esc(t.bio) + '</p>' : '') + '</figcaption></figure>').join('') + '</div>';
 }
 function faqHTML(D) {
   const F = D.S.faqs || []; if (!F.length) return '';
@@ -146,7 +148,7 @@ V.services = D => {
   const S = D.S;
   const body = pageHead('Interior services and estimated costs', 'Homes, kitchens, offices, shops, showrooms and malls — and furniture made in our own workshop. Every service comes with an indicative cost so you can plan your budget.', crumbs([['Services']])) +
     '<section class="sec tight"><div class="wrap svc-list">' + S.services.map((s, i) =>
-      '<article class="svc-row' + (i % 2 ? ' flip' : '') + '"><a class="svc-row-ph" href="/services/' + s.slug + '/"><img src="' + esc(small(s.image)) + '" alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></a><div><h2><a href="/services/' + s.slug + '/">' + esc(s.title) + '</a></h2><p>' + esc(s.intro || s.desc) + '</p>' + estTable(s.est.slice(0, 3)) + '<a class="btn btn-primary btn-sm" href="/services/' + s.slug + '/">' + esc(s.title) + ' details</a></div></article>').join('') + '</div></section>' +
+      '<article class="svc-row' + (i % 2 ? ' flip' : '') + '"><a class="svc-row-ph" href="/services/' + s.slug + '/"><img src="' + esc(small(s.image)) + '"' + RS(small(s.image)) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></a><div><h2><a href="/services/' + s.slug + '/">' + esc(s.title) + '</a></h2><p>' + esc(s.intro || s.desc) + '</p>' + estTable(s.est.slice(0, 3)) + '<a class="btn btn-primary btn-sm" href="/services/' + s.slug + '/">' + esc(s.title) + ' details</a></div></article>').join('') + '</div></section>' +
     '<section class="sec alt"><div class="wrap"><h2>Two ways to work with us</h2><p class="lede" style="margin-bottom:1.4rem">Pick what suits your budget and how involved you want to be.</p>' + modesHTML(D) + '</div></section>' + ctaBand(D, 'Not sure what it will cost?', 'Send us your room sizes or a photo on WhatsApp and we will give you a quick estimate.');
   return { title: 'Interior Services & Cost Estimates in Mumbai, Thane | ' + S.name, desc: 'Home interiors, modular kitchens, office interiors, shop & showroom fit-outs, mall work and furniture to measure — with estimated costs per sq ft. Contract or labour basis.', body, ld: [crumbLD(D, [['Services', '/services/']])] };
 };
@@ -294,7 +296,7 @@ function block(b) {
   return '';
 }
 function guideCard(g) {
-  return '<a class="svc" href="/guides/' + g.slug + '/"><span class="svc-ph"><img src="' + esc(small(g.image)) + '" alt="' + esc(g.title) + '" loading="lazy" width="600" height="450"/></span><span class="svc-body"><h3>' + esc(g.title) + '</h3><p>' + esc(g.desc) + '</p><span class="svc-go">Read guide ' + I.arrow + '</span></span></a>';
+  return '<a class="svc" href="/guides/' + g.slug + '/"><span class="svc-ph"><img src="' + esc(small(g.image)) + '"' + RS(small(g.image)) + ' alt="' + esc(g.title) + '" loading="lazy" width="600" height="450"/></span><span class="svc-body"><h3>' + esc(g.title) + '</h3><p>' + esc(g.desc) + '</p><span class="svc-go">Read guide ' + I.arrow + '</span></span></a>';
 }
 V.guides = D => {
   const body = pageHead('Guides and price advice', 'Plain-language guides on interior and furniture costs in Mumbai, Thane and Navi Mumbai — written by our team.', crumbs([['Guides']])) +
@@ -337,7 +339,7 @@ const POLICIES = {
     '<h2>9. Changes</h2>' + P('We may update these terms. The date at the top shows the latest version.') },
   privacy: { path: 'privacy-policy', title: 'Privacy Policy', desc: 'How we collect, use and protect personal data', body: (D, x) =>
     P('This policy explains how ' + x.name + ' handles personal data collected through ' + x.site + '. It is written to follow the Information Technology Act, 2000 and its rules, and the Digital Personal Data Protection Act, 2023 and the DPDP Rules, 2025.') +
-    '<h2>1. What we collect</h2>' + UL(['<b>Details you type into our forms</b> — your name, phone number, site area or address, and details of the work you want (size, material, budget, notes).', '<b>Your quote list</b> — the furniture you add is stored only in your own browser on your device. We do not receive it unless you send it to us.', '<b>Messages you send us</b> on WhatsApp, by email or by phone.', '<b>Technical logs</b> — our hosting provider (GitHub Pages) and the font service (Google Fonts) may record your IP address, browser type and time of visit for security and operation. We do not use advertising or tracking cookies, and we do not run analytics that identify you.']) +
+    '<h2>1. What we collect</h2>' + UL(['<b>Details you type into our forms</b> — your name, phone number, site area or address, and details of the work you want (size, material, budget, notes).', '<b>Your quote list</b> — the furniture you add is stored only in your own browser on your device. We do not receive it unless you send it to us.', '<b>Messages you send us</b> on WhatsApp, by email or by phone.', '<b>Technical logs</b> — our hosting provider (GitHub Pages) and the font service (Google Fonts) may record your IP address, browser type and time of visit for security and operation. We do not use advertising or tracking cookies, and we do not run analytics that identify you.'].concat(D.S.ga_id ? ['<b>Visit statistics</b> — we use Google Analytics to count visits and see which pages are useful (pages viewed, device type, approximate city). It uses cookies, does not tell us who you are, and IP addresses are anonymised by Google. You can block it with your browser\'s privacy settings.'] : [])) +
     P('We do not collect passwords, bank or card details, Aadhaar, or any other sensitive personal data through this website. We do not take online payments on this website.') +
     '<h2>2. Why we use it</h2>' + UL(['To reply to your enquiry and give you an estimate.', 'To arrange a site visit and prepare a quotation, agreement, bill or invoice.', 'To carry out and support the work you hire us for.', 'To keep records that tax and other laws require.']) +
     P('By sending us a form or message you give consent for these uses. You can withdraw consent at any time by contacting the Grievance Officer below; this does not affect work already done or records the law requires us to keep.') +
@@ -485,7 +487,7 @@ function header(D, path) {
   const theme = '<button type="button" class="themebtn" data-theme aria-pressed="false" aria-label="Dark mode">' + I.moon + I.sun + '</button>';
   return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><div class="wrap"><span class="tn-text">' + esc(S.top_note || '') + '</span>' +
     '<a class="tn-phone" href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a><span class="tools">' + langLinks(path) + fs + theme + '</span></div></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo.png" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo-44.webp" srcset="/assets/logo-88.webp 2x" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
     '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
     '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
@@ -495,7 +497,7 @@ function header(D, path) {
 function footer(D) {
   const S = D.S, locs = (S.locations || []).filter(Boolean);
   return '<footer class="site"><div class="wrap fgrid">' +
-    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo.png" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
+    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo-44.webp" srcset="/assets/logo-88.webp 2x" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +

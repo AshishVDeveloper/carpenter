@@ -49,12 +49,14 @@ function markClean(k){if(k==='auth')return;DIRTY.delete(k);ORIG[k]=JSON.stringif
 window.addEventListener('beforeunload',e=>{if(DIRTY.size){e.preventDefault();e.returnValue=''}});
 
 /* photo upload: resize in the browser, then commit to images/products/ */
-function resize(file,max=1400){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82).split(',')[1]);URL.revokeObjectURL(img.src)};img.onerror=()=>rej(new Error('That file isn\'t an image the browser can read.'));img.src=URL.createObjectURL(file)})}
+function resize(file,max=1400){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);const w=c.toDataURL('image/webp',.8),ok=w.startsWith('data:image/webp');res({b64:(ok?w:c.toDataURL('image/jpeg',.82)).split(',')[1],ext:ok?'webp':'jpg'});URL.revokeObjectURL(img.src)};img.onerror=()=>rej(new Error('That file isn\'t an image the browser can read.'));img.src=URL.createObjectURL(file)})}
 async function uploadPhotos(files,nameHint){
   const cfg=gh(); if(!cfg||!cfg.token){toast('Connect GitHub in Publishing to upload photos, or paste an image link instead.',true);return[]}
   const out=[];
-  for(const f of files){const path='images/'+(PAGE==='projects'?'work':'products')+'/'+slugify(nameHint)+'-'+Date.now().toString(36)+'.jpg';
-    try{await ghPutRaw(cfg,path,await resize(f),'Add product photo '+path);out.push(path)}catch(e){toast(e.status?errText(e):e.message,true)}}
+  for(const f of files){try{const r=await resize(f),path='images/'+(PAGE==='projects'?'work':'products')+'/'+slugify(nameHint)+'-'+Date.now().toString(36)+'.'+r.ext;
+    await ghPutRaw(cfg,path,r.b64,'Add photo '+path);
+    if(r.ext==='webp'&&PAGE!=='projects')for(const[w,sx]of[[600,'-sm'],[400,'-xs']]){const v=await resize(f,w);if(v.ext==='webp')await ghPutRaw(cfg,path.replace(/\.webp$/,sx+'.webp'),v.b64,'Add photo '+sx)}
+    out.push(path)}catch(e){toast(e.status?errText(e):e.message,true)}}
   return out}
 
 /* ── auth ── */
@@ -179,7 +181,7 @@ function pgSettings(){const S=DB.settings,f=(k,l,t='text',h='')=>'<div class="fi
   '<div class="card"><h2>Ways to hire you <button type="button" class="btn sm" onclick="addRow(\'work_modes\')">Add</button></h2><div id="modeRows"></div></div>'+
   '<div class="card"><h2>Locations <button type="button" class="btn sm" onclick="addLoc()">Add location</button></h2><div id="locRows"></div><p class="hint">The first location is shown as the main office.</p></div>'+
   '<div class="card"><h2>Contact</h2><div class="g2">'+f('whatsapp','WhatsApp number with country code','tel','Orders go here. e.g. 919004200401')+f('phone','Phone','tel')+f('email','Email','email','Order copies are emailed here.')+f('hours','Opening hours')+'</div>'+f('map','Google Maps link for the main office','url')+'</div>'+
-  '<div class="card"><h2>Search engines</h2><div class="g2">'+f('google_verification','Google Search Console code','text','Paste only the content="…" value from the HTML tag method.')+f('bing_verification','Bing Webmaster code','text','Optional.')+'</div></div>'+
+  '<div class="card"><h2>Search engines</h2><div class="g2">'+f('google_verification','Google Search Console code','text','Paste only the content="…" value from the HTML tag method.')+f('bing_verification','Bing Webmaster code','text','Optional.')+f('ga_id','Google Analytics ID','text','Optional. Looks like G-XXXXXXXXXX (Google Analytics → Admin → Data streams). Counts visits; the Privacy Policy mentions it automatically.')+'</div></div>'+
   '<div class="card"><div class="check" style="margin:0"><input type="checkbox" id="s_sample"'+(S.sample_data?' checked':'')+'/><label for="s_sample">Sample data — show a reminder in the admin until real products are added</label></div></div>'+saveBar('settings'));
   $('content').querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{S[el.dataset.k]=el.value;markDirty('settings')});$('s_sample').onchange=e=>{S.sample_data=e.target.checked;markDirty('settings')};drawLists()}
 function drawLists(){const S=DB.settings;S.services=S.services||[];S.work_modes=S.work_modes||[];S.locations=S.locations||[];

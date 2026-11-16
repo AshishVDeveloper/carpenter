@@ -12,6 +12,39 @@ const S = D.S, esc = VI.esc;
 const I18N = fs.existsSync(path.join(ROOT, 'data/i18n.json')) ? read('i18n.json') : {};
 const V = Date.now().toString(36);
 
+/* every shop/site photo needs 600 px (-sm) and 400 px (-xs) copies, team photos a 320 px (-xs) copy; made here for new uploads */
+{
+  let sharp = null; try { sharp = (await import('sharp')).default; } catch (e) { }
+  const want = [];
+  for (const dir of ['images/products', 'images/site', 'images/team']) {
+    const abs = path.join(ROOT, dir); if (!fs.existsSync(abs)) continue;
+    for (const f of fs.readdirSync(abs)) {
+      if (!/\.webp$/.test(f) || /-xs\.webp$/.test(f)) continue;
+      const full = path.join(abs, f);
+      if (dir === 'images/team') { want.push([full, full.replace(/\.webp$/, '-xs.webp'), 320]); continue; }
+      if (/-sm\.webp$/.test(f)) { want.push([full, full.replace(/-sm\.webp$/, '-xs.webp'), 400]); continue; }
+      want.push([full, full.replace(/\.webp$/, '-sm.webp'), 600], [full, full.replace(/\.webp$/, '-xs.webp'), 400]);
+    }
+  }
+  let made = 0;
+  for (const [from, to, w] of want) {
+    if (fs.existsSync(to)) continue;
+    try { if (sharp) await sharp(from).resize({ width: w, withoutEnlargement: true }).webp({ quality: 78 }).toFile(to); else fs.copyFileSync(from, to); made++; }
+    catch (e) { try { fs.copyFileSync(from, to); made++; } catch (x) { } }
+  }
+  if (made) console.log('Made ' + made + ' smaller photo copies' + (sharp ? '' : ' (copied — install sharp to resize)'));
+}
+/* fonts: fewer files (one variable font per family), loaded without blocking the first paint */
+const FONTS = lang => 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400..700' + (lang === 'en' ? '' : '&family=Noto+Sans+Devanagari:wght@400..800') + '&display=swap';
+/* page CSS goes inside each page, so the browser can draw it without waiting for another file */
+const CSS = fs.readFileSync(path.join(ROOT, 'assets/store.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,])\s*/g, '$1').replace(/;}/g, '}').replace(/<\/style/gi, '').trim();
+/* optional Google Analytics (Business details → Google Analytics ID) */
+const GA_ID = /^G-[A-Z0-9]{4,14}$/.test(String(S.ga_id || '').trim()) ? S.ga_id.trim() : '';
+const GA = GA_ID ? `\n<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>\n<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true})</script>` : '';
+/* keep email addresses out of reach of simple spam scrapers: &#64; in HTML, @ inside scripts (browsers and Google read both normally) */
+const hideMail = html => html.replace(/(<script[^>]*>)([\s\S]*?)(<\/script>)/g, (m, a, b, c) => a + b.replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[a-z]{2,})/g, '$1\\u0040$2') + c)
+  .replace(/(^|>)([^<]*)/g, (m, a, t) => a + t.replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[a-z]{2,})/g, '$1&#64;$2'))
+  .replace(/(href="mailto:[^"@]+)@/g, '$1&#64;').replace(/(content="[^"@]*?[A-Za-z0-9._%+-])@([A-Za-z0-9.-]+\.[a-z]{2,})/g, '$1&#64;$2');
 function page(route, view, args, lang) {
   VI.setLang(lang, I18N);
   const pre = lang === 'en' ? '' : '/' + lang;
@@ -25,7 +58,7 @@ function page(route, view, args, lang) {
 <html lang="${lang === 'en' ? 'en-IN' : lang + '-IN'}"${['home', 'service', 'area', 'guide'].includes(view) ? ' class="ovl"' : ''}>
 <head>
 <meta charset="UTF-8"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://formsubmit.co https://*.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self' https://formsubmit.co; upgrade-insecure-requests"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'${S.ga_id ? ' https://www.googletagmanager.com' : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://formsubmit.co https://*.workers.dev${S.ga_id ? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com' : ''}; object-src 'none'; base-uri 'self'; form-action 'self' https://formsubmit.co; upgrade-insecure-requests"/>
 <meta name="referrer" content="strict-origin-when-cross-origin"/>
 <script>if(location.protocol==='http:'&&/(^|\\.)mumbai-interior\\.in$/.test(location.hostname))location.replace('https://www.mumbai-interior.in'+location.pathname+location.search+location.hash);if(top!==self){document.documentElement.style.display='none';try{top.location=self.location.href}catch(e){}}</script>
 <script>try{var t=localStorage.getItem("vi_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}</script>
@@ -51,8 +84,9 @@ ${alts}
 <link rel="manifest" href="/site.webmanifest"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700${lang === 'en' ? '' : '&family=Noto+Sans+Devanagari:wght@400;500;600;700;800'}&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/assets/store.css?v=${V}"/>
+<link rel="preload" as="style" href="${FONTS(lang)}" onload="this.onload=null;this.rel='stylesheet'"/>
+<noscript><link rel="stylesheet" href="${FONTS(lang)}"/></noscript>
+<style>${CSS}</style>${GA}
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 <style>#ldr{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#F2F3EE;transition:opacity .45s ease,visibility .45s}html.dark #ldr{background:#0F1511}#ldr.done{opacity:0;visibility:hidden}
 #ldr .lb{display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:min(320px,78vw)}#ldr img{width:76px;height:76px;border-radius:18px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);animation:ldrPop .6s cubic-bezier(.2,.8,.2,1) both}
@@ -62,7 +96,7 @@ ${alts}
 @media (prefers-reduced-motion:reduce){#ldr .lt,#ldr img{animation:none}}</style>
 </head>
 <body>
-<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-96.png" alt="${esc(S.name)}" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
+<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-76.webp" srcset="/assets/logo-152.webp 2x" alt="" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
 <script>(function(){var l=document.getElementById('ldr'),t0=Date.now(),h=function(){setTimeout(function(){l.classList.add('done');setTimeout(function(){l.remove()},600)},Math.max(0,700-(Date.now()-t0)))};if(document.readyState==='complete')h();else{addEventListener('load',h);setTimeout(h,3500)}})()</script>
 <div id="hdr" data-sig="${VI.sig(hdr)}">${hdr}</div>
 <main id="app" tabindex="-1" data-sig="${VI.sig(p.body)}">
@@ -70,8 +104,8 @@ ${p.body}
 </main>
 <div id="ftr" data-sig="${VI.sig(ftr)}">${ftr}</div>
 <script>window.VI_LANG=${view === 'notfound' ? "(location.pathname.match(/^\\/(hi|mr)(?=\\/|$)/)||[])[1]||'en'" : JSON.stringify(lang)}</script>
-<script src="/assets/render.js?v=${V}"></script>
-<script src="/assets/store.js?v=${V}"></script>
+<script src="/assets/render.js?v=${V}" defer></script>
+<script src="/assets/store.js?v=${V}" defer></script>
 </body>
 </html>
 `;
@@ -89,10 +123,10 @@ for (const r of routes) {
   for (const lang of ['en', 'hi', 'mr']) {
     const d = path.join(ROOT, lang === 'en' ? '' : lang, route);
     fs.mkdirSync(d, { recursive: true });
-    fs.writeFileSync(path.join(d, 'index.html'), page(route, view, args, lang));
+    fs.writeFileSync(path.join(d, 'index.html'), hideMail(page(route, view, args, lang)));
   }
 }
-fs.writeFileSync(path.join(ROOT, '404.html'), page('/404/', 'notfound', [], 'en'));
+fs.writeFileSync(path.join(ROOT, '404.html'), hideMail(page('/404/', 'notfound', [], 'en')));
 
 // offline page (served by /sw.js when there is no internet) — standalone, works without other files
 fs.mkdirSync(path.join(ROOT, 'offline'), { recursive: true });

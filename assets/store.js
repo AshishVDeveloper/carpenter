@@ -175,6 +175,8 @@ function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQu
 function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(html)) { el.innerHTML = html; el.dataset.sig = VI.sig(html); return true; } return false; }
 (async () => {
   badge();
+  /* fetch fresh data after the page has finished loading, so it never competes with the first view */
+  await new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }));
   let raw;
   try { const [S, CATS, PRODUCTS] = await Promise.all(['settings.json', 'categories.json', 'products.json'].map(get));
     raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []) };

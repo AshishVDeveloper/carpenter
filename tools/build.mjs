@@ -48,10 +48,32 @@ const JSFILE = 'site.min.js';
 const FONTS = lang => 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400..700' + (lang === 'en' ? '' : '&family=Noto+Sans+Devanagari:wght@400..800') + '&display=swap';
 /* page CSS goes inside each page, so the browser can draw it without waiting for another file */
 const FONTCSS = fs.readFileSync(path.join(ROOT, 'assets/fonts/fonts.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n/g, '');
+/* page CSS + fonts in one cacheable file, loaded without blocking (the loading screen covers the page until it is ready) */
+const CSSFILE = 'site.css';
 const CSS = fs.readFileSync(path.join(ROOT, 'assets/store.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,])\s*/g, '$1').replace(/;}/g, '}').replace(/<\/style/gi, '').trim();
+{
+  let css = FONTCSS + CSS;
+  try { const csso = (await import('csso')).default; css = csso.minify(css, { restructure: true }).css; } catch (e) { }
+  fs.writeFileSync(path.join(ROOT, 'assets', CSSFILE), css + '\n');
+}
 /* optional Google Analytics (Business details → Google Analytics ID) */
 const GA_ID = /^G-[A-Z0-9]{4,14}$/.test(String(S.ga_id || '').trim()) ? S.ga_id.trim() : '';
 const GA = GA_ID ? `\n<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_ID}"></script>\n<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${GA_ID}',{anonymize_ip:true})</script>` : '';
+/* images get a title (same as their alt text); repeated icons are stored once and reused with <use> */
+function tidy(html) {
+  html = html.replace(/<img\b(?![^>]*\stitle=)([^>]*?)\salt="([^"]+)"([^>]*)>/g, '<img$1 alt="$2" title="$2"$3>');
+  const body = html.indexOf('<body>'); if (body < 0) return html;
+  const svgs = html.slice(body).match(/<svg\b[^>]*>[\s\S]*?<\/svg>/g) || [], cnt = {};
+  svgs.forEach(x => cnt[x] = (cnt[x] || 0) + 1);
+  const syms = []; let n = 0;
+  for (const [x, c] of Object.entries(cnt)) {
+    if (c < 2) continue;
+    const m = x.match(/^<svg\b([^>]*)>([\s\S]*)<\/svg>$/), vb = (m[1].match(/viewBox="[^"]*"/) || ['viewBox="0 0 24 24"'])[0], id = 'i' + (++n);
+    syms.push('<symbol id="' + id + '" ' + vb + '>' + m[2] + '</symbol>');
+    html = html.slice(0, body) + html.slice(body).split(x).join('<svg' + m[1] + '><use href="#' + id + '"/></svg>');
+  }
+  return syms.length ? html.replace('<body>', '<body>\n<svg class="sr" width="0" height="0" aria-hidden="true" focusable="false">' + syms.join('') + '</svg>') : html;
+}
 /* keep email addresses out of reach of simple spam scrapers: &#64; in HTML, @ inside scripts (browsers and Google read both normally) */
 const hideMail = html => html.replace(/(<script[^>]*>)([\s\S]*?)(<\/script>)/g, (m, a, b, c) => a + b.replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[a-z]{2,})/g, '$1\\u0040$2') + c)
   .replace(/(^|>)([^<]*)/g, (m, a, t) => a + t.replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+\.[a-z]{2,})/g, '$1&#64;$2'))
@@ -94,17 +116,18 @@ ${alts}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/site.webmanifest"/>
 <link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
-<style>${FONTCSS}${CSS}</style>${GA}
+<link rel="preload" href="/assets/${CSSFILE}?v=${V}" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
+<noscript><link rel="stylesheet" href="/assets/${CSSFILE}?v=${V}"/></noscript>${GA}
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 <style>#ldr{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#F2F3EE;transition:opacity .45s ease,visibility .45s}html.dark #ldr{background:#0F1511}#ldr.done{opacity:0;visibility:hidden}
-#ldr .lb{display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:min(320px,78vw)}#ldr img{width:76px;height:76px;border-radius:18px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);animation:ldrPop .6s cubic-bezier(.2,.8,.2,1) both}
+#ldr .lb{display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:min(320px,78vw)}#ldr .logo-i{display:block;background:url(/assets/logo-88.webp) center/cover no-repeat;width:76px;height:76px;border-radius:18px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);animation:ldrPop .6s cubic-bezier(.2,.8,.2,1) both}
 #ldr .lt{position:relative;width:100%;height:30px;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(90deg,rgba(31,42,34,.85) 0 1.5px,transparent 1.5px 2%) bottom/100% 8px no-repeat,repeating-linear-gradient(90deg,rgba(31,42,34,.9) 0 2px,transparent 2px 10%) bottom/100% 15px no-repeat,#E9C46A;box-shadow:0 8px 20px -10px rgba(0,0,0,.45);animation:ldrTape 1.4s cubic-bezier(.6,0,.3,1) infinite}
 #ldr .lt span{position:absolute;top:2px;margin-left:3px;font:800 10px/1 system-ui,sans-serif;color:#3a3016}#ldr .lt span:nth-child(1){left:0%}#ldr .lt span:nth-child(2){left:10%}#ldr .lt span:nth-child(3){left:20%}#ldr .lt span:nth-child(4){left:30%}#ldr .lt span:nth-child(5){left:40%}#ldr .lt span:nth-child(6){left:50%}#ldr .lt span:nth-child(7){left:60%}#ldr .lt span:nth-child(8){left:70%}#ldr .lt span:nth-child(9){left:80%}#ldr .lt span:nth-child(10){left:90%}#ldr p{font:700 15px/1 'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:.01em;color:#1F2A22}html.dark #ldr p{color:#E6ECE6}
 @keyframes ldrTape{0%{clip-path:inset(0 100% 0 0)}55%{clip-path:inset(0 0 0 0)}80%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 100%)}}@keyframes ldrPop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){#ldr .lt,#ldr img{animation:none}}</style>
+@media (prefers-reduced-motion:reduce){#ldr .lt,#ldr .logo-i{display:block;background:url(/assets/logo-88.webp) center/cover no-repeat;animation:none}}</style>
 </head>
 <body>
-<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-88.webp" alt="${esc(S.name)} logo" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span>${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
+<div id="ldr" aria-hidden="true"><div class="lb"><span class="logo-i"></span><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span>${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
 <script>(function(){var l=document.getElementById('ldr'),t0=Date.now(),h=function(){setTimeout(function(){l.classList.add('done');setTimeout(function(){l.remove()},600)},Math.max(0,700-(Date.now()-t0)))};if(document.readyState==='complete')h();else{addEventListener('load',h);setTimeout(h,3500)}})()</script>
 <div id="hdr" data-sig="${VI.sig(hdr)}">${hdr}</div>
 <main id="app" tabindex="-1" data-sig="${VI.sig(p.body)}">
@@ -130,10 +153,10 @@ for (const r of routes) {
   for (const lang of ['en', 'hi', 'mr']) {
     const d = path.join(ROOT, lang === 'en' ? '' : lang, route);
     fs.mkdirSync(d, { recursive: true });
-    fs.writeFileSync(path.join(d, 'index.html'), hideMail(page(route, view, args, lang)));
+    fs.writeFileSync(path.join(d, 'index.html'), hideMail(tidy(page(route, view, args, lang))));
   }
 }
-fs.writeFileSync(path.join(ROOT, '404.html'), hideMail(page('/404/', 'notfound', [], 'en')));
+fs.writeFileSync(path.join(ROOT, '404.html'), hideMail(tidy(page('/404/', 'notfound', [], 'en'))));
 
 // offline page (served by /sw.js when there is no internet) — standalone, works without other files
 fs.mkdirSync(path.join(ROOT, 'offline'), { recursive: true });

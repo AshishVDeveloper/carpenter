@@ -513,7 +513,7 @@ function header(D, path) {
   const theme = '<button type="button" class="themebtn" data-theme aria-pressed="false" aria-label="Dark mode">' + I.moon + I.sun + '</button>';
   return '<a class="skip" href="#app">Skip to main content</a><div class="top-note"><div class="wrap"><span class="tn-text">' + esc(S.top_note || '') + '</span>' +
     '<a class="tn-phone" href="' + tel(S) + '">' + I.phone + '+91 ' + esc(S.phone) + '</a><span class="tools">' + langLinks(path) + fs + theme + '</span></div></div>' +
-    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><img src="/assets/logo-88.webp" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
+    '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><span class="logo-i" role="img" aria-label="' + esc(S.name) + ' logo"></span><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
     '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
     '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
@@ -523,7 +523,7 @@ function header(D, path) {
 function footer(D) {
   const S = D.S, locs = (S.locations || []).filter(Boolean);
   return '<footer class="site"><div class="wrap fgrid">' +
-    '<div class="fbrand"><a class="fbrand-name" href="/"><img src="/assets/logo-88.webp" alt="' + esc(S.name) + ' logo" width="44" height="44"/><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
+    '<div class="fbrand"><a class="fbrand-name" href="/"><span class="logo-i" role="img" aria-label="' + esc(S.name) + ' logo"></span><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +

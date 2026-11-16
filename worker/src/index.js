@@ -49,15 +49,32 @@ async function route(req, env, url) {
     const f = b.fields && typeof b.fields === 'object' ? b.fields : {};
     const keys = Object.keys(f).slice(0, 15);
     if (!keys.length || !String(b.subject || '').trim()) throw err(400, 'bad', 'Empty enquiry.');
-    const day = new Date().toISOString().slice(0, 10), ipk = 'enq:' + ip + ':' + day, dk = 'enq:day:' + day;
-    const [ipn, dn] = await Promise.all([KV.get(ipk), KV.get(dk)]);
+    const clip = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n);
+    const cust = clip(b.email, 120).trim().toLowerCase(), okCust = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[a-z]{2,}$/i.test(cust);
+    const day = new Date().toISOString().slice(0, 10), ipk = 'enq:' + ip + ':' + day, dk = 'enq:day:' + day, ck = 'enq:to:' + cust + ':' + day;
+    const [ipn, dn, cn] = await Promise.all([KV.get(ipk), KV.get(dk), okCust ? KV.get(ck) : null]);
     if ((+ipn || 0) >= 8) throw err(429, 'limit', 'Too many enquiries from this connection today. Please call or WhatsApp us.');
     if ((+dn || 0) >= 45) throw err(429, 'limit', 'Daily email limit reached. Please call or WhatsApp us.');
-    const clip = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n);
-    const text = keys.map(k => clip(k, 40) + ': ' + clip(f[k], 2000)).join('\n') + '\n\n--\nSent from ' + clip(b.page || 'www.mumbai-interior.in', 200) + '\nIP: ' + ip + ' · ' + new Date().toISOString();
-    await smtpSend(env, { to: env.ENQUIRY_TO || 'info@mumbai-interior.in', subject: clip(b.subject, 180), text });
-    await Promise.all([KV.put(ipk, String((+ipn || 0) + 1), { expirationTtl: 90000 }), KV.put(dk, String((+dn || 0) + 1), { expirationTtl: 90000 })]);
-    return json({ ok: true });
+    const rows = keys.map(k => [clip(k, 40), clip(f[k], 2000)]);
+    const page = clip(b.page || 'https://www.mumbai-interior.in/', 200), subj = clip(b.subject, 180);
+    const name = clip(f.Name || f.name || '', 80).trim(), phone = clip(f.Phone || f.phone || '', 30).trim();
+    // 1) to the business inbox — Reply goes straight to the customer when they gave an email
+    await smtpSend(env, { to: env.ENQUIRY_TO || 'info@mumbai-interior.in', replyTo: okCust ? cust : undefined, subject: subj,
+      text: rows.map(r => r[0] + ': ' + r[1]).join('\n') + '\n\n--\nSent from ' + page + '\nIP: ' + ip,
+      html: brandMail(env, { preheader: subj, title: subj, intro: 'A new request came in from the website.' + (okCust ? ' Press Reply to answer the customer directly.' : ''), rows, note: 'Sent from <a href="' + escH(page) + '" style="color:#2F4A3A">' + escH(page) + '</a> · ' + new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }) });
+    let sent = 1;
+    // 2) confirmation to the customer (only when they gave an email; at most 2 a day per address)
+    if (okCust && (+cn || 0) < 2 && (+dn || 0) + 1 < 45) {
+      try {
+        const hello = name ? 'Namaste ' + name + ',' : 'Namaste,';
+        await smtpSend(env, { to: cust, replyTo: env.ENQUIRY_TO || 'info@mumbai-interior.in', subject: 'We received your request — Mumbai Interior',
+          text: hello + '\n\nThank you for contacting Mumbai Interior. We have received your request and will call you' + (phone && phone !== '-' ? ' on ' + phone : '') + ' within 24 hours (open all days, 9 AM – 8 PM).\n\nYour request:\n' + rows.map(r => r[0] + ': ' + r[1]).join('\n') + '\n\nNeed us sooner? Call or WhatsApp +91 9004200401.\n\nMumbai Interior\nRM36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708\nwww.mumbai-interior.in',
+          html: brandMail(env, { preheader: 'Thank you — we will call you within 24 hours.', title: 'Thank you for your request', intro: escH(hello) + '<br/><br/>We have received your request and will call you' + (phone && phone !== '-' ? ' on <b>' + escH(phone) + '</b>' : '') + ' within <b>24 hours</b> (open all days, 9 AM – 8 PM). Here is what you sent us:', rows, cta: true, note: 'You are receiving this email because this address was entered on a form at www.mumbai-interior.in. If it was not you, please ignore it.' }) });
+        sent++; await KV.put(ck, String((+cn || 0) + 1), { expirationTtl: 90000 });
+      } catch (e) { /* the business still got the enquiry */ }
+    }
+    await Promise.all([KV.put(ipk, String((+ipn || 0) + 1), { expirationTtl: 90000 }), KV.put(dk, String((+dn || 0) + sent), { expirationTtl: 90000 })]);
+    return json({ ok: true, confirmation: sent > 1 });
   }
 
   // ── one-time setup: owner proves control of the GitHub repo, scans QR, confirms a code ──
@@ -155,46 +172,61 @@ async function route(req, env, url) {
     await ghOwner(env, b.github); a.gh = b.github; await KV.put('acct', JSON.stringify(a)); return json({ ok: true });
   }
 
-  // ── Zoho Mail (info@ mailbox) ──
-  if (p === '/mail/status' && m === 'GET') { const z = JSON.parse(await KV.get('zoho') || 'null'); return json({ connected: !!(z && z.refresh), email: z && z.email }); }
+  // ── Zoho Mail: several mailboxes (info@, asheesh@, …), each connected once with its own Zoho login ──
+  if (p === '/mail/status' && m === 'GET') { const Z = await zLoad(KV); return json({ connected: Z.boxes.length > 0, email: Z.boxes[0] && Z.boxes[0].email, boxes: Z.boxes.map(x => x.email) }); }
   if (p === '/mail/connect' && m === 'POST') {
     const b = await body(req);
     if (!b.clientId || !b.clientSecret || !b.code) throw err(400, 'bad', 'Fill in Client ID, Client Secret and Code.');
     const r = await fetch(zAcc(env) + '/oauth/v2/token?' + new URLSearchParams({ grant_type: 'authorization_code', client_id: b.clientId.trim(), client_secret: b.clientSecret.trim(), code: b.code.trim() }), { method: 'POST' });
     const j = await r.json().catch(() => ({}));
     if (!j.refresh_token) throw err(400, 'zoho', j.error === 'invalid_code' ? 'That code has expired or was already used. Generate a new code (it lasts 10 minutes) and try again.' : 'Zoho did not accept these details (' + (j.error || r.status) + '). Check the Client ID and Secret.');
-    const z = { cid: b.clientId.trim(), sec: b.clientSecret.trim(), refresh: j.refresh_token };
-    await KV.put('zoho_at', JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
-    await KV.put('zoho', JSON.stringify(z));
-    const acc = await zApi(env, KV, '/api/accounts');
-    const a = (acc.data || [])[0]; if (!a) throw err(400, 'zoho', 'Connected, but no mailbox was found for this Zoho login.');
-    z.acc = a.accountId; z.email = a.primaryEmailAddress || a.mailboxAddress; await KV.put('zoho', JSON.stringify(z));
-    return json({ connected: true, email: z.email });
+    const Z = await zLoad(KV), cid = 'c' + [...rand(5)].map(x => x.toString(16).padStart(2, '0')).join('');
+    Z.conns[cid] = { cid: b.clientId.trim(), sec: b.clientSecret.trim(), refresh: j.refresh_token };
+    await KV.put('zoho_at:' + cid, JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
+    await zSave(KV, Z);
+    const acc = await zApi(env, KV, cid, '/api/accounts').catch(e => { delete Z.conns[cid]; zSave(KV, Z); throw e; });
+    const found = (acc.data || []).map(a => ({ email: lc(a.primaryEmailAddress || a.mailboxAddress), acc: String(a.accountId), conn: cid })).filter(x => x.email && x.acc);
+    if (!found.length) { delete Z.conns[cid]; await zSave(KV, Z); throw err(400, 'zoho', 'Connected, but no mailbox was found for this Zoho login.'); }
+    Z.boxes = Z.boxes.filter(x => !found.some(f => f.email === x.email)).concat(found);
+    zTidy(Z); await zSave(KV, Z);
+    return json({ connected: true, email: found[0].email, added: found.map(x => x.email), boxes: Z.boxes.map(x => x.email) });
   }
-  if (p === '/mail/disconnect' && m === 'POST') { await KV.delete('zoho'); await KV.delete('zoho_at'); return json({ ok: true }); }
+  if (p === '/mail/disconnect' && m === 'POST') {
+    const b = await body(req), Z = await zLoad(KV);
+    Z.boxes = b.box ? Z.boxes.filter(x => x.email !== lc(b.box)) : [];
+    zTidy(Z); await zSave(KV, Z); return json({ ok: true, boxes: Z.boxes.map(x => x.email) });
+  }
+  if (p === '/mail/unread' && m === 'GET') {
+    const Z = await zLoad(KV);
+    const out = await Promise.all(Z.boxes.map(async x => { try { const r = await zApi(env, KV, x.conn, '/api/accounts/' + x.acc + '/folders'); const ib = (r.data || []).find(f => /inbox/i.test(f.folderType) || /^inbox$/i.test(f.folderName)); return { email: x.email, unread: ib ? +ib.unreadCount || 0 : 0 }; } catch (e) { return { email: x.email, unread: 0, error: e.message }; } }));
+    return json({ boxes: out });
+  }
   if (p.startsWith('/mail/')) {
-    const z = JSON.parse(await KV.get('zoho') || 'null'); if (!z || !z.acc) throw err(409, 'nomail', 'Mail is not connected yet.');
-    const A = '/api/accounts/' + z.acc;
-    if (p === '/mail/folders' && m === 'GET') { const r = await zApi(env, KV, A + '/folders'); return json({ email: z.email, folders: (r.data || []).map(f => ({ id: f.folderId, name: f.folderName, type: f.folderType, unread: +f.unreadCount || 0 })) }); }
+    const Z = await zLoad(KV); if (!Z.boxes.length) throw err(409, 'nomail', 'Mail is not connected yet.');
+    const want = lc(url.searchParams.get('box') || (m === 'POST' ? (await req.clone().json().catch(() => ({}))).box : '') || '');
+    const z = (want && Z.boxes.find(x => x.email === want)) || Z.boxes[0];
+    const A = '/api/accounts/' + z.acc, zApiB = (path, opt) => zApi(env, KV, z.conn, path, opt);
+    if (p === '/mail/folders' && m === 'GET') { const r = await zApiB(A + '/folders'); return json({ email: z.email, folders: (r.data || []).map(f => ({ id: f.folderId, name: f.folderName, type: f.folderType, unread: +f.unreadCount || 0 })) }); }
     if (p === '/mail/list' && m === 'GET') {
       const q = new URLSearchParams({ folderId: url.searchParams.get('folder') || '', start: String(Math.max(1, +url.searchParams.get('start') || 1)), limit: '30', sortorder: 'false' });
-      const r = await zApi(env, KV, A + '/messages/view?' + q);
+      const r = await zApiB(A + '/messages/view?' + q);
       return json({ messages: (r.data || []).map(x => ({ id: x.messageId, folder: x.folderId, from: x.sender || x.fromAddress, fromAddress: x.fromAddress, to: x.toAddress, subject: x.subject, summary: x.summary, time: +x.receivedTime || +x.sentDateInGMT, unread: String(x.status) === '0', attach: String(x.hasAttachment) === '1' })) });
     }
     if (p === '/mail/read' && m === 'GET') {
       const f = url.searchParams.get('folder'), id = url.searchParams.get('id');
       if (!/^\d+$/.test(f || '') || !/^\d+$/.test(id || '')) throw err(400, 'bad', 'Bad message.');
-      const [c, h] = await Promise.all([zApi(env, KV, A + '/folders/' + f + '/messages/' + id + '/content'), zApi(env, KV, A + '/folders/' + f + '/messages/' + id + '/details').catch(() => ({}))]);
-      zApi(env, KV, A + '/updatemessage', { method: 'PUT', body: JSON.stringify({ mode: 'markAsRead', messageId: [id] }) }).catch(() => {});
+      const [c, h] = await Promise.all([zApiB(A + '/folders/' + f + '/messages/' + id + '/content'), zApiB(A + '/folders/' + f + '/messages/' + id + '/details').catch(() => ({}))]);
+      zApiB(A + '/updatemessage', { method: 'PUT', body: JSON.stringify({ mode: 'markAsRead', messageId: [id] }) }).catch(() => {});
       const d = h.data || {};
       return json({ content: (c.data || {}).content || '', from: d.sender || d.fromAddress, fromAddress: d.fromAddress, to: d.toAddress, cc: d.ccAddress, subject: d.subject, time: +d.receivedTime || +d.sentDateInGMT });
     }
     if (p === '/mail/send' && m === 'POST') {
       const b = await body(req);
       if (!/\S+@\S+\.\S+/.test(b.to || '')) throw err(400, 'bad', 'Enter a valid "To" email address.');
-      const msg = { fromAddress: z.email, toAddress: b.to, ccAddress: b.cc || undefined, subject: String(b.subject || '(no subject)').slice(0, 250), content: String(b.content || ''), mailFormat: 'html' };
-      if (b.replyTo && /^\d+$/.test(b.replyTo)) await zApi(env, KV, A + '/messages/' + b.replyTo, { method: 'POST', body: JSON.stringify({ ...msg, action: 'reply' }) });
-      else await zApi(env, KV, A + '/messages', { method: 'POST', body: JSON.stringify(msg) });
+      const sub = String(b.subject || '(no subject)').slice(0, 250);
+      const msg = { fromAddress: z.email, toAddress: b.to, ccAddress: b.cc || undefined, subject: sub, content: brandMail(env, { preheader: sub, bodyHtml: String(b.content || '') }), mailFormat: 'html' };
+      if (b.replyTo && /^\d+$/.test(b.replyTo)) await zApiB(A + '/messages/' + b.replyTo, { method: 'POST', body: JSON.stringify({ ...msg, action: 'reply' }) });
+      else await zApiB(A + '/messages', { method: 'POST', body: JSON.stringify(msg) });
       return json({ ok: true });
     }
     throw err(404, 'notfound', 'Not found.');
@@ -216,7 +248,7 @@ async function route(req, env, url) {
 /* ── minimal SMTP client (implicit TLS, AUTH LOGIN) for sending from the business mailbox ── */
 const b64u = str => { const b = new TextEncoder().encode(str); let o = ''; for (const x of b) o += String.fromCharCode(x); return btoa(o); };
 const encHead = v => /^[\x20-\x7e]*$/.test(v) ? v : '=?UTF-8?B?' + b64u(v) + '?=';
-async function smtpSend(env, { to, subject, text, replyTo }) {
+async function smtpSend(env, { to, subject, text, html, replyTo }) {
   const user = env.SMTP_USER || 'noreply@mumbai-interior.in', host = env.SMTP_HOST || 'smtppro.zoho.in', port = +(env.SMTP_PORT || 465);
   const sock = connect({ hostname: host, port }, { secureTransport: env.SMTP_TLS === 'off' ? 'off' : 'on', allowHalfOpen: false });
   const w = sock.writable.getWriter(), r = sock.readable.getReader(), dec = new TextDecoder(), enc = new TextEncoder();
@@ -238,31 +270,75 @@ async function smtpSend(env, { to, subject, text, replyTo }) {
     await cmd('MAIL FROM:<' + user + '>', '250');
     for (const t of String(to).split(',').map(x => x.trim()).filter(Boolean)) await cmd('RCPT TO:<' + t + '>', '25');
     await cmd('DATA', '354');
-    const bodyB64 = b64u(text).replace(/.{1,76}/g, '$&\r\n');
-    const msg = ['From: ' + encHead('Mumbai Interior Website') + ' <' + user + '>', 'To: ' + to, 'Reply-To: ' + (replyTo || env.ENQUIRY_TO || 'info@mumbai-interior.in'), 'Subject: ' + encHead(subject),
-      'Date: ' + new Date().toUTCString().replace('GMT', '+0000'), 'Message-ID: <' + crypto.randomUUID() + '@mumbai-interior.in>', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', bodyB64].join('\r\n');
+    const wrap = t => b64u(t).replace(/.{1,76}/g, '$&\r\n');
+    const head = ['From: ' + encHead('Mumbai Interior') + ' <' + user + '>', 'To: ' + to, 'Reply-To: ' + (replyTo || env.ENQUIRY_TO || 'info@mumbai-interior.in'), 'Subject: ' + encHead(subject),
+      'Date: ' + new Date().toUTCString().replace('GMT', '+0000'), 'Message-ID: <' + crypto.randomUUID() + '@mumbai-interior.in>', 'MIME-Version: 1.0'];
+    let msg;
+    if (html) {
+      const bd = 'mi_' + crypto.randomUUID().replace(/-/g, '');
+      msg = head.concat(['Content-Type: multipart/alternative; boundary="' + bd + '"', '', '--' + bd, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(text || ''), '--' + bd, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(html), '--' + bd + '--']).join('\r\n');
+    } else msg = head.concat(['Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(text)]).join('\r\n');
     await cmd(msg + '\r\n.', '250');
     await cmd('QUIT', '221').catch(() => {});
   } finally { try { await w.close(); } catch (e) { } try { sock.close(); } catch (e) { } }
 }
 
+/* ── branded email (header + footer), email-client safe: tables and inline styles ── */
+const escH = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function brandMail(env, { preheader, title, intro, rows, bodyHtml, cta, note }) {
+  const site = 'https://www.mumbai-interior.in', ink = '#1F2A22', forest = '#2F4A3A', gold = '#E9C46A', muted = '#5B675D', line = '#E3E6DD';
+  const table = rows && rows.length ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:18px 0 6px;border:1px solid ' + line + ';border-radius:10px">' +
+    rows.map((r, i) => '<tr><td style="padding:10px 14px;' + (i ? 'border-top:1px solid ' + line + ';' : '') + 'width:34%;color:' + muted + ';font-size:13px;vertical-align:top">' + escH(r[0]) + '</td><td style="padding:10px 14px;' + (i ? 'border-top:1px solid ' + line + ';' : '') + 'color:' + ink + ';font-size:14px;white-space:pre-wrap;word-break:break-word">' + escH(r[1]) + '</td></tr>').join('') + '</table>' : '';
+  const btn = (href, label, bg, fg) => '<a href="' + href + '" style="display:inline-block;background:' + bg + ';color:' + fg + ';text-decoration:none;font-weight:700;font-size:14px;padding:11px 18px;border-radius:10px;margin:6px 8px 0 0">' + label + '</a>';
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>' + escH(title || 'Mumbai Interior') + '</title></head>' +
+    '<body style="margin:0;padding:0;background:#F2F3EE;font-family:Arial,Helvetica,sans-serif">' +
+    (preheader ? '<div style="display:none;max-height:0;overflow:hidden;opacity:0">' + escH(preheader) + '</div>' : '') +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2F3EE"><tr><td align="center" style="padding:20px 10px">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid ' + line + '">' +
+    // header
+    '<tr><td style="background:' + forest + ';padding:18px 22px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td style="padding-right:12px"><img src="' + site + '/assets/logo-96.png" width="44" height="44" alt="" style="display:block;border-radius:8px"></td>' +
+    '<td><a href="' + site + '" style="color:#ffffff;text-decoration:none;font-size:20px;font-weight:700;letter-spacing:.2px">Mumbai Interior</a>' +
+    '<div style="color:' + gold + ';font-size:12px;margin-top:2px">Custom furniture · Made in India</div></td></tr></table></td></tr>' +
+    '<tr><td style="height:4px;background:' + gold + ';font-size:0;line-height:0">&nbsp;</td></tr>' +
+    // body
+    '<tr><td style="padding:24px 22px 8px;color:' + ink + ';font-size:15px;line-height:1.6">' +
+    (title ? '<h1 style="margin:0 0 10px;font-size:20px;line-height:1.3;color:' + ink + '">' + escH(title) + '</h1>' : '') +
+    (intro ? '<p style="margin:0">' + intro + '</p>' : '') + (bodyHtml || '') + table +
+    (cta ? '<div style="margin:18px 0 4px">' + btn('tel:+919004200401', 'Call 9004200401', forest, '#ffffff') + btn('https://wa.me/919004200401', 'WhatsApp us', '#1F8F4E', '#ffffff') + btn(site, 'Visit website', gold, ink) + '</div>' : '') +
+    '</td></tr>' +
+    (note ? '<tr><td style="padding:6px 22px 18px;color:' + muted + ';font-size:12px;line-height:1.5">' + note + '</td></tr>' : '<tr><td style="padding:6px 22px 10px"></td></tr>') +
+    // footer
+    '<tr><td style="background:#F7F8F4;border-top:1px solid ' + line + ';padding:16px 22px;color:' + muted + ';font-size:12px;line-height:1.7">' +
+    '<b style="color:' + ink + '">Mumbai Interior</b> · Interiors &amp; custom furniture<br>RM36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708<br>' +
+    '<a href="tel:+919004200401" style="color:' + forest + ';text-decoration:none">+91 9004200401</a> · <a href="mailto:info@mumbai-interior.in" style="color:' + forest + ';text-decoration:none">info@mumbai-interior.in</a> · <a href="' + site + '" style="color:' + forest + ';text-decoration:none">www.mumbai-interior.in</a><br>Open all days, 9 AM – 8 PM' +
+    '</td></tr></table></td></tr></table></body></html>';
+}
+
 /* ── Zoho helpers ── */
 const zAcc = env => env.ZOHO_ACCOUNTS || 'https://accounts.zoho.in';
 const zMail = env => env.ZOHO_MAIL || 'https://mail.zoho.in';
-async function zToken(env, KV, force) {
-  const c = JSON.parse(await KV.get('zoho_at') || 'null');
+async function zLoad(KV) {
+  const Z = JSON.parse(await KV.get('zoho') || 'null') || {};
+  if (Z.refresh) return { conns: { c0: { cid: Z.cid, sec: Z.sec, refresh: Z.refresh } }, boxes: Z.acc ? [{ email: lc(Z.email), acc: String(Z.acc), conn: 'c0' }] : [] }; // older single-mailbox format
+  return { conns: Z.conns || {}, boxes: Z.boxes || [] };
+}
+const zSave = (KV, Z) => KV.put('zoho', JSON.stringify({ conns: Z.conns, boxes: Z.boxes }));
+function zTidy(Z) { for (const k of Object.keys(Z.conns)) if (!Z.boxes.some(x => x.conn === k)) delete Z.conns[k]; }
+async function zToken(env, KV, conn, force) {
+  const c = JSON.parse(await KV.get('zoho_at:' + conn) || 'null');
   if (!force && c && c.exp > Date.now()) return c.t;
-  const z = JSON.parse(await KV.get('zoho') || 'null'); if (!z) throw err(409, 'nomail', 'Mail is not connected yet.');
+  const z = (await zLoad(KV)).conns[conn]; if (!z) throw err(409, 'nomail', 'This mailbox is not connected any more.');
   const r = await fetch(zAcc(env) + '/oauth/v2/token?' + new URLSearchParams({ grant_type: 'refresh_token', client_id: z.cid, client_secret: z.sec, refresh_token: z.refresh }), { method: 'POST' });
   const j = await r.json().catch(() => ({}));
-  if (!j.access_token) throw err(502, 'zoho', 'Zoho refused the saved connection (' + (j.error || r.status) + '). Reconnect Mail.');
-  await KV.put('zoho_at', JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
+  if (!j.access_token) throw err(502, 'zoho', 'Zoho refused the saved connection (' + (j.error || r.status) + '). Reconnect this mailbox.');
+  await KV.put('zoho_at:' + conn, JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
   return j.access_token;
 }
-async function zApi(env, KV, path, opt = {}, retry) {
-  const t = await zToken(env, KV, retry);
+async function zApi(env, KV, conn, path, opt = {}, retry) {
+  const t = await zToken(env, KV, conn, retry);
   const r = await fetch(zMail(env) + path, { ...opt, headers: { Authorization: 'Zoho-oauthtoken ' + t, Accept: 'application/json', ...(opt.body ? { 'Content-Type': 'application/json' } : {}) } });
-  if (r.status === 401 && !retry) return zApi(env, KV, path, opt, true);
+  if (r.status === 401 && !retry) return zApi(env, KV, conn, path, opt, true);
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw err(r.status === 404 ? 404 : 502, 'zoho', (j.data && (j.data.moreInfo || j.data.errorCode)) || (j.status && j.status.description) || 'Zoho Mail error ' + r.status);
   return j;

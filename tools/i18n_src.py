@@ -222,7 +222,7 @@ T = {
 # ── contact / quote ──
 "Contact us": ["संपर्क करें", "संपर्क साधा"], "Call, WhatsApp or send a message. We usually reply within an hour during working hours.": ["कॉल करें, WhatsApp करें या संदेश भेजें। काम के समय में हम आमतौर पर एक घंटे में जवाब देते हैं।", "कॉल करा, WhatsApp करा किंवा मेसेज पाठवा. कामाच्या वेळेत आम्ही साधारण एका तासात उत्तर देतो."],
 "Call": ["कॉल", "कॉल"], "Chat with us": ["हमसे बात करें", "आमच्याशी बोला"], "Email": ["ईमेल", "ईमेल"], "Main office": ["मुख्य ऑफिस", "मुख्य ऑफिस"], "Also in": ["यहाँ भी", "येथेही"],
-"Send a message": ["संदेश भेजें", "मेसेज पाठवा"], "Your name": ["आपका नाम", "तुमचे नाव"], "Phone": ["फ़ोन", "फोन"], "Message": ["संदेश", "मेसेज"], "Send on WhatsApp": ["WhatsApp पर भेजें", "WhatsApp वर पाठवा"],
+"Send a message": ["संदेश भेजें", "मेसेज पाठवा"], "Your name": ["आपका नाम", "तुमचे नाव"], "Phone": ["फ़ोन", "फोन"], "Email (optional)": ["ईमेल (वैकल्पिक)", "ईमेल (ऐच्छिक)"], "Message": ["संदेश", "मेसेज"], "Send on WhatsApp": ["WhatsApp पर भेजें", "WhatsApp वर पाठवा"],
 "Grievance Officer": ["शिकायत अधिकारी", "तक्रार अधिकारी"], "Name": ["नाम", "नाव"], "Designation": ["पद", "पद"], "Director and Grievance Officer": ["निदेशक और शिकायत अधिकारी", "संचालक आणि तक्रार अधिकारी"],
 "Business": ["व्यवसाय", "व्यवसाय"], "Address": ["पता", "पत्ता"], "Phone / WhatsApp": ["फ़ोन / WhatsApp", "फोन / WhatsApp"], "Hours": ["समय", "वेळ"], "Monday to Saturday, 10 am to 7 pm": ["सोमवार से शनिवार, सुबह 10 से शाम 7 बजे", "सोमवार ते शनिवार, सकाळी 10 ते सायं. 7"],
 "Complaints are acknowledged within 48 hours and resolved within 30 days. See": ["शिकायतों की पावती 48 घंटे में और समाधान 30 दिन में। देखें", "तक्रारींची पोच 48 तासांत आणि निवारण 30 दिवसांत. पाहा"],

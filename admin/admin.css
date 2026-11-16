@@ -189,3 +189,19 @@ td .s{color:var(--muted);font-size:.82rem}
   .mbody{border:0;border-radius:0;margin:0 -.8rem .8rem;width:calc(100% + 1.6rem)}
   .mitem{padding:.7rem .85rem}
 }
+/* mailbox switcher (top right of Mail) */
+.mswitch{position:relative}
+.mswbtn{gap:.4rem;border-color:var(--forest);color:var(--forest)}
+.mswbtn .n,.mswmenu .n{background:var(--red);color:#fff;border-radius:999px;font-size:.7rem;padding:.05rem .4rem;font-weight:700}
+.mswmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:270px;max-width:calc(100vw - 24px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(31,42,34,.16);padding:.4rem}
+.mswhead{font-size:.78rem;color:var(--muted);padding:.35rem .6rem .25rem}
+.mswmenu button{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:.55rem .6rem;font-size:.9rem;color:var(--ink);cursor:pointer}
+.mswmenu button:hover,.mswmenu button:focus-visible{background:#F2F3EE}
+.mswmenu button.on{background:#E8EEE9;font-weight:600}
+.mswmenu button.danger{color:var(--red)}
+.mswmenu hr{border:0;border-top:1px solid var(--line);margin:.35rem 0}
+.mswdot{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--forest);color:var(--tape);font-weight:700;font-size:.85rem}
+.mswmail{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:700px){.mswname{display:none}.mswbtn{padding:.5rem .6rem}}
+.mswitch{margin-left:auto}
+@media (max-width:700px){.macts{width:100%}}

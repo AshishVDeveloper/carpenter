@@ -46,11 +46,13 @@ const list = {
 };
 function badge() { const n = list.get().reduce((a, l) => a + l.q, 0); document.querySelectorAll('[data-count]').forEach(b => { b.textContent = n; b.hidden = !n; }); }
 function save(rec) { try { const a = JSON.parse(localStorage.getItem(ORD_KEY) || '[]'); a.unshift(Object.assign({ id: Date.now(), date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }, rec)); localStorage.setItem(ORD_KEY, JSON.stringify(a.slice(0, 100))); } catch (e) {} }
-function emailCopy(subject, fields) {
+function emailCopy(subject, fields, email) {
+  email = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((email || '').trim()) ? email.trim() : '';
+  if (email) fields = Object.assign({}, fields, { Email: email });
   if (!D || !D.S.email) return;
-  const fallback = () => fetch('https://formsubmit.co/ajax/' + D.S.email, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.assign({}, fields, { _subject: subject, _template: 'table', _captcha: 'false' })) }).catch(() => {});
+  const fallback = () => fetch('https://formsubmit.co/ajax/' + D.S.email, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.assign({}, fields, { _subject: subject, _template: 'table', _captcha: 'false' }, email ? { _replyto: email } : {})) }).catch(() => {});
   /* own mail server first (sends from noreply@ to info@); old form service only if it is unavailable */
-  get('api.json').then(a => fetch(a.url + '/enquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ subject, fields, page: location.href }) }))
+  get('api.json').then(a => fetch(a.url + '/enquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ subject, fields, email, page: location.href }) }))
     .then(r => { if (!r.ok && r.status !== 429) fallback(); }).catch(fallback);
 }
 const okPhone = p => /^\+?\d[\d\s-]{8,}$/.test(String(p || '').trim());
@@ -88,7 +90,7 @@ function bindList() {
     app.innerHTML = L('<div class="cart"><div><div id="lines">' + lines.map(l => '<div class="line"><img src="' + esc(VI.small((l.p.images || [])[0])) + '" alt=""/><div><h3><a href="' + l.p.url + '">' + esc(l.p.name) + '</a></h3><div class="meta">' + VI.range(l.p) + ' each</div><button class="rm" type="button" data-rm="' + l.p.id + '">Remove</button></div><div class="qtybox"><label class="sr" for="q' + l.p.id + '">Quantity</label><input id="q' + l.p.id + '" data-q="' + l.p.id + '" type="number" min="1" max="20" value="' + l.q + '"/></div></div>').join('') + '</div>' +
       '<div class="sum total"><span>Estimated total</span><span>' + VI.inr(lo) + ' – ' + VI.inr(hi) + '</span></div><p class="hint">The exact price is confirmed after we check sizes, wood and finish with you.</p></div>' +
       '<form class="panel" id="checkout" novalidate><h2>Send for a quote</h2><p class="hint" style="margin-bottom:1rem">Your list opens in WhatsApp so you can send it to us. No payment now.</p>' +
-      '<div class="field"><label for="cName">Full name</label><input id="cName" name="name" autocomplete="name" required/></div><div class="field"><label for="cPhone">Phone</label><input id="cPhone" name="phone" type="tel" autocomplete="tel" required/></div>' +
+      '<div class="field"><label for="cName">Full name</label><input id="cName" name="name" autocomplete="name" required/></div><div class="field"><label for="cPhone">Phone</label><input id="cPhone" name="phone" type="tel" autocomplete="tel" required/></div><div class="field"><label for="cEmail">' + tt('Email (optional)') + '</label><input id="cEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div>' +
       '<div class="field"><label for="cAddr">Area / address</label><input id="cAddr" name="address" autocomplete="street-address" placeholder="e.g. Bhandup West"/></div><div class="field"><label for="cNotes">Sizes or notes (optional)</label><textarea id="cNotes" name="notes" style="min-height:80px" placeholder="Room size, colour, wood…"></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/>' +
       '<button class="btn btn-wa" style="width:100%">' + VI.I.wa + 'Send list on WhatsApp</button></form></div>');
     $('lines').onclick = e => { const b = e.target.closest('[data-rm]'); if (b) { list.set(list.get().filter(l => l.id !== +b.dataset.rm)); draw(); } };
@@ -99,7 +101,7 @@ function bindList() {
       const items = lines.map(l => '• ' + l.p.name + ' × ' + l.q + ' — est. ' + VI.range(l.p)).join('\n');
       const msg = 'Quote request from website\n\n' + items + '\n\nEstimated total: ' + VI.inr(lo) + ' – ' + VI.inr(hi) + '\n\nName: ' + d.name + '\nPhone: ' + d.phone + (d.address ? '\nArea: ' + d.address : '') + (d.notes ? '\nNotes: ' + d.notes : '');
       save({ name: d.name, phone: d.phone, address: d.address, notes: d.notes, items: lines.map(l => ({ id: l.p.id, name: l.p.name, q: l.q, price: l.p.lo })), total: lo, kind: 'order' });
-      emailCopy('Quote list — ' + d.name, { Name: d.name, Phone: d.phone, Area: d.address || '-', Items: items, Estimate: VI.inr(lo) + ' – ' + VI.inr(hi), Notes: d.notes || '-' });
+      emailCopy('Quote list — ' + d.name, { Name: d.name, Phone: d.phone, Area: d.address || '-', Items: items, Estimate: VI.inr(lo) + ' – ' + VI.inr(hi), Notes: d.notes || '-' }, d.email);
       window.open(VI.waLink(D.S, msg), '_blank', 'noopener'); list.set([]); location.href = home('/thanks/');
     };
   };
@@ -116,7 +118,7 @@ function bindQuote() {
     if (!d.name.trim() || !okPhone(d.phone) || !d.type.trim()) { toast(tt('Add what you need, your name and phone number.'), true); return; }
     const msg = 'Estimate request\n\nWork: ' + d.type + (d.mode ? '\nBasis: ' + d.mode : '') + (d.size ? '\nSize: ' + d.size : '') + (d.wood ? '\nMaterial: ' + d.wood : '') + (d.budget ? '\nBudget: ' + d.budget : '') + (d.details ? '\nDetails: ' + d.details : '') + '\n\nName: ' + d.name + '\nPhone: ' + d.phone + (d.area ? '\nSite: ' + d.area : '') + '\n\n(I will send photos here.)';
     save(Object.assign({}, d, { work: d.type, kind: 'custom' }));
-    emailCopy('Estimate request — ' + d.type + ' — ' + d.name, { Work: d.type, Basis: d.mode || '-', Size: d.size || '-', Material: d.wood || '-', Budget: d.budget || '-', Details: d.details || '-', Name: d.name, Phone: d.phone, Site: d.area || '-' });
+    emailCopy('Estimate request — ' + d.type + ' — ' + d.name, { Work: d.type, Basis: d.mode || '-', Size: d.size || '-', Material: d.wood || '-', Budget: d.budget || '-', Details: d.details || '-', Name: d.name, Phone: d.phone, Site: d.area || '-' }, d.email);
     window.open(VI.waLink(D.S, msg), '_blank', 'noopener'); location.href = home('/thanks/');
   };
 }
@@ -125,7 +127,7 @@ function bindContact() {
   f.onsubmit = e => {
     e.preventDefault(); const d = Object.fromEntries(new FormData(f)); if (d._honey) return;
     if (!d.name.trim() || !d.message.trim()) { toast(tt('Add your name and a message.'), true); return; }
-    emailCopy('Website enquiry — ' + d.name, { Name: d.name, Phone: d.phone || '-', Message: d.message });
+    emailCopy('Website enquiry — ' + d.name, { Name: d.name, Phone: d.phone || '-', Message: d.message }, d.email);
     save(Object.assign({}, d, { kind: 'enquiry' }));
     window.open(VI.waLink(D.S, 'Hi, I am ' + d.name + '.\n' + d.message), '_blank', 'noopener'); f.reset(); toast(tt('Thanks! We will reply soon.'));
   };
@@ -135,7 +137,7 @@ function bindGrievance() {
   f.onsubmit = e => {
     e.preventDefault(); const d = Object.fromEntries(new FormData(f)); if (d._honey) return;
     if (!d.name.trim() || !okPhone(d.phone) || !d.message.trim()) { toast(tt('Add your name, phone number and details.'), true); return; }
-    emailCopy('Grievance / feedback — ' + d.type + ' — ' + d.name, { Name: d.name, Phone: d.phone, Type: d.type, Details: d.message });
+    emailCopy('Grievance / feedback — ' + d.type + ' — ' + d.name, { Name: d.name, Phone: d.phone, Type: d.type, Details: d.message }, d.email);
     save(Object.assign({}, d, { kind: 'enquiry', work: d.type }));
     window.open(VI.waLink(D.S, d.type + '\n\nName: ' + d.name + '\nPhone: ' + d.phone + '\n\n' + d.message), '_blank', 'noopener');
     f.reset(); toast(tt('Sent. We will acknowledge it within 48 hours.'));

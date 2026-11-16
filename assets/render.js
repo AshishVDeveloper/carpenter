@@ -8,6 +8,8 @@ const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 const src = s => !s ? '/assets/logo.svg' : /^(https?:|data:|\/)/.test(s) ? s : '/' + s;
 /* responsive photos: 400 px and 600 px versions; if a fresh upload has no small copy yet, fall back to the original */
 const RS = u => /^\/images\/(products|site)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
+/* readable quote links: /get-quote/#contract-basis instead of ?mode=Contract%20basis */
+const qslug = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const small = s => { const u = src(s); return /^\/images\/(products|site)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
 
 const I = {
@@ -62,7 +64,7 @@ function card(D, p) {
   return '<article class="card"><a class="ph" href="' + p.url + '"><img src="' + esc(small((p.images || [])[0])) + '"' + RS(small((p.images || [])[0])) + ' alt="' + esc(p.name) + '" loading="lazy" width="600" height="450"/>' +
     (p.customizable ? '<span class="badge">Made to your size</span>' : '') + '</a>' +
     '<div class="body"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h3><a href="' + p.url + '">' + esc(p.name) + '</a></h3>' + priceHTML(p) +
-    '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote</button><a class="btn btn-ghost btn-sm" href="' + p.url + '">Details</a></div></div></article>';
+    '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote</button><a class="btn btn-ghost btn-sm" href="' + p.url + '">Details<span class="sr"> of ' + esc(p.name) + '</span></a></div></div></article>';
 }
 function svcTile(s) {
   return '<a class="svc" href="/services/' + s.slug + '/"><span class="svc-ph"><img src="' + esc(small(s.image || 'images/site/home-interiors.webp')) + '"' + RS(small(s.image || 'images/site/home-interiors.webp')) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></span>' +
@@ -76,7 +78,7 @@ function estTable(rows) {
 }
 function modesHTML(D) {
   return '<div class="modes">' + (D.S.work_modes || []).map(m => '<div class="mode"><h3>' + esc(m.title) + '</h3><p>' + esc(m.desc) + '</p>' + (m.est ? '<p class="mode-est">' + I.ruler + esc(m.est) + '</p>' : '') +
-    '<a class="link" href="/get-quote/?mode=' + encodeURIComponent(m.title) + '">Ask for a ' + esc(m.title.toLowerCase()) + ' quote</a></div>').join('') + '</div>';
+    '<a class="link" href="/get-quote/#' + qslug(m.title) + '">Ask for a ' + esc(m.title.toLowerCase()) + ' quote</a></div>').join('') + '</div>';
 }
 function workHTML(list) {
   return '<div class="work">' + list.map(w => '<article class="site-card">' + (w.images && w.images[0] ? '<img src="' + esc(src(w.images[0])) + '" alt="' + esc(w.title) + '" loading="lazy"/>' : '<div class="noimg">' + I.building + '</div>') +
@@ -119,7 +121,7 @@ V.home = D => {
     '<div class="wrap"><div class="hero-in"><p class="hero-k">World-class furniture, made in India · Custom furniture</p>' +
     '<h1>' + esc(S.hero_title) + '</h1><p class="lede">' + esc(S.hero_text) + '</p>' +
     '<div class="ctas"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-light" href="/services/">Our services</a></div>' +
-    '<div class="tape" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => '<span style="left:' + (i * 10) + '%">' + (i * 10) + '</span>').join('') + '</div>' +
+    '<div class="tape" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => '<span>' + (i * 10) + '</span>').join('') + '</div>' +
     '<ul class="trust"><li><b>' + D.AREAS.length + '</b> areas served</li><li><b>2 ways</b> to hire — contract or labour</li><li><b>Free</b> site visit</li></ul></div></div></section>' +
 
     '<section class="sec"><div class="wrap"><div class="sec-head"><div><h2>What we do</h2><p class="lede">Complete interiors and carpentry for homes and businesses — with an estimate for every kind of work.</p></div><a class="link" href="/services/">All services</a></div><div class="svcs">' + S.services.map(svcTile).join('') + '</div></div></section>' +
@@ -132,7 +134,7 @@ V.home = D => {
     (D.WORK.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>Where we have worked</h2><p class="lede">Homes, offices, shops, showrooms and mall stores across Mumbai and Thane.</p></div><a class="link" href="/our-work/">Our work</a></div>' + workHTML(D.WORK.slice(0, 6)) +
       '<h3 class="mini">Areas we serve</h3>' + areasHTML(D) + '</div></section>' : '') +
 
-    '<section class="sec"><div class="wrap"><h2>How we work</h2><p class="lede" style="margin-bottom:1.6rem">From your first message to the finished space.</p>' + stepsHTML() + '</div></section>' +
+    '<section class="sec"><div class="wrap"><h2>How we work</h2><p class="lede mb16">From your first message to the finished space.</p>' + stepsHTML() + '</div></section>' +
 
     ((S.team || []).length ? '<section class="sec alt"><div class="wrap split"><div><h2>The people behind the work</h2><p class="lede">' + esc(S.about) + '</p><a class="link" href="/about/">About us</a></div>' + teamHTML(D) + '</div></section>' : '') +
 
@@ -149,7 +151,7 @@ V.services = D => {
   const body = pageHead('Interior services and estimated costs', 'Homes, kitchens, offices, shops, showrooms and malls — and furniture made in our own workshop. Every service comes with an indicative cost so you can plan your budget.', crumbs([['Services']])) +
     '<section class="sec tight"><div class="wrap svc-list">' + S.services.map((s, i) =>
       '<article class="svc-row' + (i % 2 ? ' flip' : '') + '"><a class="svc-row-ph" href="/services/' + s.slug + '/"><img src="' + esc(small(s.image)) + '"' + RS(small(s.image)) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></a><div><h2><a href="/services/' + s.slug + '/">' + esc(s.title) + '</a></h2><p>' + esc(s.intro || s.desc) + '</p>' + estTable(s.est.slice(0, 3)) + '<a class="btn btn-primary btn-sm" href="/services/' + s.slug + '/">' + esc(s.title) + ' details</a></div></article>').join('') + '</div></section>' +
-    '<section class="sec alt"><div class="wrap"><h2>Two ways to work with us</h2><p class="lede" style="margin-bottom:1.4rem">Pick what suits your budget and how involved you want to be.</p>' + modesHTML(D) + '</div></section>' + ctaBand(D, 'Not sure what it will cost?', 'Send us your room sizes or a photo on WhatsApp and we will give you a quick estimate.');
+    '<section class="sec alt"><div class="wrap"><h2>Two ways to work with us</h2><p class="lede mb14">Pick what suits your budget and how involved you want to be.</p>' + modesHTML(D) + '</div></section>' + ctaBand(D, 'Not sure what it will cost?', 'Send us your room sizes or a photo on WhatsApp and we will give you a quick estimate.');
   return { title: 'Interior Services & Cost Estimates in Mumbai, Thane | ' + S.name, desc: 'Home interiors, modular kitchens, office interiors, shop & showroom fit-outs, mall work and furniture to measure — with estimated costs per sq ft. Contract or labour basis.', body, ld: [crumbLD(D, [['Services', '/services/']])] };
 };
 
@@ -157,14 +159,14 @@ V.service = (D, slug) => {
   const S = D.S, s = S.services.find(x => x.slug === slug); if (!s) return null;
   const rel = D.PRODUCTS.filter(p => slug === 'furniture-to-measure' || (slug === 'home-interiors' && /wardrobes|beds|tv-units|storage/.test(p.category)) || (slug === 'office-interiors' && /study|chairs/.test(p.category))).slice(0, 4);
   const others = S.services.filter(x => x.slug !== slug);
-  const body = photoHead(s.image, s.title + ' in Mumbai, Thane & Navi Mumbai', s.desc, crumbs([['Services', '/services/'], [s.title]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/?item=' + encodeURIComponent(s.title) + '">Get a free estimate</a><a class="btn btn-light" href="' + esc(waLink(S, 'Hi, I want a quote for ' + s.title.toLowerCase() + '.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div>') +
+  const body = photoHead(s.image, s.title + ' in Mumbai, Thane & Navi Mumbai', s.desc, crumbs([['Services', '/services/'], [s.title]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/#' + qslug(s.title) + '">Get a free estimate</a><a class="btn btn-light" href="' + esc(waLink(S, 'Hi, I want a quote for ' + s.title.toLowerCase() + '.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div>') +
     '<section class="sec"><div class="wrap split"><div><h2>What we do</h2><p class="lede">' + esc(s.intro || s.desc) + '</p>' + (s.points.length ? '<ul class="ticks">' + s.points.map(p => '<li>' + I.check + esc(p) + '</li>').join('') + '</ul>' : '') + '</div>' +
     '<div><h2>Estimated cost</h2>' + (estTable(s.est) || '<p class="lede">Call us for a quick estimate.</p>') + '</div></div></section>' +
     (rel.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><h2>Related furniture</h2><a class="link" href="/furniture/">All furniture</a></div><div class="grid">' + rel.map(p => card(D, p)).join('') + '</div></div></section>' : '') +
-    '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede" style="margin-bottom:1.4rem">Hire us for the complete job, or just for the labour.</p>' + modesHTML(D) + '</div></section>' +
-    '<section class="sec alt"><div class="wrap"><h2>' + esc(s.title) + ' near you</h2><p class="lede" style="margin-bottom:1rem">Our teams work in these areas.</p>' + areasHTML(D) + '</div></section>' +
-    (D.GUIDES.some(g => g.service === slug) ? '<section class="sec"><div class="wrap"><h2>Helpful guides</h2><div class="svcs" style="margin-top:1.2rem">' + D.GUIDES.filter(g => g.service === slug).slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
-    '<section class="sec"><div class="wrap"><h2>Other services</h2><div class="svcs" style="margin-top:1.2rem">' + others.slice(0, 3).map(svcTile).join('') + '</div></div></section>' +
+    '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede mb14">Hire us for the complete job, or just for the labour.</p>' + modesHTML(D) + '</div></section>' +
+    '<section class="sec alt"><div class="wrap"><h2>' + esc(s.title) + ' near you</h2><p class="lede mb10">Our teams work in these areas.</p>' + areasHTML(D) + '</div></section>' +
+    (D.GUIDES.some(g => g.service === slug) ? '<section class="sec"><div class="wrap"><h2>Helpful guides</h2><div class="svcs mt12">' + D.GUIDES.filter(g => g.service === slug).slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
+    '<section class="sec"><div class="wrap"><h2>Other services</h2><div class="svcs mt12">' + others.slice(0, 3).map(svcTile).join('') + '</div></div></section>' +
     ctaBand(D, 'Get an estimate for ' + s.title.toLowerCase(), 'Share your sizes or photos — we will reply with a price range and a date for a site visit.');
   const ld = [crumbLD(D, [['Services', '/services/'], [s.title, '/services/' + s.slug + '/']]), { '@context': 'https://schema.org', '@type': 'Service', name: s.title, serviceType: s.title, description: s.intro || s.desc, provider: { '@type': 'HomeAndConstructionBusiness', name: S.name, telephone: '+91' + S.phone }, areaServed: D.AREAS.map(a => a.name), image: S.site_url + src(s.image) }];
   return { title: s.title + ' in Mumbai, Thane & Navi Mumbai — Cost & Estimate | ' + S.name, desc: s.title + ' by ' + S.name + ': ' + s.desc + ' ' + (s.est[0] ? s.est[0].item + ' ' + s.est[0].range + '. ' : '') + 'Free site visit — call ' + S.phone + '.', body, ld, image: src(s.image) };
@@ -177,7 +179,7 @@ function shopBody(D, cat) {
     D.CATS.filter(c => count(c.slug)).map(c => '<a href="/furniture/' + esc(c.slug) + '/"' + (cat === c.slug ? ' aria-current="page"' : '') + '>' + esc(c.name) + ' <small>' + count(c.slug) + '</small></a>').join('') + '</nav>' +
     '<div class="toolbar"><input id="search" type="search" placeholder="Search sofa, bed, wardrobe…" aria-label="Search furniture"/><div><span id="count" class="hint">' + list.length + (list.length === 1 ? ' design' : ' designs') + '</span><select id="sort" aria-label="Sort"><option value="popular">Popular</option><option value="low">Estimate: low to high</option><option value="high">Estimate: high to low</option></select></div></div>' +
     '<div id="results"><div class="grid">' + list.map(p => card(D, p)).join('') + '</div></div>' +
-    '<p class="note" style="margin-top:1.4rem">Prices shown are estimates. Every piece is made to order — the final price depends on size, wood or board and finish, and is confirmed after measurement. Photos are design references.</p></div></section>';
+    '<p class="note mt14">Prices shown are estimates. Every piece is made to order — the final price depends on size, wood or board and finish, and is confirmed after measurement. Photos are design references.</p></div></section>';
 }
 V.furniture = D => {
   const S = D.S;
@@ -199,9 +201,9 @@ V.product = (D, cat, slug) => {
     '<p class="pd-desc">' + esc(p.description) + '</p>' +
     '<dl class="specs">' + [['Material', p.material], ['Size', p.size], ['Finish', p.finish], ['Made to size', p.customizable ? 'Yes — any size, wood or finish' : 'Standard size only']].filter(r => r[1]).map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' +
     '<div class="buy"><button class="btn btn-primary" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote list</button><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I am interested in: ' + p.name + ' (estimate ' + range(p) + ').\n' + S.site_url + p.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a></div>' +
-    '<div class="note">' + I.ruler + '<span>The final price depends on the size, wood or board and finish you choose. <a class="link" href="/get-quote/?item=' + encodeURIComponent(p.name) + '">Get an exact quote</a></span></div>' +
-    (S.delivery_note ? '<p class="hint" style="margin-top:.8rem">' + esc(S.delivery_note) + '</p>' : '') + '</div></div>' +
-    (rel.length ? '<h2 style="margin:3.5rem 0 1.2rem">You may also like</h2><div class="grid">' + rel.map(x => card(D, x)).join('') + '</div>' : '') + '</div></section>';
+    '<div class="note">' + I.ruler + '<span>The final price depends on the size, wood or board and finish you choose. <a class="link" href="/get-quote/#' + qslug(p.name) + '">Get an exact quote</a></span></div>' +
+    (S.delivery_note ? '<p class="hint mt08">' + esc(S.delivery_note) + '</p>' : '') + '</div></div>' +
+    (rel.length ? '<h2 class="mh35">You may also like</h2><div class="grid">' + rel.map(x => card(D, x)).join('') + '</div>' : '') + '</div></section>';
   const ld = [crumbLD(D, [['Furniture', '/furniture/'], [catName(D, p.category), '/furniture/' + p.category + '/'], [p.name, p.url]]),
     { '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: S.site_url + src(imgs[0]), material: p.material, brand: { '@type': 'Brand', name: S.name }, offers: { '@type': 'AggregateOffer', priceCurrency: 'INR', lowPrice: p.lo, highPrice: p.hi, offerCount: 1, availability: 'https://schema.org/MadeToOrder', url: S.site_url + p.url } }];
   return { title: p.name + ' — Est. ' + range(p).replace(/ – /, '–') + ' | ' + S.name, desc: p.name + ' made to order in Mumbai & Thane. ' + (p.material ? p.material + '. ' : '') + 'Estimated price ' + range(p) + '. Custom size, wood and finish. Free site visit.', body, ld, image: src(imgs[0]) };
@@ -211,7 +213,7 @@ V.work = D => {
   const S = D.S;
   const body = pageHead('Our work', 'Homes, offices, shops, showrooms and mall stores we have worked on across Mumbai, Thane and Mira Bhayandar.', crumbs([['Our work']])) +
     '<section class="sec tight"><div class="wrap">' + (D.WORK.length ? workHTML(D.WORK) : '<div class="empty">Project photos are coming soon.</div>') + '</div></section>' +
-    '<section class="sec alt"><div class="wrap"><h2>Areas we serve</h2><p class="lede" style="margin-bottom:1rem">Tap your area to see what we do there.</p>' + areasHTML(D) + '</div></section>' + ctaBand(D, 'Want the same for your home or business?', 'Book a free site visit — we will measure and give you an estimate.');
+    '<section class="sec alt"><div class="wrap"><h2>Areas we serve</h2><p class="lede mb10">Tap your area to see what we do there.</p>' + areasHTML(D) + '</div></section>' + ctaBand(D, 'Want the same for your home or business?', 'Book a free site visit — we will measure and give you an estimate.');
   return { title: 'Our Work — Interior Projects in Bhandup, Thane, Mira Bhayandar | ' + S.name, desc: 'Interior and carpentry projects by ' + S.name + ' in Dreams building Bhandup, Usha Nagar, Hiranandani Thane, Mira Bhayandar and more — homes, offices, shops, showrooms and malls.', body, ld: [crumbLD(D, [['Our work', '/our-work/']])] };
 };
 
@@ -221,9 +223,9 @@ V.about = D => {
     '<section class="sec tight"><div class="wrap split"><figure class="photo"><img src="/images/site/furniture-to-measure-sm.webp" alt="Carpenter cutting and drilling wood on a workbench" loading="lazy" width="600" height="450"/></figure>' +
     '<div><h2>A family of carpenters</h2><p class="lede">' + esc(S.name) + ' is run by the Vishwakarma family and grew out of hands-on carpentry — ' + esc((S.letterhead && S.letterhead.intro || 'teakwood furniture, sofas and wardrobes').toLowerCase()) + '. Today we take on complete interior contracts as well as labour-basis work, and we still make furniture in our own workshop.</p>' +
     '<ul class="ticks">' + ['Our own carpenters on every job', 'Clear contract or labour-basis pricing', 'Free site visit and measurement', 'Teams in Mumbai, Thane, Navi Mumbai and Uttar Pradesh'].map(t => '<li>' + I.check + t + '</li>').join('') + '</ul></div></div></section>' +
-    ((S.team || []).length ? '<section class="sec alt"><div class="wrap"><h2>Our people</h2><p class="lede" style="margin-bottom:1.4rem">The family that runs ' + esc(S.name) + '.</p>' + teamHTML(D) + '</div></section>' : '') +
-    '<section class="sec"><div class="wrap"><h2>How we work</h2><p class="lede" style="margin-bottom:1.6rem">From your first message to the finished space.</p>' + stepsHTML() + '</div></section>' +
-    '<section class="sec alt"><div class="wrap"><h2>Where we are</h2><p class="lede" style="margin-bottom:1rem">Offices and teams in these areas.</p>' + areasHTML(D) + '</div></section>' + ctaBand(D, 'Talk to us about your project', 'Call or WhatsApp to book a free site visit.');
+    ((S.team || []).length ? '<section class="sec alt"><div class="wrap"><h2>Our people</h2><p class="lede mb14">The family that runs ' + esc(S.name) + '.</p>' + teamHTML(D) + '</div></section>' : '') +
+    '<section class="sec"><div class="wrap"><h2>How we work</h2><p class="lede mb16">From your first message to the finished space.</p>' + stepsHTML() + '</div></section>' +
+    '<section class="sec alt"><div class="wrap"><h2>Where we are</h2><p class="lede mb10">Offices and teams in these areas.</p>' + areasHTML(D) + '</div></section>' + ctaBand(D, 'Talk to us about your project', 'Call or WhatsApp to book a free site visit.');
   return { title: 'About Us — ' + S.name + ' | Founder ' + ((S.team || [])[0] || {}).name, desc: 'About ' + S.name + ': a family of carpenters doing interiors and furniture in Mumbai, Thane, Navi Mumbai and Uttar Pradesh. ' + (S.team || []).map(t => t.role + ' ' + t.name).join(', ') + '.', body, ld: [crumbLD(D, [['About us', '/about/']])] };
 };
 
@@ -237,8 +239,8 @@ V.contact = D => {
   const S = D.S;
   const body = pageHead('Contact us', 'Call, WhatsApp or send a message. We usually reply within an hour during working hours.', crumbs([['Contact']])) +
     '<section class="sec tight"><div class="wrap split">' + contactList(D) +
-    '<form class="panel" id="qf" novalidate><h2>Send a message</h2><div class="field"><label for="qName">Your name</label><input id="qName" name="name" autocomplete="name" required/></div><div class="field"><label for="qPhone">Phone</label><input id="qPhone" name="phone" type="tel" autocomplete="tel"/></div><div class="field"><label for="qEmail">Email (optional)</label><input id="qEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div><div class="field"><label for="qMsg">Message</label><textarea id="qMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-wa" style="width:100%">' + I.wa + 'Send on WhatsApp</button></form></div></section>' +
-    '<section class="sec tight"><div class="wrap narrow0">' + officerBox(D) + '<p class="hint" style="margin-top:.6rem">Complaints are acknowledged within 48 hours and resolved within 30 days. See <a class="link" href="/grievance/">Grievance & Feedback</a>.</p></div></section>';
+    '<form class="panel" id="qf" novalidate><h2>Send a message</h2><div class="field"><label for="qName">Your name</label><input id="qName" name="name" autocomplete="name" required/></div><div class="field"><label for="qPhone">Phone</label><input id="qPhone" name="phone" type="tel" autocomplete="tel"/></div><div class="field"><label for="qEmail">Email (optional)</label><input id="qEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div><div class="field"><label for="qMsg">Message</label><textarea id="qMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-wa w100">' + I.wa + 'Send on WhatsApp</button></form></div></section>' +
+    '<section class="sec tight"><div class="wrap narrow0">' + officerBox(D) + '<p class="hint mt06">Complaints are acknowledged within 48 hours and resolved within 30 days. See <a class="link" href="/grievance/">Grievance & Feedback</a>.</p></div></section>';
   return { title: 'Contact ' + S.name + ' — Call ' + S.phone + ' | Airoli, Bhandup, Thane', desc: 'Contact ' + S.name + ' for interior and furniture work. Call or WhatsApp ' + S.phone + '. Offices in Airoli (Navi Mumbai), Bhandup (Mumbai), Kunda and Prayagraj.', body, ld: [crumbLD(D, [['Contact', '/contact/']])] };
 };
 
@@ -252,7 +254,7 @@ V.quote = D => {
     '<div class="row2"><div class="field"><label for="xBudget">Budget</label><select id="xBudget" name="budget"><option value="">Prefer not to say</option><option>Under ₹50,000</option><option>₹50,000 – ₹2 lakh</option><option>₹2 – 5 lakh</option><option>₹5 – 10 lakh</option><option>Above ₹10 lakh</option></select></div><div class="field"><label for="xArea">Site location</label><input id="xArea" name="area" list="areas" placeholder="e.g. Bhandup, Thane, Airoli"/><datalist id="areas">' + D.AREAS.map(a => '<option value="' + esc(a.name) + '">').join('') + '</datalist></div></div>' +
     '<div class="field"><label for="xDet">Details</label><textarea id="xDet" name="details" placeholder="Colour, number of drawers, mirror, finish…"></textarea></div>' +
     '<div class="row2"><div class="field"><label for="xName">Your name</label><input id="xName" name="name" autocomplete="name" required/></div><div class="field"><label for="xPhone">Phone</label><input id="xPhone" name="phone" type="tel" autocomplete="tel" required/></div></div><div class="field"><label for="xEmail">Email (optional)</label><input id="xEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/>' +
-    '<button class="btn btn-wa" style="width:100%">' + I.wa + 'Send request on WhatsApp</button></form></div></section>';
+    '<button class="btn btn-wa w100">' + I.wa + 'Send request on WhatsApp</button></form></div></section>';
   return { title: 'Get a Free Interior Estimate in Mumbai & Thane | ' + S.name, desc: 'Ask ' + S.name + ' for a free estimate for home interiors, modular kitchens, wardrobes, office or shop work and custom furniture. Contract or labour basis.', body, ld: [crumbLD(D, [['Get a quote', '/get-quote/']])] };
 };
 
@@ -266,10 +268,10 @@ V.area = (D, slug) => {
   const S = D.S, a = D.AREAS.find(x => x.slug === slug); if (!a) return null;
   const here = D.WORK.filter(w => slugify(w.area) === slug || (w.area || '').indexOf(a.short) >= 0);
   const office = (S.locations || []).some(l => slugify(l) === slug);
-  const body = photoHead('images/site/living.webp', 'Interior work & carpenters in ' + a.name, (office ? 'We have a team based in ' + a.short + '. ' : 'Our teams regularly work in ' + a.short + '. ') + 'Home interiors, modular kitchens, wardrobes, office and shop work, and furniture made to measure — on contract or labour basis.', crumbs([['Areas', '/our-work/'], [a.short]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/?area=' + encodeURIComponent(a.name) + '">Book a free site visit</a><a class="btn btn-light" href="' + tel(S) + '">' + I.phone + 'Call ' + esc(S.phone) + '</a></div>') +
+  const body = photoHead('images/site/living.webp', 'Interior work & carpenters in ' + a.name, (office ? 'We have a team based in ' + a.short + '. ' : 'Our teams regularly work in ' + a.short + '. ') + 'Home interiors, modular kitchens, wardrobes, office and shop work, and furniture made to measure — on contract or labour basis.', crumbs([['Areas', '/our-work/'], [a.short]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/#' + qslug(a.name) + '">Book a free site visit</a><a class="btn btn-light" href="' + tel(S) + '">' + I.phone + 'Call ' + esc(S.phone) + '</a></div>') +
     '<section class="sec"><div class="wrap"><div class="sec-head"><div><h2>Services in ' + esc(a.short) + '</h2><p class="lede">With an indicative cost for each.</p></div></div><div class="svcs">' + S.services.map(svcTile).join('') + '</div></div></section>' +
     (here.length ? '<section class="sec alt"><div class="wrap"><h2>Our work in ' + esc(a.short) + '</h2>' + workHTML(here) + '</div></section>' : '') +
-    '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede" style="margin-bottom:1.4rem">Choose how you want to hire us.</p>' + modesHTML(D) + '</div></section>' +
+    '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede mb14">Choose how you want to hire us.</p>' + modesHTML(D) + '</div></section>' +
     '<section class="sec alt"><div class="wrap"><h2>Other areas we serve</h2>' + areasHTML(D, slug) + '</div></section>' + ctaBand(D, 'Need a carpenter or interior team in ' + a.short + '?', 'Call or WhatsApp ' + S.phone + ' for a free site visit.');
   return { title: 'Interior Contractor & Carpenter in ' + a.name + ' | ' + S.name, desc: 'Home interiors, modular kitchens, wardrobes, office and shop work and custom furniture in ' + a.name + '. Contract or labour basis. Free site visit — call ' + S.phone + '.', body, ld: [crumbLD(D, [[a.short, '/areas/' + slug + '/']])], image: '/images/site/living.webp' };
 };
@@ -308,9 +310,9 @@ V.guide = (D, slug) => {
   const svc = S.services.find(x => x.slug === g.service), more = D.GUIDES.filter(x => x.slug !== slug).slice(0, 3);
   const body = photoHead(g.image, g.title, g.desc, crumbs([['Guides', '/guides/'], [g.title]])) +
     '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal guide">' + (CUR.lang !== 'en' ? '<p class="note">This guide is in English.</p>' : '') + (g.body || []).map(block).join('') +
-    '<div class="ctas" style="margin-top:1.4rem"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I read your guide "' + g.title + '" and want an estimate.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div></article>' +
+    '<div class="ctas mt14"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I read your guide "' + g.title + '" and want an estimate.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div></article>' +
     '<nav class="legal-nav" aria-label="More guides"><h2>More guides</h2>' + D.GUIDES.map(x => '<a href="/guides/' + x.slug + '/"' + (x.slug === slug ? ' aria-current="page"' : '') + '>' + esc(x.title) + '</a>').join('') + (svc ? '<a href="/services/' + svc.slug + '/">' + esc(svc.title) + ' service</a>' : '') + '</nav></div></section>' +
-    '<section class="sec alt"><div class="wrap"><h2>Read next</h2><div class="svcs" style="margin-top:1.2rem">' + more.map(guideCard).join('') + '</div></div></section>';
+    '<section class="sec alt"><div class="wrap"><h2>Read next</h2><div class="svcs mt12">' + more.map(guideCard).join('') + '</div></div></section>';
   const ld = [crumbLD(D, [['Guides', '/guides/'], [g.title, '/guides/' + slug + '/']]), { '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.desc, image: S.site_url + src(g.image), datePublished: g.date, dateModified: g.date, author: { '@type': 'Organization', name: S.name, url: S.site_url + '/' }, publisher: { '@type': 'Organization', name: S.name, logo: { '@type': 'ImageObject', url: S.site_url + '/assets/logo.png' } }, mainEntityOfPage: S.site_url + '/guides/' + slug + '/' }];
   return { title: g.title + ' | ' + S.name, desc: g.desc, body, ld, image: src(g.image) };
 };
@@ -380,7 +382,7 @@ const POLICIES = {
     P('We want every customer to be satisfied. If you have a complaint about our work, a quotation, your personal data or this website, or simply want to give feedback, contact our Grievance Officer.') + officerBox(D) +
     '<h2>How we handle your complaint</h2><ol class="steps one">' + [['Tell us', 'Use the form below, WhatsApp, email or phone. Include your name, phone, site address and what went wrong.'], ['Acknowledgement within 48 hours', 'We confirm we have received your complaint and who is handling it.'], ['Resolution within 30 days', 'We inspect, discuss and resolve the complaint, and tell you the outcome.']].map(s => '<li class="step"><h3>' + s[0] + '</h3><p>' + s[1] + '</p></li>').join('') + '</ol>' +
     '<h2>Send a complaint or feedback</h2><form class="panel" id="gf" novalidate><div class="row2"><div class="field"><label for="gName">Your name</label><input id="gName" name="name" autocomplete="name" required/></div><div class="field"><label for="gPhone">Phone</label><input id="gPhone" name="phone" type="tel" autocomplete="tel" required/></div></div><div class="field"><label for="gEmail">Email (optional)</label><input id="gEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div>' +
-    '<div class="field"><label for="gType">Type</label><select id="gType" name="type"><option>Complaint about work</option><option>Quotation or billing</option><option>Personal data request</option><option>Website or accessibility</option><option>Feedback or suggestion</option></select></div><div class="field"><label for="gMsg">Details</label><textarea id="gMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-primary" style="width:100%">Send to Grievance Officer</button></form>' +
+    '<div class="field"><label for="gType">Type</label><select id="gType" name="type"><option>Complaint about work</option><option>Quotation or billing</option><option>Personal data request</option><option>Website or accessibility</option><option>Feedback or suggestion</option></select></div><div class="field"><label for="gMsg">Details</label><textarea id="gMsg" name="message" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><button class="btn btn-primary w100">Send to Grievance Officer</button></form>' +
     '<h2>If you are not satisfied</h2>' + UL(['Consumer complaints: National Consumer Helpline — call 1915 or visit <a class="link" href="https://consumerhelpline.gov.in" target="_blank" rel="noopener">consumerhelpline.gov.in</a>.', 'Personal data complaints: the Data Protection Board of India, after first contacting us.']) },
   help: { path: 'help', title: 'Help', desc: 'How to use this website', body: (D, x) =>
     '<h2>Getting an estimate</h2>' + UL(['Open a <a class="link" href="/services/">service</a> to see what it usually costs.', 'Use <a class="link" href="/get-quote/">Get a quote</a> to send your requirement. It opens WhatsApp with your details filled in — tap Send.', 'For furniture, tap <b>Add to quote</b> on the pieces you like, then open the quote list (the list icon at the top) and send it.']) +

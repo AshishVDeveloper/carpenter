@@ -89,10 +89,10 @@ function bindList() {
     const lo = lines.reduce((a, l) => a + l.p.lo * l.q, 0), hi = lines.reduce((a, l) => a + l.p.hi * l.q, 0);
     app.innerHTML = L('<div class="cart"><div><div id="lines">' + lines.map(l => '<div class="line"><img src="' + esc(VI.small((l.p.images || [])[0])) + '" alt=""/><div><h3><a href="' + l.p.url + '">' + esc(l.p.name) + '</a></h3><div class="meta">' + VI.range(l.p) + ' each</div><button class="rm" type="button" data-rm="' + l.p.id + '">Remove</button></div><div class="qtybox"><label class="sr" for="q' + l.p.id + '">Quantity</label><input id="q' + l.p.id + '" data-q="' + l.p.id + '" type="number" min="1" max="20" value="' + l.q + '"/></div></div>').join('') + '</div>' +
       '<div class="sum total"><span>Estimated total</span><span>' + VI.inr(lo) + ' – ' + VI.inr(hi) + '</span></div><p class="hint">The exact price is confirmed after we check sizes, wood and finish with you.</p></div>' +
-      '<form class="panel" id="checkout" novalidate><h2>Send for a quote</h2><p class="hint" style="margin-bottom:1rem">Your list opens in WhatsApp so you can send it to us. No payment now.</p>' +
+      '<form class="panel" id="checkout" novalidate><h2>Send for a quote</h2><p class="hint mb10">Your list opens in WhatsApp so you can send it to us. No payment now.</p>' +
       '<div class="field"><label for="cName">Full name</label><input id="cName" name="name" autocomplete="name" required/></div><div class="field"><label for="cPhone">Phone</label><input id="cPhone" name="phone" type="tel" autocomplete="tel" required/></div><div class="field"><label for="cEmail">' + tt('Email (optional)') + '</label><input id="cEmail" name="email" type="email" autocomplete="email" inputmode="email"/></div>' +
-      '<div class="field"><label for="cAddr">Area / address</label><input id="cAddr" name="address" autocomplete="street-address" placeholder="e.g. Bhandup West"/></div><div class="field"><label for="cNotes">Sizes or notes (optional)</label><textarea id="cNotes" name="notes" style="min-height:80px" placeholder="Room size, colour, wood…"></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/>' +
-      '<button class="btn btn-wa" style="width:100%">' + VI.I.wa + 'Send list on WhatsApp</button></form></div>');
+      '<div class="field"><label for="cAddr">Area / address</label><input id="cAddr" name="address" autocomplete="street-address" placeholder="e.g. Bhandup West"/></div><div class="field"><label for="cNotes">Sizes or notes (optional)</label><textarea id="cNotes" name="notes" class="mh80" placeholder="Room size, colour, wood…"></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/>' +
+      '<button class="btn btn-wa w100">' + VI.I.wa + 'Send list on WhatsApp</button></form></div>');
     $('lines').onclick = e => { const b = e.target.closest('[data-rm]'); if (b) { list.set(list.get().filter(l => l.id !== +b.dataset.rm)); draw(); } };
     $('lines').onchange = e => { const i = e.target.closest('[data-q]'); if (i) { const c = list.get(), l = c.find(x => x.id === +i.dataset.q); l.q = Math.max(1, Math.min(20, +i.value || 1)); list.set(c); draw(); } };
     $('checkout').onsubmit = e => {
@@ -113,6 +113,11 @@ function bindQuote() {
   if (qs.get('item')) $('xType').value = qs.get('item');
   if (qs.get('mode')) $('xMode').value = qs.get('mode');
   if (qs.get('area')) $('xArea').value = qs.get('area');
+  const hs = decodeURIComponent(location.hash.slice(1)), sl = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (hs && D) {
+    const m = (D.S.work_modes || []).find(x => sl(x.title) === hs), a = (D.AREAS || []).find(x => sl(x.name) === hs), w = (D.PRODUCTS || []).map(x => x.name).concat((D.S.services || []).map(x => x.title)).find(x => sl(x) === hs);
+    if (m) $('xMode').value = m.title; if (a) $('xArea').value = a.name; if (w) $('xType').value = w;
+  }
   f.onsubmit = e => {
     e.preventDefault(); const d = Object.fromEntries(new FormData(f)); if (d._honey) return;
     if (!d.name.trim() || !okPhone(d.phone) || !d.type.trim()) { toast(tt('Add what you need, your name and phone number.'), true); return; }

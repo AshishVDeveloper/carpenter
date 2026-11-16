@@ -151,3 +151,27 @@ td .s{color:var(--muted);font-size:.82rem}
 .boot img{width:64px;height:64px;animation:bootp 1.2s ease-in-out infinite}
 @keyframes bootp{50%{opacity:.45;transform:scale(.94)}}
 @media (prefers-reduced-motion:reduce){.boot img{animation:none}}
+
+/* mail */
+.mailbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.mfolders{display:flex;gap:.3rem;flex-wrap:wrap}
+.mfolders button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:.4rem .85rem;font:inherit;font-weight:600;cursor:pointer;color:inherit}
+.mfolders button.on{background:var(--forest);color:#fff;border-color:transparent}
+.mfolders .n{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#C8922A;color:#fff;font-size:.72rem;margin-left:.2rem}
+.macts{display:flex;gap:.4rem}
+.mailgrid{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:1rem;align-items:start}
+.mlist{padding:0;overflow:hidden}
+.mitem{display:grid;grid-template-columns:1fr auto;gap:.1rem .6rem;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:.75rem 1rem;cursor:pointer;font:inherit;color:inherit}
+.mitem:hover{background:rgba(0,0,0,.03)}.mitem.on{background:rgba(200,146,42,.12)}
+.mitem .mfrom{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mitem .mtime{font-size:.78rem;color:var(--muted)}
+.mitem .msub,.mitem .msum{grid-column:1/-1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mitem .msum{font-size:.82rem;color:var(--muted)}
+.mitem.unread .mfrom,.mitem.unread .msub{font-weight:800}
+.mitem.unread{box-shadow:inset 3px 0 0 #C8922A}
+.mpager{display:flex;justify-content:space-between;padding:.6rem}
+.mread .mh{margin:.2rem 0 .5rem}.mmeta{font-size:.86rem;color:var(--muted);margin-bottom:.8rem;word-break:break-word}
+.mbody{width:100%;min-height:300px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:.8rem}
+.mback{display:none;margin-bottom:.6rem}
+.mboxes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem}
+.mbox{display:flex;flex-direction:column;gap:.15rem;border:1px solid var(--line);border-radius:12px;padding:.8rem 1rem;text-decoration:none;color:inherit}
+.mbox:hover{border-color:#C8922A}.mbox span{font-size:.82rem;color:var(--muted)}
+@media (max-width:860px){.mailgrid{grid-template-columns:1fr}.mailgrid .mread{display:none}.mailgrid.reading .mlist{display:none}.mailgrid.reading .mread{display:block}.mback{display:inline-flex}}

@@ -134,6 +134,51 @@ async function route(req, env, url) {
     await ghOwner(env, b.github); a.gh = b.github; await KV.put('acct', JSON.stringify(a)); return json({ ok: true });
   }
 
+  // ── Zoho Mail (info@ mailbox) ──
+  if (p === '/mail/status' && m === 'GET') { const z = JSON.parse(await KV.get('zoho') || 'null'); return json({ connected: !!(z && z.refresh), email: z && z.email }); }
+  if (p === '/mail/connect' && m === 'POST') {
+    const b = await body(req);
+    if (!b.clientId || !b.clientSecret || !b.code) throw err(400, 'bad', 'Fill in Client ID, Client Secret and Code.');
+    const r = await fetch(zAcc(env) + '/oauth/v2/token?' + new URLSearchParams({ grant_type: 'authorization_code', client_id: b.clientId.trim(), client_secret: b.clientSecret.trim(), code: b.code.trim() }), { method: 'POST' });
+    const j = await r.json().catch(() => ({}));
+    if (!j.refresh_token) throw err(400, 'zoho', j.error === 'invalid_code' ? 'That code has expired or was already used. Generate a new code (it lasts 10 minutes) and try again.' : 'Zoho did not accept these details (' + (j.error || r.status) + '). Check the Client ID and Secret.');
+    const z = { cid: b.clientId.trim(), sec: b.clientSecret.trim(), refresh: j.refresh_token };
+    await KV.put('zoho_at', JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
+    await KV.put('zoho', JSON.stringify(z));
+    const acc = await zApi(env, KV, '/api/accounts');
+    const a = (acc.data || [])[0]; if (!a) throw err(400, 'zoho', 'Connected, but no mailbox was found for this Zoho login.');
+    z.acc = a.accountId; z.email = a.primaryEmailAddress || a.mailboxAddress; await KV.put('zoho', JSON.stringify(z));
+    return json({ connected: true, email: z.email });
+  }
+  if (p === '/mail/disconnect' && m === 'POST') { await KV.delete('zoho'); await KV.delete('zoho_at'); return json({ ok: true }); }
+  if (p.startsWith('/mail/')) {
+    const z = JSON.parse(await KV.get('zoho') || 'null'); if (!z || !z.acc) throw err(409, 'nomail', 'Mail is not connected yet.');
+    const A = '/api/accounts/' + z.acc;
+    if (p === '/mail/folders' && m === 'GET') { const r = await zApi(env, KV, A + '/folders'); return json({ email: z.email, folders: (r.data || []).map(f => ({ id: f.folderId, name: f.folderName, type: f.folderType, unread: +f.unreadCount || 0 })) }); }
+    if (p === '/mail/list' && m === 'GET') {
+      const q = new URLSearchParams({ folderId: url.searchParams.get('folder') || '', start: String(Math.max(1, +url.searchParams.get('start') || 1)), limit: '30', sortorder: 'false' });
+      const r = await zApi(env, KV, A + '/messages/view?' + q);
+      return json({ messages: (r.data || []).map(x => ({ id: x.messageId, folder: x.folderId, from: x.sender || x.fromAddress, fromAddress: x.fromAddress, to: x.toAddress, subject: x.subject, summary: x.summary, time: +x.receivedTime || +x.sentDateInGMT, unread: String(x.status) === '0', attach: String(x.hasAttachment) === '1' })) });
+    }
+    if (p === '/mail/read' && m === 'GET') {
+      const f = url.searchParams.get('folder'), id = url.searchParams.get('id');
+      if (!/^\d+$/.test(f || '') || !/^\d+$/.test(id || '')) throw err(400, 'bad', 'Bad message.');
+      const [c, h] = await Promise.all([zApi(env, KV, A + '/folders/' + f + '/messages/' + id + '/content'), zApi(env, KV, A + '/folders/' + f + '/messages/' + id + '/details').catch(() => ({}))]);
+      zApi(env, KV, A + '/updatemessage', { method: 'PUT', body: JSON.stringify({ mode: 'markAsRead', messageId: [id] }) }).catch(() => {});
+      const d = h.data || {};
+      return json({ content: (c.data || {}).content || '', from: d.sender || d.fromAddress, fromAddress: d.fromAddress, to: d.toAddress, cc: d.ccAddress, subject: d.subject, time: +d.receivedTime || +d.sentDateInGMT });
+    }
+    if (p === '/mail/send' && m === 'POST') {
+      const b = await body(req);
+      if (!/\S+@\S+\.\S+/.test(b.to || '')) throw err(400, 'bad', 'Enter a valid "To" email address.');
+      const msg = { fromAddress: z.email, toAddress: b.to, ccAddress: b.cc || undefined, subject: String(b.subject || '(no subject)').slice(0, 250), content: String(b.content || ''), mailFormat: 'html' };
+      if (b.replyTo && /^\d+$/.test(b.replyTo)) await zApi(env, KV, A + '/messages/' + b.replyTo, { method: 'POST', body: JSON.stringify({ ...msg, action: 'reply' }) });
+      else await zApi(env, KV, A + '/messages', { method: 'POST', body: JSON.stringify(msg) });
+      return json({ ok: true });
+    }
+    throw err(404, 'notfound', 'Not found.');
+  }
+
   // ── publishing: forwards only this repo's contents API, using the key kept here ──
   if (p === '/gh' || p.startsWith('/gh/contents/')) {
     if (!['GET', 'PUT'].includes(m)) throw err(405, 'method', 'Not allowed.');
@@ -145,6 +190,28 @@ async function route(req, env, url) {
     return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json' } });
   }
   throw err(404, 'notfound', 'Not found.');
+}
+
+/* ── Zoho helpers ── */
+const zAcc = env => env.ZOHO_ACCOUNTS || 'https://accounts.zoho.in';
+const zMail = env => env.ZOHO_MAIL || 'https://mail.zoho.in';
+async function zToken(env, KV, force) {
+  const c = JSON.parse(await KV.get('zoho_at') || 'null');
+  if (!force && c && c.exp > Date.now()) return c.t;
+  const z = JSON.parse(await KV.get('zoho') || 'null'); if (!z) throw err(409, 'nomail', 'Mail is not connected yet.');
+  const r = await fetch(zAcc(env) + '/oauth/v2/token?' + new URLSearchParams({ grant_type: 'refresh_token', client_id: z.cid, client_secret: z.sec, refresh_token: z.refresh }), { method: 'POST' });
+  const j = await r.json().catch(() => ({}));
+  if (!j.access_token) throw err(502, 'zoho', 'Zoho refused the saved connection (' + (j.error || r.status) + '). Reconnect Mail.');
+  await KV.put('zoho_at', JSON.stringify({ t: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000 - 120000 }), { expirationTtl: 3500 });
+  return j.access_token;
+}
+async function zApi(env, KV, path, opt = {}, retry) {
+  const t = await zToken(env, KV, retry);
+  const r = await fetch(zMail(env) + path, { ...opt, headers: { Authorization: 'Zoho-oauthtoken ' + t, Accept: 'application/json', ...(opt.body ? { 'Content-Type': 'application/json' } : {}) } });
+  if (r.status === 401 && !retry) return zApi(env, KV, path, opt, true);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw err(r.status === 404 ? 404 : 502, 'zoho', (j.data && (j.data.moreInfo || j.data.errorCode)) || (j.status && j.status.description) || 'Zoho Mail error ' + r.status);
+  return j;
 }
 
 /* ── helpers ── */

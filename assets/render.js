@@ -245,7 +245,7 @@ V.contact = D => {
 V.quote = D => {
   const S = D.S;
   const body = pageHead('Get a free estimate', 'Tell us about your interior or furniture work. We will reply on WhatsApp with a price range and a date for a site visit.', crumbs([['Get a quote']])) +
-    '<section class="sec tight"><div class="wrap split"><div><ol class="steps one">' + [['Send the request', 'Fill in this form — it opens WhatsApp with your details.'], ['Share photos', 'Send pictures of the site or designs you like in the same chat.'], ['Site visit & quote', 'We measure, suggest materials and confirm the price.']].map(s => '<li class="step"><h3>' + s[0] + '</h3><p>' + s[1] + '</p></li>').join('') + '</ol></div>' +
+    '<section class="sec tight"><div class="wrap split"><div><h2>How it works</h2><ol class="steps one">' + [['Send the request', 'Fill in this form — it opens WhatsApp with your details.'], ['Share photos', 'Send pictures of the site or designs you like in the same chat.'], ['Site visit & quote', 'We measure, suggest materials and confirm the price.']].map(s => '<li class="step"><h3>' + s[0] + '</h3><p>' + s[1] + '</p></li>').join('') + '</ol></div>' +
     '<form class="panel" id="cf" novalidate><div class="field"><label for="xType">What do you need?</label><input id="xType" name="type" list="types" required placeholder="e.g. 2BHK interior, modular kitchen, wardrobe"/><datalist id="types">' + S.services.map(s => '<option value="' + esc(s.title) + '">').join('') + D.CATS.map(c => '<option value="' + esc(c.name) + '">').join('') + '<option value="False ceiling"><option value="Wall panelling"><option value="Sliding aluminium window"><option value="Temple / mandir"></datalist></div>' +
     '<div class="field"><label for="xMode">How do you want to hire us?</label><select id="xMode" name="mode"><option value="">Not sure yet</option>' + (S.work_modes || []).map(m => '<option>' + esc(m.title) + '</option>').join('') + '</select></div>' +
     '<div class="row2"><div class="field"><label for="xSize">Size (approx.)</label><input id="xSize" name="size" placeholder="e.g. 2BHK, 600 sq ft, 7 × 6 ft"/></div><div class="field"><label for="xWood">Wood / material</label><select id="xWood" name="wood"><option value="">Not sure — suggest</option><option>Teak</option><option>Sheesham</option><option>Plywood with laminate</option><option>Engineered wood</option></select></div></div>' +
@@ -393,7 +393,7 @@ Object.keys(POLICIES).forEach(k => {
     const Pp = POLICIES[k], x = legalInfo(D);
     const body = pageHead(Pp.title, (x.updated && k !== 'help' ? 'Last updated: ' + x.updated : ''), crumbs([[Pp.title]])) +
       '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal">' + (CUR.lang !== 'en' && !/grievance|help/.test(k) ? '<p class="note">The English text of this policy applies.</p>' : '') + Pp.body(D, x) + '</article>' + legalNav(k) + '</div></section>';
-    return { title: Pp.title + ' | ' + D.S.name, desc: Pp.title + ' of ' + D.S.name + ' (' + x.site + '): ' + Pp.desc + '.', body, ld: [crumbLD(D, [[Pp.title, '/' + Pp.path + '/']])] };
+    return { title: Pp.title + ' | ' + D.S.name, desc: Pp.desc + '. ' + Pp.title + ' of ' + D.S.name + ', interiors and furniture makers in Airoli, Navi Mumbai.', body, ld: [crumbLD(D, [[Pp.title, '/' + Pp.path + '/']])] };
   };
 });
 function legalNav(cur) {
@@ -442,11 +442,32 @@ const tr = s => CUR.lang === 'en' ? s : String(s).split(/( \| | — |: )/).map(x
 function langOf(path) { const m = String(path || '').match(/^\/(hi|mr)(\/|$)/); return m ? m[1] : 'en'; }
 
 /* search-result friendly lengths: titles about 60 characters, descriptions about 155 */
-function fitTitle(t, brand) {
-  t = String(t || ''); if (t.length <= 60) return t;
-  const parts = t.split(' | '); if (parts.length > 1 && parts[parts.length - 1] === brand) t = parts.slice(0, -1).join(' | ');
-  if (t.length <= 60) return t;
-  t = t.split(' — ')[0]; return t.length <= 60 ? t : clip(t, 60);
+function fitTitle(t, brand, max = 60) {
+  t = String(t || ''); if (t.length <= max && t.length >= 30) return t;
+  /* keep as many leading parts as fit in max characters; cut an overlong part at a comma; add the brand if there is room */
+  const segs = t.split(/(?= \| | — )/); let out = '';
+  for (const g of segs) {
+    if ((out + g).length <= max) { out += g; continue; }
+    const cut = g.split(', '); while (cut.length > 1 && (out + cut.join(', ')).length > max) cut.pop();
+    if ((out + cut.join(', ')).length <= max && cut.join(', ').replace(/^( \| | — )/, '').length > 3) out += cut.join(', ');
+    break;
+  }
+  if (!out) out = clip(t, max);
+  if (out.length < 30 && !out.includes(brand) && (out + ' | ' + brand).length <= max) out += ' | ' + brand;
+  if (out.length < 30 && (out + ', Navi Mumbai').length <= max) out += ', Navi Mumbai';
+  return out;
+}
+/* descriptions: 120–155 characters */
+function fitDesc(d, S) {
+  d = String(d || '').trim();
+  if (d.length < 120) {
+    const A = { en: [' ' + S.name + ' — interiors and custom furniture in Mumbai, Thane and Navi Mumbai. Call ' + S.phone + '.', ' Interiors and custom furniture in Mumbai, Thane and Navi Mumbai.', ' Call ' + S.phone + '.'],
+      hi: [' ' + S.name + ' — मुंबई, ठाणे और नवी मुंबई में इंटीरियर और कस्टम फर्नीचर। कॉल करें ' + S.phone + '।', ' मुंबई, ठाणे और नवी मुंबई में इंटीरियर और कस्टम फर्नीचर।', ' कॉल करें ' + S.phone + '।'],
+      mr: [' ' + S.name + ' — मुंबई, ठाणे आणि नवी मुंबईत इंटिरियर आणि कस्टम फर्निचर. कॉल करा ' + S.phone + '.', ' मुंबई, ठाणे आणि नवी मुंबईत इंटिरियर आणि कस्टम फर्निचर.', ' कॉल करा ' + S.phone + '.'] }[CUR.lang] || [];
+    const base = d.replace(/[.।]?$/, CUR.lang === 'hi' ? '।' : '.'), add = A.find(x => (base + x).length <= 158);
+    if (add) d = base + add;
+  }
+  return clip(d, 158);
 }
 function clip(s, n) { s = String(s || ''); if (s.length <= n) return s; const c = s.slice(0, n - 1); return c.slice(0, Math.max(c.lastIndexOf(' '), n - 20)).replace(/[\s,.;:—–-]+$/, '') + '…'; }
 
@@ -471,7 +492,8 @@ function resolve(D, path) {
 function render(D, view, args) {
   const p = (V[view] && V[view].apply(null, [D].concat(args || []))) || V.notfound(D);
   if (CUR.lang !== 'en') { p.body = localize(p.body); p.title = tr(p.title); p.desc = tr(p.desc); }
-  p.title = fitTitle(p.title, D.S.name); p.desc = clip(p.desc, 155);
+  p.title = fitTitle(p.title, D.S.name); p.desc = fitDesc(p.desc, D.S);
+  if (CUR.lang !== 'en') { const L = CUR.lang === 'hi' ? ' (हिंदी)' : ' (मराठी)'; p.title = (p.title.length + L.length > 60 ? fitTitle(p.title, D.S.name, 60 - L.length) : p.title) + L; }
   return p;
 }
 const headerL = (D, path) => localize(header(D, path)), footerL = D => localize(footer(D));

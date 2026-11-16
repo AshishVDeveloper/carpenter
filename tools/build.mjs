@@ -35,17 +35,19 @@ const V = Date.now().toString(36);
   if (made) console.log('Made ' + made + ' smaller photo copies' + (sharp ? '' : ' (copied — install sharp to resize)'));
 }
 /* minified copies of the site scripts (made with terser when it is installed; otherwise the readable files are used) */
-const JS = { render: 'render.js', store: 'store.js' };
+/* one script file for the whole site: render.js + store.js joined (minified with terser when it is installed) */
+const JSFILE = 'site.min.js';
 {
+  const src = ['render.js', 'store.js'].map(f => fs.readFileSync(path.join(ROOT, 'assets', f), 'utf8')).join(';\n');
   let terser = null; try { terser = await import('terser'); } catch (e) { }
-  if (terser) for (const k of Object.keys(JS)) {
-    const out = await terser.minify(fs.readFileSync(path.join(ROOT, 'assets', k + '.js'), 'utf8'), { compress: true, mangle: true, format: { comments: false } });
-    if (out.code) { fs.writeFileSync(path.join(ROOT, 'assets', k + '.min.js'), out.code + '\n'); JS[k] = k + '.min.js'; }
-  }
+  const out = terser ? (await terser.minify(src, { compress: true, mangle: true, format: { comments: false } })).code : src;
+  fs.writeFileSync(path.join(ROOT, 'assets', JSFILE), out + '\n');
+  for (const f of ['render.min.js', 'store.min.js']) try { fs.unlinkSync(path.join(ROOT, 'assets', f)); } catch (e) { }
 }
 /* fonts: fewer files (one variable font per family), loaded without blocking the first paint */
 const FONTS = lang => 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400..700' + (lang === 'en' ? '' : '&family=Noto+Sans+Devanagari:wght@400..800') + '&display=swap';
 /* page CSS goes inside each page, so the browser can draw it without waiting for another file */
+const FONTCSS = fs.readFileSync(path.join(ROOT, 'assets/fonts/fonts.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n/g, '');
 const CSS = fs.readFileSync(path.join(ROOT, 'assets/store.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{};,])\s*/g, '$1').replace(/;}/g, '}').replace(/<\/style/gi, '').trim();
 /* optional Google Analytics (Business details → Google Analytics ID) */
 const GA_ID = /^G-[A-Z0-9]{4,14}$/.test(String(S.ga_id || '').trim()) ? S.ga_id.trim() : '';
@@ -67,7 +69,7 @@ function page(route, view, args, lang) {
 <html lang="${lang === 'en' ? 'en-IN' : lang + '-IN'}"${['home', 'service', 'area', 'guide'].includes(view) ? ' class="ovl"' : ''}>
 <head>
 <meta charset="UTF-8"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'${S.ga_id ? ' https://www.googletagmanager.com' : ''}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://formsubmit.co https://*.workers.dev${S.ga_id ? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com' : ''}; object-src 'none'; base-uri 'self'; form-action 'self' https://formsubmit.co; upgrade-insecure-requests"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'${S.ga_id ? ' https://www.googletagmanager.com' : ''}; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://formsubmit.co https://*.workers.dev${S.ga_id ? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com' : ''}; object-src 'none'; base-uri 'self'; form-action 'self' https://formsubmit.co; upgrade-insecure-requests"/>
 <meta name="referrer" content="strict-origin-when-cross-origin"/>
 <script>if(location.protocol==='http:'&&/(^|\\.)mumbai-interior\\.in$/.test(location.hostname))location.replace('https://www.mumbai-interior.in'+location.pathname+location.search+location.hash);if(top!==self){document.documentElement.style.display='none';try{top.location=self.location.href}catch(e){}}</script>
 <script>try{var t=localStorage.getItem("vi_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}</script>
@@ -91,11 +93,8 @@ ${alts}
 <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/site.webmanifest"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="preload" as="style" href="${FONTS(lang)}" onload="this.onload=null;this.rel='stylesheet'"/>
-<noscript><link rel="stylesheet" href="${FONTS(lang)}"/></noscript>
-<style>${CSS}</style>${GA}
+<link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<style>${FONTCSS}${CSS}</style>${GA}
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 <style>#ldr{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#F2F3EE;transition:opacity .45s ease,visibility .45s}html.dark #ldr{background:#0F1511}#ldr.done{opacity:0;visibility:hidden}
 #ldr .lb{display:flex;flex-direction:column;align-items:center;gap:1.1rem;width:min(320px,78vw)}#ldr img{width:76px;height:76px;border-radius:18px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);animation:ldrPop .6s cubic-bezier(.2,.8,.2,1) both}
@@ -105,7 +104,7 @@ ${alts}
 @media (prefers-reduced-motion:reduce){#ldr .lt,#ldr img{animation:none}}</style>
 </head>
 <body>
-<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-76.webp" srcset="/assets/logo-152.webp 2x" alt="${esc(S.name)} logo" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
+<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-88.webp" alt="${esc(S.name)} logo" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
 <script>(function(){var l=document.getElementById('ldr'),t0=Date.now(),h=function(){setTimeout(function(){l.classList.add('done');setTimeout(function(){l.remove()},600)},Math.max(0,700-(Date.now()-t0)))};if(document.readyState==='complete')h();else{addEventListener('load',h);setTimeout(h,3500)}})()</script>
 <div id="hdr" data-sig="${VI.sig(hdr)}">${hdr}</div>
 <main id="app" tabindex="-1" data-sig="${VI.sig(p.body)}">
@@ -113,8 +112,7 @@ ${p.body}
 </main>
 <div id="ftr" data-sig="${VI.sig(ftr)}">${ftr}</div>
 <script>window.VI_LANG=${view === 'notfound' ? "(location.pathname.match(/^\\/(hi|mr)(?=\\/|$)/)||[])[1]||'en'" : JSON.stringify(lang)}</script>
-<script src="/assets/${JS.render}?v=${V}" defer></script>
-<script src="/assets/${JS.store}?v=${V}" defer></script>
+<script src="/assets/${JSFILE}?v=${V}" defer></script>
 </body>
 </html>
 `;

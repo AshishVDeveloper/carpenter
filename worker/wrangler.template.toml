@@ -11,7 +11,7 @@ GH_OWNER = "AshishVDeveloper"
 GH_REPO = "carpenter"
 ISSUER = "Mumbai Interior"
 SMTP_USER = "noreply@mumbai-interior.in"
-SMTP_HOST = "smtppro.zoho.in"
+SMTP_HOST = "smtp.zoho.in"
 SMTP_PORT = "465"
 ENQUIRY_TO = "info@mumbai-interior.in"
 

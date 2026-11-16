@@ -216,9 +216,14 @@ async function route(req, env, url) {
       const f = url.searchParams.get('folder'), id = url.searchParams.get('id');
       if (!/^\d+$/.test(f || '') || !/^\d+$/.test(id || '')) throw err(400, 'bad', 'Bad message.');
       const [c, h] = await Promise.all([zApiB(A + '/folders/' + f + '/messages/' + id + '/content'), zApiB(A + '/folders/' + f + '/messages/' + id + '/details').catch(() => ({}))]);
-      zApiB(A + '/updatemessage', { method: 'PUT', body: JSON.stringify({ mode: 'markAsRead', messageId: [id] }) }).catch(() => {});
+      const marked = await zMark(zApiB, A, [id], true).then(() => true, () => false);
       const d = h.data || {};
-      return json({ content: (c.data || {}).content || '', from: d.sender || d.fromAddress, fromAddress: d.fromAddress, to: d.toAddress, cc: d.ccAddress, subject: d.subject, time: +d.receivedTime || +d.sentDateInGMT });
+      return json({ content: (c.data || {}).content || '', from: d.sender || d.fromAddress, fromAddress: d.fromAddress, to: d.toAddress, cc: d.ccAddress, subject: d.subject, time: +d.receivedTime || +d.sentDateInGMT, marked });
+    }
+    if (p === '/mail/mark' && m === 'POST') {
+      const b = await body(req), ids = (Array.isArray(b.ids) ? b.ids : []).map(String).filter(x => /^\d{1,25}$/.test(x)).slice(0, 50);
+      if (!ids.length) throw err(400, 'bad', 'Bad message.');
+      await zMark(zApiB, A, ids, b.read !== false); return json({ ok: true });
     }
     if (p === '/mail/send' && m === 'POST') {
       const b = await body(req);
@@ -343,6 +348,9 @@ async function zApi(env, KV, conn, path, opt = {}, retry) {
   if (!r.ok) throw err(r.status === 404 ? 404 : 502, 'zoho', (j.data && (j.data.moreInfo || j.data.errorCode)) || (j.status && j.status.description) || 'Zoho Mail error ' + r.status);
   return j;
 }
+
+/* Zoho wants message ids as JSON numbers, but they are longer than JavaScript numbers can hold exactly — so write them as digits */
+const zMark = (zApiB, A, ids, read) => zApiB(A + '/updatemessage', { method: 'PUT', body: '{"mode":"' + (read ? 'markAsRead' : 'markAsUnread') + '","messageId":[' + ids.filter(x => /^\d+$/.test(x)).join(',') + ']}' });
 
 /* ── helpers ── */
 const json = (o, st = 200, h = {}) => new Response(JSON.stringify(o), { status: st, headers: { 'Content-Type': 'application/json', ...h } });

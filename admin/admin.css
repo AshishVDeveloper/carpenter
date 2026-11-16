@@ -162,11 +162,12 @@ td .s{color:var(--muted);font-size:.82rem}
 .mailgrid{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:1rem;align-items:start}
 .mlist{padding:0;overflow:hidden}
 .mitem{display:grid;grid-template-columns:1fr auto;gap:.1rem .6rem;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:.75rem 1rem;cursor:pointer;font:inherit;color:inherit}
-.mitem:hover{background:rgba(0,0,0,.03)}.mitem.on{background:rgba(200,146,42,.12)}
+.mitem:hover{background:rgba(0,0,0,.03)}.mitem.on{background:#E8EEE9}
 .mitem .mfrom{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mitem .mtime{font-size:.78rem;color:var(--muted)}
 .mitem .msub,.mitem .msum{grid-column:1/-1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mitem .msum{font-size:.82rem;color:var(--muted)}
 .mitem.unread .mfrom,.mitem.unread .msub{font-weight:800}
-.mitem.unread{box-shadow:inset 3px 0 0 #C8922A}
+.mitem.unread{box-shadow:inset 3px 0 0 #C8922A}.mitem.unread .mfrom::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#C8922A;margin-right:.45rem;vertical-align:middle}
+.mitem:not(.unread) .mfrom,.mitem:not(.unread) .msub{color:#3d4740}
 .mpager{display:flex;justify-content:space-between;padding:.6rem}
 .mread .mh{margin:.2rem 0 .5rem}.mmeta{font-size:.86rem;color:var(--muted);margin-bottom:.8rem;word-break:break-word}
 .mbody{width:100%;min-height:300px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:.8rem}

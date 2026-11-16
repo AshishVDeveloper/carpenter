@@ -28,7 +28,7 @@ async function pgMail(arg) {
   const inbox = MAIL.folders.find(f => /inbox/i.test(f.type) || /^inbox$/i.test(f.name)) || MAIL.folders[0];
   if (!MAIL.folder || !MAIL.folders.some(f => f.id === MAIL.folder)) MAIL.folder = inbox && inbox.id;
   $('mailWrap').innerHTML =
-    '<div class="mailbar"><div class="mfolders" role="tablist">' + mailFolderTabs() + '</div><div class="macts"><button class="btn sm" onclick="mailLoad()" title="Refresh">Refresh</button><button class="btn sm pri" onclick="mailCompose()">Write email</button>' + mailSwitch() + '</div></div>' +
+    '<div class="mailbar"><div class="mfolders" role="tablist">' + mailFolderTabs() + '</div><div class="macts"><button class="btn sm" onclick="mailRefresh()" title="Refresh">Refresh</button><button class="btn sm pri" onclick="mailCompose()">Write email</button>' + mailSwitch() + '</div></div>' +
     '<div class="mailgrid"><div class="card mlist" id="mList"></div><div class="card mread" id="mRead"><div class="empty">Choose an email to read it.</div></div></div>' +
     '<p class="hint" style="margin-top:.6rem">Showing <b>' + esc(MAIL.email || '') + '</b>. <a href="https://mail.zoho.in/zm/" target="_blank" rel="noopener">Open full Zoho Mail</a></p>';
   mailLoad();
@@ -57,6 +57,10 @@ function mailFolderTabs() {
   return (pick.length ? pick : MAIL.folders).map(f => '<button role="tab" aria-selected="' + (f.id === MAIL.folder) + '" class="' + (f.id === MAIL.folder ? 'on' : '') + '" onclick="mailFolder(\'' + esc(f.id) + '\')">' + esc(f.name) + (f.unread ? ' <span class="n">' + f.unread + '</span>' : '') + '</button>').join('');
 }
 function mailFolder(id) { MAIL.folder = id; MAIL.start = 1; document.querySelector('.mfolders').innerHTML = mailFolderTabs(); $('mRead').innerHTML = '<div class="empty">Choose an email to read it.</div>'; mailLoad(); }
+async function mailRefresh() {
+  try { const f = await api('/mail/folders?' + mbq()); MAIL.folders = f.folders; const t = document.querySelector('.mfolders'); if (t) t.innerHTML = mailFolderTabs(); } catch (e) { }
+  mailLoad(); mailBadge();
+}
 async function mailLoad() {
   const box = $('mList'); if (!box) return;
   box.innerHTML = '<p class="hint" style="padding:1rem">Loading…</p>';
@@ -72,16 +76,31 @@ async function mailOpen(i) {
   const r = $('mRead'); r.innerHTML = '<p class="hint">Opening…</p>'; document.querySelector('.mailgrid').classList.add('reading');
   try {
     const d0 = await api('/mail/read?' + mbq() + '&folder=' + encodeURIComponent(m.folder) + '&id=' + encodeURIComponent(m.id)); const d = { ...d0, from: un(d0.from), fromAddress: un(d0.fromAddress), to: un(d0.to), cc: un(d0.cc), subject: un(d0.subject) };
-    if (m.unread) { m.unread = false; document.querySelectorAll('.mitem')[i].classList.remove('unread'); mailBadge(true); }
+    if (m.unread && d0.marked !== false) mailSetRead(i, true, true);
     r.innerHTML = '<button class="btn sm mback" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\')">← Back</button><h2 class="mh">' + esc(d.subject || m.subject || '(no subject)') + '</h2>' +
       '<div class="mmeta"><b>' + esc(d.from || m.from || '') + '</b> &lt;' + esc(d.fromAddress || m.fromAddress || '') + '&gt;<br/>To: ' + esc(d.to || '') + (d.cc ? '<br/>Cc: ' + esc(d.cc) : '') + '<br/>' + (d.time ? new Date(d.time).toLocaleString('en-IN') : '') + '</div>' +
       '<iframe class="mbody" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" scrolling="no" referrerpolicy="no-referrer" title="Email content"></iframe>' +
-      '<div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="mailCompose(' + i + ')">Reply</button></div>';
+      '<div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="mailCompose(' + i + ')">Reply</button><button class="btn" onclick="mailToggleRead(' + i + ')" id="mRd">Mark as unread</button></div>';
     const f = r.querySelector('iframe');
     f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0}body{font:15px/1.55 system-ui,sans-serif;color:#222;padding:12px;overflow-wrap:anywhere;word-break:break-word}img{max-width:100%!important;height:auto!important}table{max-width:100%!important;width:auto!important}td,th{word-break:break-word}*{max-width:100%;box-sizing:border-box}pre{white-space:pre-wrap}</style>' + mailClean(d.content || '');
     const fit = () => { try { const h = f.contentDocument.documentElement.scrollHeight; if (h) f.style.height = (h + 4) + 'px'; } catch (e) { f.style.height = '520px'; } };
     f.onload = () => { fit(); try { f.contentDocument.querySelectorAll('img').forEach(i => i.addEventListener('load', fit)); new ResizeObserver(fit).observe(f.contentDocument.body); } catch (e) { } setTimeout(fit, 600); };
   } catch (e) { r.innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
+}
+/* read / unread: update the row, the folder count, the mailbox count and the menu badge together */
+function mailSetRead(i, read, already) {
+  const m = MAIL.list[i]; if (!m || m.unread === !read) return; m.unread = !read;
+  const row = document.querySelectorAll('.mitem')[i]; if (row) row.classList.toggle('unread', !read);
+  const f = MAIL.folders.find(x => x.id === m.folder); if (f) f.unread = Math.max(0, (f.unread || 0) + (read ? -1 : 1));
+  const tabs = document.querySelector('.mfolders'); if (tabs) tabs.innerHTML = mailFolderTabs();
+  MAIL.unread[MAIL.email] = Math.max(0, (MAIL.unread[MAIL.email] || 0) + (read ? -1 : 1)); MAIL_UNREAD = Math.max(0, MAIL_UNREAD + (read ? -1 : 1)); mailBadge(0);
+  const b = $('mRd'); if (b && MAIL.open === m.id) b.textContent = read ? 'Mark as unread' : 'Mark as read';
+}
+async function mailToggleRead(i) {
+  const m = MAIL.list[i]; if (!m) return; const read = m.unread;
+  mailSetRead(i, read);
+  try { await api('/mail/mark', { box: MAIL.email, ids: [m.id], read }); toast(read ? 'Marked as read.' : 'Marked as unread.'); }
+  catch (e) { mailSetRead(i, !read); toast(e.message, true); }
 }
 /* strip scripts, event handlers and active content from email HTML before showing it */
 function mailClean(html) {
@@ -125,7 +144,7 @@ async function mailReconnect() { if (!await confirmBox('Reconnect ' + MAIL.email
 /* unread badge on the Mail menu item */
 let MAIL_UNREAD = 0;
 async function mailBadge(dec) {
-  if (dec) { MAIL_UNREAD = Math.max(0, MAIL_UNREAD - 1); if (MAIL.unread[MAIL.email]) MAIL.unread[MAIL.email]--; }
+  if (dec === 0) { const sw = document.querySelector('.mswitch'); if (sw && MAIL.boxes.length) sw.outerHTML = mailSwitch(); }
   else {
     try { if (typeof SERVER !== 'function' || !SERVER()) return; const r = await api('/mail/unread'); MAIL.unread = {}; r.boxes.forEach(b => MAIL.unread[b.email] = b.unread); MAIL_UNREAD = r.boxes.reduce((n, b) => n + b.unread, 0); } catch (e) { return; }
     const sw = document.querySelector('.mswitch'); if (sw && MAIL.boxes.length) sw.outerHTML = mailSwitch();

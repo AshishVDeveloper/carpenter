@@ -152,6 +152,18 @@ function notFound() {
   const t = String((VI.render(D, best[1], best.slice(2)) || {}).title || best[0]).split(' | ')[0].split(' — ')[0];
   sg.innerHTML = tt('Were you looking for') + ' <a class="link" href="' + home(best[0]) + '">' + esc(tt(t)) + '</a>?'; sg.hidden = false;
 }
+
+/* header: transparent over photo banners, glass + progress line after scrolling */
+function hdrFx() {
+  const h = document.documentElement;
+  h.classList.toggle('ovl', !!document.querySelector('#app > .hero:first-child, #app > .phero:first-child'));
+  if (hdrFx.on) return; hdrFx.on = 1;
+  let raf = 0;
+  const upd = () => { raf = 0; const y = scrollY, max = document.documentElement.scrollHeight - innerHeight; h.classList.toggle('scrolled', y > 24); h.style.setProperty('--sp', max > 0 ? Math.min(1, y / max).toFixed(4) : 0); };
+  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+  addEventListener('resize', upd); upd();
+}
+hdrFx();
 function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
@@ -167,7 +179,7 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   if (window.__legacyProduct) { const p = D.PRODUCTS.find(x => String(x.id) === window.__legacyProduct); location.replace(home(p ? p.url : '/furniture/')); return; }
   const r = VI.resolve(D, location.pathname), p = VI.render(D, r.view, r.args);
   if (r.view !== 'list' && swap('app', p.body)) document.title = p.title;
-  swap('hdr', VI.header(D, r.view === 'notfound' ? '' : r.path)); swap('ftr', VI.footer(D)); a11y(); theme();
+  swap('hdr', VI.header(D, r.view === 'notfound' ? '' : r.path)); swap('ftr', VI.footer(D)); a11y(); theme(); hdrFx();
   if (r.view === 'notfound' || location.pathname === '/404.html') document.title = p.title;
   if (r.view === 'notfound') notFound();
   bind();

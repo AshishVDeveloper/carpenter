@@ -22,7 +22,7 @@ function page(route, view, args, lang) {
   const ld = [VI.orgLD(D)].concat(p.ld || []);
   const hdr = VI.header(D, view === 'notfound' ? '/' : route), ftr = VI.footer(D);
   return `<!DOCTYPE html>
-<html lang="${lang === 'en' ? 'en-IN' : lang + '-IN'}">
+<html lang="${lang === 'en' ? 'en-IN' : lang + '-IN'}"${['home', 'service', 'area', 'guide'].includes(view) ? ' class="ovl"' : ''}>
 <head>
 <meta charset="UTF-8"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://formsubmit.co; object-src 'none'; base-uri 'self'; form-action 'self' https://formsubmit.co; upgrade-insecure-requests"/>

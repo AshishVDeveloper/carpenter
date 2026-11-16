@@ -512,7 +512,9 @@ function footer(D) {
 function orgLD(D) {
   const S = D.S, L = S.letterhead || {};
   return { '@context': 'https://schema.org', '@type': 'HomeAndConstructionBusiness', '@id': S.site_url + '/#business', name: S.name, url: S.site_url + '/', image: S.site_url + '/images/site/og.jpg', logo: S.site_url + '/assets/logo.png', telephone: '+91' + S.phone, email: S.email, priceRange: '₹₹',
-    address: { '@type': 'PostalAddress', streetAddress: L.address || S.address, addressLocality: 'Airoli, Navi Mumbai', addressRegion: 'Maharashtra', postalCode: (String(L.address || '').match(/\b\d{6}\b/) || [])[0], addressCountry: 'IN' },
+    address: { '@type': 'PostalAddress', streetAddress: 'RM36, Yadav Nagar, MIDC Road, Airoli', addressLocality: 'Navi Mumbai', addressRegion: 'Maharashtra', postalCode: (String(L.address || '').match(/\b\d{6}\b/) || [])[0], addressCountry: 'IN' }, hasMap: S.map || undefined,
+    openingHoursSpecification: [{ '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], opens: '09:00', closes: '20:00' }],
+    sameAs: [S.instagram, S.facebook].filter(Boolean),
     areaServed: D.AREAS.map(a => ({ '@type': 'Place', name: a.name })), founder: (S.team || []).filter(t => /founder/i.test(t.role)).map(t => ({ '@type': 'Person', name: t.name, jobTitle: t.role, image: t.photo ? S.site_url + src(t.photo) : undefined })),
     employee: (S.team || []).filter(t => !/founder/i.test(t.role)).map(t => ({ '@type': 'Person', name: t.name, jobTitle: t.role })),
     makesOffer: S.services.map(s => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: s.title, url: S.site_url + '/services/' + s.slug + '/' } })) };

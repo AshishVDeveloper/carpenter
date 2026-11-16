@@ -2,7 +2,10 @@
    Keeps the password check, the 2FA secret and the GitHub publishing key off the public website.
 
    KV keys
-     acct            {email, salt, ph, totp, last, backup:[sha256], gh}
+     acct            {email, salt, ph, totp, last, backup:[sha256], gh}   owner, always super admin
+     user:<email>    {email, name, role, custom?, salt, ph, totp?, backup, active}   team members (list in "users")
+     roles           {key: {name, perms[]}}                    role master (super_admin is fixed)
+     vaultkey        shared AES key for private documents
      pending         {secret, gh, kind}                       (15 min) 2FA setup in progress
      ticket:<id>     {email}                                   (5 min)  password OK, waiting for 2FA code
      sess:<id>       {email, exp}                              (12 h)   signed-in session
@@ -39,7 +42,7 @@ export default {
 
 async function route(req, env, url) {
   const p = url.pathname, m = req.method, KV = env.AUTH;
-  if (p === '/' && m === 'GET') return json({ ok: true, ready: !!(await KV.get('acct')) });
+  if (p === '/' && m === 'GET') return json({ ok: true, ready: !!(await KV.get('acct')), roles: true });
 
   // ── website enquiry → email to the business inbox via own SMTP (public, rate-limited) ──
   if (p === '/enquiry' && m === 'POST') {
@@ -100,81 +103,153 @@ async function route(req, env, url) {
     return json({ backup: codes, ...(await newSession(KV, lc(b.email))) });
   }
 
-  // ── sign in: step 1 password, step 2 code ──
+  // ── sign in: step 1 password, step 2 code (first sign-in of a team member: scan QR to set up 2FA) ──
   if (p === '/login' && m === 'POST') {
     const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
-    await lockCheck(KV, ip);
-    const a = await acct(KV);
-    if (lc(b.email) !== a.email || await sha(a.salt + (b.hash || '')) !== a.ph) { await lockFail(KV, ip); throw err(401, 'login', 'Email or password is incorrect.'); }
-    const id = hex(rand(24));
-    await KV.put('ticket:' + id, JSON.stringify({ email: a.email }), { expirationTtl: TICKET_TTL });
-    return json({ ticket: id });
+    await lockCheck(KV, ip); await acct(KV);
+    const u = await getUser(KV, b.email);
+    if (!u || !u.ph || await sha(u.salt + (b.hash || '')) !== u.ph) { await lockFail(KV, ip); throw err(401, 'login', 'Email or password is incorrect.'); }
+    if (u.active === false) throw err(403, 'inactive', 'This account is switched off. Ask the owner to switch it on.');
+    const id = hex(rand(24)), t = { email: u.email };
+    if (!u.totp) t.secret = b32(rand(20));
+    await KV.put('ticket:' + id, JSON.stringify(t), { expirationTtl: TICKET_TTL * 2 });
+    return json({ ticket: id, ...(t.secret ? { setup: { secret: t.secret, otpauth: otpauth(env, u.email, t.secret) } } : {}) });
   }
   if (p === '/login/2fa' && m === 'POST') {
     const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
     await lockCheck(KV, ip);
     const t = JSON.parse(await KV.get('ticket:' + (b.ticket || '')) || 'null');
     if (!t) throw err(401, 'expired', 'Sign-in expired. Enter your password again.');
-    const a = await acct(KV);
-    if (!(await secondFactor(KV, a, b.code))) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong. Use the newest code from the app.'); }
+    const u = await getUser(KV, t.email); if (!u || u.active === false) throw err(401, 'login', 'This account is not available.');
+    let codes;
+    if (t.secret) {
+      const step = await totpCheck(t.secret, b.code, -1);
+      if (step < 0) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong. Use the newest code from the app.'); }
+      codes = backupCodes(); u.totp = t.secret; u.last = step; u.backup = await Promise.all(codes.map(c => sha(c.replace(/-/g, '')))); await saveUser(KV, u);
+    } else if (!(await secondFactor(KV, u, b.code))) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong. Use the newest code from the app.'); }
     await KV.delete('ticket:' + b.ticket); await KV.delete('fail:' + ip);
-    return json(await newSession(KV, a.email));
+    return json({ ...(await newSession(KV, u.email)), ...(codes ? { backup: codes } : {}) });
   }
 
-  // ── password reset (forgot password): GitHub key + 2FA code or backup code ──
+  // ── password reset (forgot password) for the owner: GitHub key + 2FA code or backup code. Team members ask the owner. ──
   if (p === '/reset' && m === 'POST') {
     const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
     await lockCheck(KV, ip);
-    const a = await acct(KV);
+    const a = await getUser(KV, (await acct(KV)).email);
     await ghOwner(env, b.github);
     if (!(await secondFactor(KV, a, b.code))) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong.'); }
     if (!/^[0-9a-f]{64}$/.test(b.hash || '')) throw err(400, 'bad', 'Missing details.');
     a.salt = hex(rand(16)); a.ph = await sha(a.salt + b.hash); a.gh = b.github;
-    await KV.put('acct', JSON.stringify(a));
+    await saveUser(KV, a);
     return json({ ok: true });
   }
 
   // ── everything below needs a signed-in session ──
-  const s = await session(KV, req);
-  if (p === '/me' && m === 'GET') { const a = await acct(KV); return json({ email: s.email, exp: s.exp, backupLeft: a.backup.length }); }
+  const s = await session(KV, req), U = s.user, can = (mod, act) => s.perms.includes(mod + '.' + act), need = (mod, act) => { if (!can(mod, act)) throw err(403, 'perm', 'You don\'t have permission for this. Ask the owner.'); };
+  const R = await rolesLoad(KV);
+  if (p === '/me' && m === 'GET') return json({ email: U.email, name: U.name || '', role: U.role, roleName: (R[U.role] || {}).name || U.role, custom: !!U.custom, perms: s.perms, owner: !!U.owner, mustChange: !!U.mustChange, exp: s.exp, backupLeft: (U.backup || []).length, mods: MODS });
   if (p === '/logout' && m === 'POST') { await KV.delete('sess:' + s.id); return json({ ok: true }); }
   if (p === '/password' && m === 'POST') {
-    const b = await body(req), a = await acct(KV);
-    if (await sha(a.salt + (b.old || '')) !== a.ph) throw err(401, 'login', 'Current password is incorrect.');
-    if (!(await secondFactor(KV, a, b.code))) throw err(401, 'code', 'That 2FA code is wrong.');
+    const b = await body(req), u = U;
+    if (await sha(u.salt + (b.old || '')) !== u.ph) throw err(401, 'login', 'Current password is incorrect.');
+    if (!(await secondFactor(KV, u, b.code))) throw err(401, 'code', 'That 2FA code is wrong.');
     if (!/^[0-9a-f]{64}$/.test(b.hash || '')) throw err(400, 'bad', 'Missing details.');
-    a.salt = hex(rand(16)); a.ph = await sha(a.salt + b.hash);
-    await KV.put('acct', JSON.stringify(a)); return json({ ok: true });
+    u.salt = hex(rand(16)); u.ph = await sha(u.salt + b.hash); delete u.mustChange;
+    await saveUser(KV, u); return json({ ok: true });
   }
   if (p === '/backup' && m === 'POST') {
-    const b = await body(req), a = await acct(KV);
-    if (!(await secondFactor(KV, a, b.code, true))) throw err(401, 'code', 'That 2FA code is wrong.');
-    const codes = backupCodes(); a.backup = await Promise.all(codes.map(c => sha(c.replace(/-/g, ''))));
-    await KV.put('acct', JSON.stringify(a)); return json({ backup: codes });
+    const b = await body(req), u = U;
+    if (!(await secondFactor(KV, u, b.code, true))) throw err(401, 'code', 'That 2FA code is wrong.');
+    const codes = backupCodes(); u.backup = await Promise.all(codes.map(c => sha(c.replace(/-/g, ''))));
+    await saveUser(KV, u); return json({ backup: codes });
   }
   if (p === '/2fa/move/start' && m === 'POST') {
-    const b = await body(req), a = await acct(KV);
-    if (!(await secondFactor(KV, a, b.code))) throw err(401, 'code', 'That 2FA code is wrong.');
+    const b = await body(req), u = U;
+    if (!(await secondFactor(KV, u, b.code))) throw err(401, 'code', 'That 2FA code is wrong.');
     const secret = b32(rand(20));
-    await KV.put('pending', JSON.stringify({ secret, kind: 'move' }), { expirationTtl: PENDING_TTL });
-    return json({ secret, otpauth: otpauth(env, a.email, secret) });
+    await KV.put('pending:' + u.email, JSON.stringify({ secret, kind: 'move' }), { expirationTtl: PENDING_TTL });
+    return json({ secret, otpauth: otpauth(env, u.email, secret) });
   }
   if (p === '/2fa/move/finish' && m === 'POST') {
-    const b = await body(req), a = await acct(KV), pend = JSON.parse(await KV.get('pending') || 'null');
+    const b = await body(req), u = U, pend = JSON.parse(await KV.get('pending:' + u.email) || 'null');
     if (!pend || pend.kind !== 'move') throw err(400, 'expired', 'Expired. Start again.');
     const step = await totpCheck(pend.secret, b.code, -1);
     if (step < 0) throw err(400, 'code', 'That code is wrong. Use the newest code from the new app.');
-    a.totp = pend.secret; a.last = step; await KV.put('acct', JSON.stringify(a)); await KV.delete('pending');
+    u.totp = pend.secret; u.last = step; await saveUser(KV, u); await KV.delete('pending:' + u.email);
     return json({ ok: true });
   }
   if (p === '/github' && m === 'POST') {
-    const b = await body(req), a = await acct(KV);
-    await ghOwner(env, b.github); a.gh = b.github; await KV.put('acct', JSON.stringify(a)); return json({ ok: true });
+    need('publishing', 'edit');
+    const b = await body(req), a = await getUser(KV, (await acct(KV)).email);
+    await ghOwner(env, b.github); a.gh = b.github; await saveUser(KV, a); return json({ ok: true });
+  }
+
+  // ── shared key for private documents (quotations, bills…), only for people allowed to see them ──
+  if (p === '/vault/key' && m === 'GET') {
+    if (!['documents', 'rates', 'letterhead'].some(x => can(x, 'view'))) throw err(403, 'perm', 'No access to documents.');
+    let k = await KV.get('vaultkey'); if (!k) { k = btoa(String.fromCharCode(...rand(32))); await KV.put('vaultkey', k); }
+    return json({ key: k });
+  }
+
+  // ── team members ──
+  if (p === '/users' && m === 'GET') {
+    need('users', 'view');
+    const list = [(await acct(KV)).email, ...await userList(KV)], out = [];
+    for (const e of list) { const u = await getUser(KV, e); if (u) out.push(pubUser(u, R)); }
+    return json({ users: out, roles: R, mods: MODS });
+  }
+  if (p === '/users/save' && m === 'POST') {
+    const b = await body(req), email = lc(b.email), isNew = !!b.create;
+    need('users', isNew ? 'add' : 'edit');
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) throw err(400, 'bad', 'Enter a valid email address.');
+    if (!R[b.role]) throw err(400, 'bad', 'Choose a role.');
+    const iAmSuper = U.role === 'super_admin';
+    let u = await getUser(KV, email);
+    if (isNew && u) throw err(409, 'exists', 'Someone with this email already exists.');
+    if (!isNew && !u) throw err(404, 'notfound', 'User not found.');
+    if (!iAmSuper && (b.role === 'super_admin' || (u && u.role === 'super_admin'))) throw err(403, 'perm', 'Only a super admin can manage super admins.');
+    if (u && u.owner && !U.owner) throw err(403, 'perm', 'Only the owner can change the owner account.');
+    if (u && u.owner && b.role !== 'super_admin') throw err(400, 'bad', 'The owner always stays super admin.');
+    if (u && u.email === U.email && (b.role !== U.role || b.active === false)) throw err(400, 'bad', 'You can\'t change your own role or switch yourself off.');
+    if (isNew) { if (!/^[0-9a-f]{64}$/.test(b.hash || '')) throw err(400, 'bad', 'Set a first password.'); u = { email, created: Date.now(), by: U.email, _key: 'user:' + email }; }
+    u.name = String(b.name || '').trim().slice(0, 60); u.phone = String(b.phone || '').replace(/[^\d+ ]/g, '').slice(0, 16);
+    u.role = b.role; u.active = b.active !== false;
+    const myPerms = new Set(s.perms), wanted = Array.isArray(b.custom) ? b.custom.filter(x => ALL.includes(x)) : null;
+    if (wanted && !iAmSuper && wanted.some(x => !myPerms.has(x))) throw err(403, 'perm', 'You can only give permissions you have yourself.');
+    if (u.owner || b.role === 'super_admin') delete u.custom; else if (wanted) u.custom = wanted; else delete u.custom;
+    if (/^[0-9a-f]{64}$/.test(b.hash || '')) { u.salt = hex(rand(16)); u.ph = await sha(u.salt + b.hash); if (u.email !== U.email) u.mustChange = true; }
+    if (b.reset2fa && !u.owner) { delete u.totp; delete u.last; u.backup = []; }
+    await saveUser(KV, u);
+    if (isNew) { const l = await userList(KV); if (!l.includes(email)) { l.push(email); await KV.put('users', JSON.stringify(l)); } }
+    return json({ ok: true, user: pubUser(await getUser(KV, email), R) });
+  }
+  if (p === '/users/delete' && m === 'POST') {
+    need('users', 'delete');
+    const b = await body(req), u = await getUser(KV, b.email);
+    if (!u) throw err(404, 'notfound', 'User not found.');
+    if (u.owner || u.email === U.email) throw err(400, 'bad', 'You can\'t delete this account.');
+    if (u.role === 'super_admin' && U.role !== 'super_admin') throw err(403, 'perm', 'Only a super admin can delete a super admin.');
+    await KV.delete('user:' + u.email); await KV.put('users', JSON.stringify((await userList(KV)).filter(x => x !== u.email)));
+    return json({ ok: true });
+  }
+  if (p === '/roles' && m === 'POST') {
+    if (U.role !== 'super_admin') throw err(403, 'perm', 'Only a super admin can change roles.');
+    const b = await body(req), inp = b.roles && typeof b.roles === 'object' ? b.roles : {}, out = {};
+    for (const [k, v] of Object.entries(inp)) {
+      if (!/^[a-z][a-z0-9_]{1,24}$/.test(k) || k === 'super_admin') continue;
+      out[k] = { name: String(v.name || k).trim().slice(0, 30) || k, perms: (v.perms || []).filter(x => ALL.includes(x)) };
+    }
+    const used = new Set(['super_admin']); for (const e of await userList(KV)) { const u = await getUser(KV, e); if (u) used.add(u.role); }
+    for (const k of Object.keys(R)) if (k !== 'super_admin' && !out[k] && used.has(k)) throw err(400, 'bad', 'The role "' + R[k].name + '" is still given to someone. Change their role first.');
+    await KV.put('roles', JSON.stringify(out));
+    return json({ roles: await rolesLoad(KV) });
   }
 
   // ── Zoho Mail: several mailboxes (info@, asheesh@, …), each connected once with its own Zoho login ──
+  if (p.startsWith('/mail/')) need('mail', 'view');
   if (p === '/mail/status' && m === 'GET') { const Z = await zLoad(KV); return json({ connected: Z.boxes.length > 0, email: Z.boxes[0] && Z.boxes[0].email, boxes: Z.boxes.map(x => x.email) }); }
   if (p === '/mail/connect' && m === 'POST') {
+    need('mail', 'manage');
     const b = await body(req);
     if (!b.clientId || !b.clientSecret || !b.code) throw err(400, 'bad', 'Fill in Client ID, Client Secret and Code.');
     const r = await fetch(zAcc(env) + '/oauth/v2/token?' + new URLSearchParams({ grant_type: 'authorization_code', client_id: b.clientId.trim(), client_secret: b.clientSecret.trim(), code: b.code.trim() }), { method: 'POST' });
@@ -192,6 +267,7 @@ async function route(req, env, url) {
     return json({ connected: true, email: found[0].email, added: found.map(x => x.email), boxes: Z.boxes.map(x => x.email) });
   }
   if (p === '/mail/disconnect' && m === 'POST') {
+    need('mail', 'manage');
     const b = await body(req), Z = await zLoad(KV);
     Z.boxes = b.box ? Z.boxes.filter(x => x.email !== lc(b.box)) : [];
     zTidy(Z); await zSave(KV, Z); return json({ ok: true, boxes: Z.boxes.map(x => x.email) });
@@ -226,6 +302,7 @@ async function route(req, env, url) {
       await zMark(zApiB, A, ids, b.read !== false); return json({ ok: true });
     }
     if (p === '/mail/send' && m === 'POST') {
+      need('mail', 'send');
       const b = await body(req);
       if (!/\S+@\S+\.\S+/.test(b.to || '')) throw err(400, 'bad', 'Enter a valid "To" email address.');
       const sub = String(b.subject || '(no subject)').slice(0, 250);
@@ -240,6 +317,10 @@ async function route(req, env, url) {
   // ── publishing: forwards only this repo's contents API, using the key kept here ──
   if (p === '/gh' || p.startsWith('/gh/contents/')) {
     if (!['GET', 'PUT'].includes(m)) throw err(405, 'method', 'Not allowed.');
+    if (m === 'PUT') {
+      const f = decodeURIComponent(p.slice('/gh/contents/'.length)), mods = ghMods(f), w = x => ['add', 'edit', 'delete'].some(a => can(x, a));
+      if (f === 'data/auth.json' ? !U.owner : !mods.some(w)) throw err(403, 'perm', 'You don\'t have permission to change this. Ask the owner.');
+    }
     const a = await acct(KV);
     const r = await fetch(ghBase(env) + '/repos/' + env.GH_OWNER + '/' + env.GH_REPO + p.slice(3) + url.search, {
       method: m, body: m === 'PUT' ? await req.text() : undefined,
@@ -369,16 +450,57 @@ async function ghOwner(env, token) {
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.permissions || !j.permissions.push) throw err(403, 'github', 'That GitHub key can\'t change the website. Check it has "Contents: Read and write" for the ' + env.GH_REPO + ' repository.');
 }
+/* ── team members, roles and permissions ──
+   owner lives in 'acct' (always super admin); others in 'user:<email>', listed in 'users' */
+const MODS = { dashboard: ['view'], documents: ['view', 'add', 'edit', 'delete'], rates: ['view', 'edit'], letterhead: ['view', 'edit'], settings: ['view', 'edit'],
+  projects: ['view', 'add', 'edit', 'delete'], testimonials: ['view', 'add', 'edit', 'delete'], products: ['view', 'add', 'edit', 'delete'], categories: ['view', 'add', 'edit', 'delete'],
+  orders: ['view', 'delete'], mail: ['view', 'send', 'manage'], publishing: ['view', 'edit'], users: ['view', 'add', 'edit', 'delete'] };
+const ALL = Object.entries(MODS).flatMap(([k, a]) => a.map(x => k + '.' + x));
+const pick = (spec) => ALL.filter(x => { const [mo, ac] = x.split('.'); return spec[mo] === '*' || (spec[mo] || []).includes(ac); });
+const ROLE_DEF = {
+  super_admin: { name: 'Super admin', perms: ALL, system: true },
+  admin: { name: 'Admin', perms: ALL.filter(x => !['users.delete', 'publishing.edit', 'mail.manage'].includes(x)) },
+  employee: { name: 'Employee', perms: pick({ dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], projects: ['view', 'add', 'edit'], products: ['view'], categories: ['view'], orders: ['view'], mail: ['view'] }) },
+  sale: { name: 'Sale', perms: pick({ dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], products: ['view'], categories: ['view'], testimonials: ['view'], orders: ['view'], mail: ['view', 'send'] }) }
+};
+async function rolesLoad(KV) {
+  const saved = JSON.parse(await KV.get('roles') || 'null');
+  const r = saved ? { super_admin: ROLE_DEF.super_admin, ...saved } : { ...ROLE_DEF };
+  r.super_admin = ROLE_DEF.super_admin; return r;
+}
+const userList = async KV => JSON.parse(await KV.get('users') || '[]');
+async function getUser(KV, email) {
+  const e = lc(email); if (!e) return null;
+  const a = JSON.parse(await KV.get('acct') || 'null');
+  if (a && a.email === e) return { name: 'Owner', ...a, role: 'super_admin', owner: true, active: true, _key: 'acct' };
+  const u = JSON.parse(await KV.get('user:' + e) || 'null'); return u ? { ...u, _key: 'user:' + e } : null;
+}
+async function saveUser(KV, u) { const { _key, owner, ...rest } = u; if (owner) delete rest.role; await KV.put(_key, JSON.stringify(rest)); }
+function permsOf(u, R) { if (u.role === 'super_admin') return ALL.slice(); const base = Array.isArray(u.custom) ? u.custom : ((R[u.role] || {}).perms || []); return base.filter(x => ALL.includes(x)); }
+const pubUser = (u, R) => ({ email: u.email, name: u.name || '', phone: u.phone || '', role: u.role, roleName: (R[u.role] || {}).name || u.role, custom: Array.isArray(u.custom) ? u.custom : null, active: u.active !== false, owner: !!u.owner, has2fa: !!u.totp, mustChange: !!u.mustChange, created: u.created || null, last: u.lastLogin || null });
+/* which permission module may write which file in the repo */
+function ghMods(f) {
+  if (f === 'data/vault.json') return ['documents', 'rates', 'letterhead'];
+  if (f === 'data/settings.json') return ['settings', 'letterhead'];
+  const m = f.match(/^data\/(products|categories|projects|testimonials)\.json$/); if (m) return [m[1]];
+  if (/^images\/products\/[\w.-]+$/.test(f)) return ['products'];
+  if (/^images\/work\/[\w.-]+$/.test(f)) return ['projects'];
+  return ['publishing'];
+}
+
 async function newSession(KV, email) {
   const id = hex(rand(32)), exp = Date.now() + SESSION_TTL * 1000;
   await KV.put('sess:' + id, JSON.stringify({ email, exp }), { expirationTtl: SESSION_TTL });
+  const u = await getUser(KV, email); if (u) { u.lastLogin = Date.now(); await saveUser(KV, u); }
   return { session: id, exp };
 }
 async function session(KV, req) {
   const id = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/, '');
   const s = id && /^[0-9a-f]{64}$/.test(id) ? JSON.parse(await KV.get('sess:' + id) || 'null') : null;
   if (!s || s.exp < Date.now()) throw err(401, 'session', 'Please sign in again.');
-  return { ...s, id };
+  const user = await getUser(KV, s.email);
+  if (!user || user.active === false) { await KV.delete('sess:' + id); throw err(401, 'session', 'Please sign in again.'); }
+  return { ...s, id, user, perms: permsOf(user, await rolesLoad(KV)) };
 }
 async function lockCheck(KV, ip) {
   const f = JSON.parse(await KV.get('fail:' + ip) || 'null');
@@ -392,11 +514,11 @@ async function lockFail(KV, ip) {
 /* app code, or a one-time backup code */
 async function secondFactor(KV, a, code, appOnly) {
   const c = String(code || '').replace(/\s/g, '');
-  if (/^\d{6}$/.test(c)) { const st = await totpCheck(a.totp, c, a.last || -1); if (st < 0) return false; a.last = st; await KV.put('acct', JSON.stringify(a)); return true; }
+  if (/^\d{6}$/.test(c)) { const st = await totpCheck(a.totp, c, a.last || -1); if (st < 0) return false; a.last = st; await saveUser(KV, a); return true; }
   if (appOnly) return false;
-  const h = await sha(c.toUpperCase().replace(/[^A-Z0-9]/g, '')), i = a.backup.indexOf(h);
+  const h = await sha(c.toUpperCase().replace(/[^A-Z0-9]/g, '')), i = (a.backup = a.backup || []).indexOf(h);
   if (i < 0) return false;
-  a.backup.splice(i, 1); await KV.put('acct', JSON.stringify(a)); return true;
+  a.backup.splice(i, 1); await saveUser(KV, a); return true;
 }
 function backupCodes() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({ length: 8 }, () => { const r = rand(10); return [...r].map(x => A[x % A.length]).join('').replace(/(.{5})/, '$1-'); }); }
 

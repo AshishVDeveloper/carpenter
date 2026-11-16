@@ -28,7 +28,7 @@ async function pgMail(arg) {
   const inbox = MAIL.folders.find(f => /inbox/i.test(f.type) || /^inbox$/i.test(f.name)) || MAIL.folders[0];
   if (!MAIL.folder || !MAIL.folders.some(f => f.id === MAIL.folder)) MAIL.folder = inbox && inbox.id;
   $('mailWrap').innerHTML =
-    '<div class="mailbar"><div class="mfolders" role="tablist">' + mailFolderTabs() + '</div><div class="macts"><button class="btn sm" onclick="mailRefresh()" title="Refresh">Refresh</button><button class="btn sm pri" onclick="mailCompose()">Write email</button>' + mailSwitch() + '</div></div>' +
+    '<div class="mailbar"><div class="mfolders" role="tablist">' + mailFolderTabs() + '</div><div class="macts"><button class="btn sm" onclick="mailRefresh()" title="Refresh">Refresh</button><button class="btn sm pri" data-perm="mail.send" onclick="mailCompose()">Write email</button>' + mailSwitch() + '</div></div>' +
     '<div class="mailgrid"><div class="card mlist" id="mList"></div><div class="card mread" id="mRead"><div class="empty">Choose an email to read it.</div></div></div>' +
     '<p class="hint" style="margin-top:.6rem">Showing <b>' + esc(MAIL.email || '') + '</b>. <a href="https://mail.zoho.in/zm/" target="_blank" rel="noopener">Open full Zoho Mail</a></p>';
   mailLoad();
@@ -40,7 +40,7 @@ function mailSwitch() {
   return '<div class="mswitch"><button class="btn sm mswbtn" aria-haspopup="menu" aria-expanded="false" onclick="mailSwitchToggle(event)" title="Switch mailbox">' + MBOX_ICON + '<span class="mswname">' + esc(mailShort(MAIL.email)) + '@</span>' + (tot ? '<span class="n">' + tot + '</span>' : '') + '</button>' +
     '<div class="mswmenu" role="menu" hidden><div class="mswhead">Mailboxes</div>' +
     MAIL.boxes.map(e => '<button role="menuitemradio" aria-checked="' + (e === MAIL.email) + '" class="' + (e === MAIL.email ? 'on' : '') + '" onclick="mailSwitchTo(\'' + esc(e) + '\')"><span class="mswdot">' + esc(mailShort(e).slice(0, 1).toUpperCase()) + '</span><span class="mswmail">' + esc(e) + '</span>' + (MAIL.unread[e] ? '<span class="n">' + MAIL.unread[e] + '</span>' : '') + '</button>').join('') +
-    '<hr/><button role="menuitem" onclick="mailConnect(true)">+ Add another mailbox</button><button role="menuitem" class="danger" onclick="mailRemove()">Remove ' + esc(mailShort(MAIL.email)) + '@ from this page</button></div></div>';
+    (can('mail', 'manage') ? '<hr/><button role="menuitem" onclick="mailConnect(true)">+ Add another mailbox</button><button role="menuitem" class="danger" onclick="mailRemove()">Remove ' + esc(mailShort(MAIL.email)) + '@ from this page</button>' : '') + '</div></div>';
 }
 function mailSwitchToggle(e) {
   e.stopPropagation(); const btn = e.currentTarget, m = btn.nextElementSibling, open = m.hidden;
@@ -80,7 +80,7 @@ async function mailOpen(i) {
     r.innerHTML = '<button class="btn sm mback" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\')">← Back</button><h2 class="mh">' + esc(d.subject || m.subject || '(no subject)') + '</h2>' +
       '<div class="mmeta"><b>' + esc(d.from || m.from || '') + '</b> &lt;' + esc(d.fromAddress || m.fromAddress || '') + '&gt;<br/>To: ' + esc(d.to || '') + (d.cc ? '<br/>Cc: ' + esc(d.cc) : '') + '<br/>' + (d.time ? new Date(d.time).toLocaleString('en-IN') : '') + '</div>' +
       '<iframe class="mbody" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" scrolling="no" referrerpolicy="no-referrer" title="Email content"></iframe>' +
-      '<div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="mailCompose(' + i + ')">Reply</button><button class="btn" onclick="mailToggleRead(' + i + ')" id="mRd">Mark as unread</button></div>';
+      '<div class="bar" style="justify-content:flex-start"><button class="btn pri" data-perm="mail.send" onclick="mailCompose(' + i + ')">Reply</button><button class="btn" onclick="mailToggleRead(' + i + ')" id="mRd">Mark as unread</button></div>';
     const f = r.querySelector('iframe');
     f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0}body{font:15px/1.55 system-ui,sans-serif;color:#222;padding:12px;overflow-wrap:anywhere;word-break:break-word}img{max-width:100%!important;height:auto!important}table{max-width:100%!important;width:auto!important}td,th{word-break:break-word}*{max-width:100%;box-sizing:border-box}pre{white-space:pre-wrap}</style>' + mailClean(d.content || '');
     const fit = () => { try { const h = f.contentDocument.documentElement.scrollHeight; if (h) f.style.height = (h + 4) + 'px'; } catch (e) { f.style.height = '520px'; } };
@@ -126,6 +126,7 @@ async function mailSend(e, replyTo) {
   catch (er) { $('cErr').textContent = er.message; $('cErr').hidden = false; b.disabled = false; b.textContent = 'Send'; }
 }
 function mailConnect(more) {
+  if (!can('mail', 'manage')) { $('mailWrap').innerHTML = '<div class="card" style="max-width:560px"><h2>Mail isn\'t connected yet</h2><p>Ask the owner to connect the business mailboxes.</p></div>'; return; }
   document.querySelectorAll('.mswmenu').forEach(x => x.hidden = true);
   const have = (MAIL.boxes || []).length && more;
   $('mailWrap').innerHTML = '<div class="card" style="max-width:680px"><h2>' + (have ? 'Add another mailbox' : 'Connect your mailbox') + '</h2><p>One-time setup per mailbox (about 3 minutes). Do it on a computer. First <b>sign out of Zoho</b>, then sign in as the mailbox you want to add (for example <b>' + esc(['info', 'asheesh', 'ramkumar', 'noreply'].map(x => x + '@mumbai-interior.in').find(x => !(MAIL.boxes || []).includes(x)) || 'info@mumbai-interior.in') + '</b>).' + (have ? ' Already here: ' + MAIL.boxes.map(esc).join(', ') + '.' : '') + '</p>' +

@@ -17,13 +17,13 @@ async function derive(pass, salt){
 async function seal(obj){
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ct = await crypto.subtle.encrypt({name: 'AES-GCM', iv}, KEY, enc.encode(JSON.stringify(obj)));
-  return {v: 1, salt: toB64(SALT), iv: toB64(iv), data: toB64(ct), updated: obj.updated};
+  return SALT ? {v: 1, salt: toB64(SALT), iv: toB64(iv), data: toB64(ct), updated: obj.updated} : {v: 2, kind: 'srv', iv: toB64(iv), data: toB64(ct), updated: obj.updated};
 }
 async function unseal(blob, key){
   const pt = await crypto.subtle.decrypt({name: 'AES-GCM', iv: fromB64(blob.iv)}, key, fromB64(blob.data));
   return JSON.parse(dec.decode(pt));
 }
-async function remember(){ sessionStorage.setItem(VSESS, JSON.stringify({k: toB64(await crypto.subtle.exportKey('raw', KEY)), s: toB64(SALT)})); }
+async function remember(){ sessionStorage.setItem(VSESS, JSON.stringify({k: toB64(await crypto.subtle.exportKey('raw', KEY)), s: SALT ? toB64(SALT) : ''})); }
 
 /* ── defaults ── */
 const DEF_TERMS = {
@@ -62,13 +62,33 @@ window.vaultOpen = async function(pass){
 };
 window.vaultResume = async function(){
   const s = JSON.parse(sessionStorage.getItem(VSESS) || 'null'); if (!s) return false;
-  SALT = fromB64(s.s); KEY = await crypto.subtle.importKey('raw', fromB64(s.k), 'AES-GCM', true, ['encrypt', 'decrypt']);
-  const blob = newest(localBlob(), await remoteBlob());
-  try { V = blob ? await unseal(blob, KEY) : blankVault(); return true; } catch (e) { sessionStorage.removeItem(VSESS); return false; }
+  SALT = s.s ? fromB64(s.s) : null; KEY = await crypto.subtle.importKey('raw', fromB64(s.k), 'AES-GCM', true, ['encrypt', 'decrypt']);
+  let rb;
+  if (!SALT && typeof srvGh === 'function') { try { const j = await srvGh('/contents/data/vault.json?ref=main'); rb = j.content ? JSON.parse(dec.decode(fromB64(j.content.replace(/\s/g, '')))) : await remoteBlob(); } catch (e) { rb = e.status === 404 ? null : await remoteBlob(); } }
+  else rb = await remoteBlob();
+  const lb = localBlob(), blob = newest(lb, rb), other = blob === lb ? rb : lb;
+  for (const b of [blob, other]) { if (!b) continue; try { V = await unseal(b, KEY); return true; } catch (e) { } }
+  if (!blob) { V = blankVault(); return true; }
+  sessionStorage.removeItem(VSESS); return false;
 };
 window.vaultForget = () => sessionStorage.removeItem(VSESS);
+/* team mode: one shared key from the sign-in server. The owner's password-locked store is moved to it on the owner's next sign-in. */
+window.vaultOpenKey = async function(kb64, pass, fresh){
+  const skey = await crypto.subtle.importKey('raw', fromB64(kb64), 'AES-GCM', true, ['encrypt', 'decrypt']);
+  let gh0; /* freshest copy straight from GitHub (the website copy can be a minute old) */
+  if (!fresh) { try { const j = await srvGh('/contents/data/vault.json?ref=main'); gh0 = j.content ? JSON.parse(new TextDecoder().decode(fromB64(j.content.replace(/\s/g, '')))) : await remoteBlob(); } catch (e) { if (e.status !== 404) throw Object.assign(new Error('unreachable'), {unreachable: true}); gh0 = null; } }
+  const blob = fresh ? null : newest(localBlob(), gh0);
+  if (blob && blob.kind === 'srv') { try { V = await unseal(blob, skey); } catch (e) { V = null; throw Object.assign(new Error('locked'), {locked: true}); } KEY = skey; SALT = null; }
+  else if (blob) {
+    if (!pass) throw Object.assign(new Error('owner'), {needOwner: true});
+    try { V = await unseal(blob, await derive(pass, fromB64(blob.salt))); } catch (e) { V = null; throw Object.assign(new Error('locked'), {locked: true}); }
+    KEY = skey; SALT = null; await saveVault(true);
+  } else { KEY = skey; SALT = null; V = blankVault(); await saveVault(true); }
+  await remember();
+};
+window.vaultReady = () => !!V;
 window.vaultFresh = async function(pass){ SALT = crypto.getRandomValues(new Uint8Array(16)); KEY = await derive(pass, SALT); V = blankVault(); await saveVault(true); await remember(); };
-window.vaultRekey = async function(pass){ if (!V) return; SALT = crypto.getRandomValues(new Uint8Array(16)); KEY = await derive(pass, SALT); await saveVault(true); await remember(); };
+window.vaultRekey = async function(pass){ if (!V || !SALT) return; SALT = crypto.getRandomValues(new Uint8Array(16)); KEY = await derive(pass, SALT); await saveVault(true); await remember(); };
 async function saveVault(now){
   V.updated = Date.now();
   const blob = await seal(V);
@@ -115,19 +135,22 @@ function printDoc(d){
 /* ── documents list ── */
 let DF = '', DQ = '';
 window.pgDocs = function(){
-  C('<div class="card"><h2>New document <span class="hint" id="syncState" style="font-weight:500"></span></h2><div class="bar" style="justify-content:flex-start">' + Object.entries(DT).map(([k, t]) => '<a class="btn' + (k === 'quotation' ? ' pri' : '') + '" href="#documents/new-' + k + '">+ ' + t.label + '</a>').join('') + '</div></div>' +
-    '<div class="card"><h2>All documents <span><button class="btn sm" onclick="backupDocs()">Download backup</button> <label class="btn sm" style="margin:0">Restore backup<input type="file" accept=".json,application/json" hidden onchange="restoreDocs(this)"/></label></span></h2>' +
+  C('<div class="card" data-perm="documents.add"><h2>New document <span class="hint" id="syncState" style="font-weight:500"></span></h2><div class="bar" style="justify-content:flex-start">' + Object.entries(DT).map(([k, t]) => '<a class="btn' + (k === 'quotation' ? ' pri' : '') + '" data-perm="documents.add" href="#documents/new-' + k + '">+ ' + t.label + '</a>').join('') + '</div></div>' +
+    '<div class="card"><h2>All documents <span><button class="btn sm" onclick="backupDocs()">Download backup</button> <label class="btn sm" data-perm="documents.delete" style="margin:0">Restore backup<input type="file" accept=".json,application/json" hidden onchange="restoreDocs(this)"/></label></span></h2>' +
     '<div class="tools"><input type="search" placeholder="Search client or number" aria-label="Search documents" value="' + esc(DQ) + '" oninput="DQ_set(this.value)"/><select aria-label="Type" onchange="DF_set(this.value)"><option value="">All types</option>' + Object.entries(DT).map(([k, t]) => '<option value="' + k + '"' + (DF === k ? ' selected' : '') + '>' + t.label + '</option>').join('') + '</select></div>' +
-    '<div class="tw"><table><thead><tr><th>No.</th><th>Client</th><th class="hide-m">Date</th><th>Total</th><th class="hide-m">Status</th><th><span hidden>Actions</span></th></tr></thead><tbody id="dRows"></tbody></table></div></div>' +
-    '<div class="msg info">Documents are private. They are encrypted with your admin password before being saved on this device' + (gh() ? ' and on GitHub (so they sync to your other devices)' : '') + '. Keep a backup: if the password is reset with a GitHub token, old documents can\'t be opened without a backup.</div>');
+    '<div class="tw"><table><thead><tr><th class="sr">Sr.</th><th>No.</th><th>Client</th><th class="hide-m">Date</th><th>Total</th><th class="hide-m">Status</th><th><span hidden>Actions</span></th></tr></thead><tbody id="dRows"></tbody></table></div></div>' +
+    (SALT ? '<div class="msg info">Documents are private. They are encrypted with your admin password before being saved on this device' + (gh() ? ' and on GitHub (so they sync to your other devices)' : '') + '. Keep a backup: if the password is reset with a GitHub token, old documents can\'t be opened without a backup.</div>' : '<div class="msg info">Documents are private. They are encrypted with a team key that only your sign-in server hands out, to people allowed to see documents. Keep a backup now and then.</div>'));
   drawDocs(); setSync('');
 };
 window.DQ_set = v => { DQ = v; drawDocs(); }; window.DF_set = v => { DF = v; drawDocs(); };
+window.drawDocs = drawDocs;
 function drawDocs(){
   const q = DQ.toLowerCase(), L = V.docs.filter(d => (!DF || d.type === DF) && (!q || (d.no + ' ' + d.client + ' ' + (d.client_phone || '')).toLowerCase().includes(q))).sort((a, b) => (b.updated || 0) - (a.updated || 0));
-  document.getElementById('dRows').innerHTML = L.length ? L.map(d => '<tr><td><div class="t">' + esc(d.no) + '</div><div class="s">' + DT[d.type].label + '</div></td><td>' + esc(d.client || '—') + '<div class="s">' + esc(d.client_phone || '') + '</div></td><td class="hide-m">' + esc(D.fmtDate(d.date)) + '</td><td><b>' + D.rs(docTotal(d)) + '</b></td><td class="hide-m"><span class="pill ' + (d.status === 'final' ? 'ok' : 'warn') + '">' + (d.status === 'final' ? 'Final' : 'Draft') + '</span></td>' +
-    '<td><div class="acts-cell"><a class="btn sm" href="#documents/' + d.id + '">Open</a><button class="btn sm" onclick="docPDF(\'' + d.id + '\',this)">PDF</button><button class="btn sm danger" onclick="docDel(\'' + d.id + '\')">Delete</button></div></td></tr>').join('')
-    : '<tr><td colspan="6" class="empty">No documents yet. Create a quotation above.</td></tr>';
+  const pg = pageOf('documents', L, q + '|' + DF);
+  document.getElementById('dRows').innerHTML = L.length ? pg.rows.map((d, j) => '<tr>' + sr(pg, j) + '<td><div class="t">' + esc(d.no) + '</div><div class="s">' + DT[d.type].label + '</div></td><td>' + esc(d.client || '—') + '<div class="s">' + esc(d.client_phone || '') + '</div></td><td class="hide-m">' + esc(D.fmtDate(d.date)) + '</td><td><b>' + D.rs(docTotal(d)) + '</b></td><td class="hide-m"><span class="pill ' + (d.status === 'final' ? 'ok' : 'warn') + '">' + (d.status === 'final' ? 'Final' : 'Draft') + '</span></td>' +
+    '<td><div class="acts-cell"><a class="btn sm" href="#documents/' + d.id + '">Open</a><button class="btn sm" onclick="docPDF(\'' + d.id + '\',this)">PDF</button><button class="btn sm danger" data-perm="documents.delete" onclick="docDel(\'' + d.id + '\')">Delete</button></div></td></tr>').join('')
+    : '<tr><td colspan="7" class="empty">No documents yet.</td></tr>';
+  pgMount(document.getElementById('dRows'), pg, 'drawDocs');
 }
 window.docPDF = (id, btn) => makePDF(V.docs.find(d => d.id === id), btn);
 window.docDel = async id => { const d = V.docs.find(x => x.id === id); if (!await confirmBox('Delete ' + DT[d.type].label.toLowerCase() + ' ' + d.no + '?', 'This can\'t be undone unless you have a backup.')) return; V.docs = V.docs.filter(x => x.id !== id); await saveVault(); drawDocs(); };
@@ -257,14 +280,17 @@ window.docRoute = function(arg){
 
 /* ── rate list ── */
 window.pgRates = function(){
-  C('<div class="card"><h2>Rate list <span class="hint" id="syncState" style="font-weight:500"></span></h2><p class="hint" style="margin:-.5rem 0 1rem">Pick these in the Description box of any document — the rate fills in by itself.</p><div id="rRows"></div><div class="bar" style="justify-content:space-between"><button class="btn sm" onclick="rtAdd()">+ Add item</button><button class="btn pri" onclick="rtSave(this)">Save rate list</button></div></div>');
+  C('<div class="card"><h2>Rate list <span class="hint" id="syncState" style="font-weight:500"></span></h2><p class="hint" style="margin:-.5rem 0 1rem">Pick these in the Description box of any document — the rate fills in by itself.</p><div id="rRows"></div><div class="bar" style="justify-content:space-between"><button class="btn sm" data-perm="rates.edit" onclick="rtAdd()">+ Add item</button><button class="btn pri" onclick="rtSave(this)">Save rate list</button></div></div>');
   drawRates();
 };
+window.drawRates = drawRates;
 function drawRates(){
-  document.getElementById('rRows').innerHTML = '<div class="r rhead" style="grid-template-columns:1fr 130px 120px auto"><span>Item</span><span>Charged</span><span>Rate ₹</span><span></span></div>' + (V.rates || []).map((r, i) => '<div class="r" style="grid-template-columns:1fr 130px 120px auto"><input aria-label="Item" value="' + esc(r.desc) + '" oninput="V_rate(' + i + ',\'desc\',this.value)"/><select aria-label="Charged" onchange="V_rate(' + i + ',\'unit\',this.value)"><option value="sqft"' + (r.unit === 'sqft' ? ' selected' : '') + '>per sq ft</option><option value="nos"' + (r.unit === 'nos' ? ' selected' : '') + '>per piece</option><option value="lump"' + (r.unit === 'lump' ? ' selected' : '') + '>fixed price</option></select><input aria-label="Rate" inputmode="decimal" value="' + esc(r.rate) + '" oninput="V_rate(' + i + ',\'rate\',this.value)"/><button class="btn sm danger" onclick="rtDel(' + i + ')">Remove</button></div>').join('');
+  const pg = pageOf('rates', (V.rates || []).map((r, i) => [r, i]));
+  document.getElementById('rRows').innerHTML = '<div class="r rhead" style="grid-template-columns:40px 1fr 130px 120px auto"><span>Sr.</span><span>Item</span><span>Charged</span><span>Rate ₹</span><span></span></div>' + pg.rows.map(([r, i], j) => '<div class="r" style="grid-template-columns:40px 1fr 130px 120px auto"><span class="sr">' + (pg.from + j + 1) + '</span><input aria-label="Item" value="' + esc(r.desc) + '" oninput="V_rate(' + i + ',\'desc\',this.value)"/><select aria-label="Charged" onchange="V_rate(' + i + ',\'unit\',this.value)"><option value="sqft"' + (r.unit === 'sqft' ? ' selected' : '') + '>per sq ft</option><option value="nos"' + (r.unit === 'nos' ? ' selected' : '') + '>per piece</option><option value="lump"' + (r.unit === 'lump' ? ' selected' : '') + '>fixed price</option></select><input aria-label="Rate" inputmode="decimal" value="' + esc(r.rate) + '" oninput="V_rate(' + i + ',\'rate\',this.value)"/><button class="btn sm danger" data-perm="rates.edit" onclick="rtDel(' + i + ')">Remove</button></div>').join('');
+  pgMount(document.getElementById('rRows'), pg, 'drawRates');
 }
 window.V_rate = (i, k, v) => { V.rates[i][k] = k === 'rate' ? (Number(v) || v) : v; setSync('Unsaved changes'); };
-window.rtAdd = () => { V.rates.push({id: Date.now(), desc: '', unit: 'sqft', rate: ''}); drawRates(); const ins = document.querySelectorAll('#rRows input[aria-label=Item]'); ins[ins.length - 1].focus(); };
+window.rtAdd = () => { V.rates.push({id: Date.now(), desc: '', unit: 'sqft', rate: ''}); PGS.rates && (PGS.rates.p = 1e9); drawRates(); const ins = document.querySelectorAll('#rRows input[aria-label=Item]'); ins[ins.length - 1].focus(); };
 window.rtDel = i => { V.rates.splice(i, 1); drawRates(); setSync('Unsaved changes'); };
 window.rtSave = async b => { V.rates = V.rates.filter(r => r.desc.trim()); b.disabled = true; await saveVault(true); b.disabled = false; toast('Rate list saved.'); drawRates(); };
 

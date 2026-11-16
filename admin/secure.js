@@ -36,8 +36,8 @@ async function srvLogin(e) {
   const email = $('lEmail').value, pw = $('lPass').value;
   $('lBtn').disabled = true; $('lBtn').textContent = 'Checking…';
   try {
-    const { ticket } = await api('/login', { email, hash: await srvHash(email, pw) });
-    PENDING = { ticket, email, pw }; showTfa();
+    const r = await api('/login', { email, hash: await srvHash(email, pw) });
+    PENDING = { ticket: r.ticket, email, pw, setup: r.setup }; showTfa();
   } catch (err) { msg('lErr', err.message); }
   $('lBtn').disabled = false; $('lBtn').textContent = 'Sign in';
 }
@@ -49,7 +49,24 @@ function showTfa() {
       '<form onsubmit="srvTfa(event)">' + codeField('tCode', 'Code', 'Lost your phone? Type one of your backup codes instead.') + '<button class="btn pri" id="tBtn">Verify and sign in</button></form><button class="linkbtn" onclick="tfaBack()">Back</button>';
     $('loginForm').after(f);
   }
+  const su = PENDING && PENDING.setup;
+  f.querySelector('h1').textContent = su ? 'Set up two-step sign-in' : 'Enter your code';
+  let box = $('tSetup'); if (!box) { box = document.createElement('div'); box.id = 'tSetup'; f.querySelector('h1').after(box); }
+  box.innerHTML = su ? '<p>This is your first sign-in. Install <b>Google Authenticator</b> or <b>Microsoft Authenticator</b> on your phone, tap <b>+</b> → <b>Scan a QR code</b>, and scan this. Then type the 6-digit code it shows.</p><div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:.6rem 0 1rem"><div style="width:170px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px">' + qrSVG(su.otpauth) + '</div><div style="flex:1;min-width:160px"><a class="btn sm" href="' + esc(su.otpauth) + '">Open in authenticator app</a><p class="hint" style="margin-top:.6rem">Can\'t scan? Enter this key:<br/><code style="word-break:break-all;user-select:all">' + su.secret.replace(/(.{4})/g, '$1 ').trim() + '</code></p></div></div>' : '';
+  f.querySelector('h1 + div + p').hidden = !!su;
   $('loginForm').hidden = true; $('resetForm').hidden = true; f.hidden = false; msg('tErr', ''); $('tCode').value = ''; $('tCode').focus();
+}
+async function finishLogin() {
+  const P = PENDING || {}, me = await api('/me');
+  if (me.perms.some(x => /^(documents|rates|letterhead)\.view$/.test(x))) {
+    try {
+      const { key } = await api('/vault/key');
+      try { await vaultOpenKey(key, me.owner ? P.pw : null); }
+      catch (er) { console.warn('vault open', er && er.message); if (er.locked && me.owner && window.confirm('Your saved documents can\'t be opened with this password. Start a new, empty document store? (You can restore a backup file afterwards.)')) await vaultOpenKey(key, null, true); }
+    } catch (e) { console.warn('vault key', e && e.message); }
+  }
+  sessionStorage.setItem(SESS, JSON.stringify({ email: me.email, t: Date.now() })); PENDING = null;
+  location.replace('/admin/' + (me.mustChange ? '#account' : location.hash));
 }
 function tfaBack() { PENDING = null; $('tfaForm').hidden = true; $('loginForm').hidden = false; $('lPass').value = ''; $('lPass').focus(); }
 async function srvTfa(e) {
@@ -57,10 +74,9 @@ async function srvTfa(e) {
   $('tBtn').disabled = true; $('tBtn').textContent = 'Verifying…';
   try {
     const s = await api('/login/2fa', { ticket: PENDING.ticket, code: $('tCode').value });
-    sessionStorage.setItem(SRVK, JSON.stringify(s));
-    try { await vaultOpen(PENDING.pw); } catch (er) { if (!er.locked) throw er; if (!window.confirm('Your saved documents were locked with an older password and can\'t be opened. Start a new, empty document store? (You can restore a backup file afterwards.)')) { $('tBtn').disabled = false; return; } await vaultFresh(PENDING.pw); }
-    sessionStorage.setItem(SESS, JSON.stringify({ email: AUTH.email, t: Date.now() })); PENDING = null;
-    location.replace('/admin/' + location.hash); return;
+    sessionStorage.setItem(SRVK, JSON.stringify({ session: s.session, exp: s.exp }));
+    if (s.backup) { $('tfaForm').innerHTML = '<h1>Save your backup codes</h1><div class="msg info">Each code lets you sign in once if you lose your phone. This is the only time they are shown.</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem .8rem;font:600 1.05rem ui-monospace,monospace;margin:1rem 0;padding:1rem;border:1px dashed var(--line);border-radius:12px;user-select:all">' + s.backup.map(c => '<span>' + c + '</span>').join('') + '</div><button class="btn pri" id="tBtn" onclick="this.disabled=true;finishLogin()">I\'ve saved them — continue</button>'; return; }
+    await finishLogin(); return;
   } catch (err) { msg('tErr', err.message); if (err.code === 'expired') setTimeout(tfaBack, 1500); }
   $('tBtn').disabled = false; $('tBtn').textContent = 'Verify and sign in';
 }
@@ -125,6 +141,7 @@ async function secFinish(e, mode) {
     const r = await api('/setup/finish', { github: SETUP.github, code: $('sCode').value, email: AUTH.email, hash: await srvHash(AUTH.email, pw) });
     sessionStorage.setItem(SRVK, JSON.stringify({ session: r.session, exp: r.exp })); API_READY = true;
     // remove the password check from the public website and the GitHub key from this browser
+    try { ME = await api('/me'); } catch (e) { }
     await srvSwitchAuth();
     localStorage.removeItem(GHK); SETUP = null; chrome(); showBackup(r.backup, true);
   } catch (err) { msg('sErr', err.message); btn.disabled = false; btn.textContent = 'Turn on'; }
@@ -153,7 +170,7 @@ async function secDo(e, kind) {
 
 /* once 2FA is on, the public website no longer needs the password check — remove it (retried on each sign-in until it succeeds) */
 async function srvSwitchAuth() {
-  if (!SERVER() || !srvSess() || (AUTH && AUTH.mode === 'server')) return;
+  if (!SERVER() || !srvSess() || (AUTH && AUTH.mode === 'server') || !ME || !ME.owner) return;
   try { await ghPut({ ...ghDefaults(), token: '@server' }, 'auth.json', { email: AUTH.email, mode: 'server' }, 'Admin sign-in moved to the secure server'); AUTH = { email: AUTH.email, mode: 'server' }; }
   catch (er) { console.warn('auth.json switch failed', er); }
 }
@@ -163,7 +180,7 @@ async function srvChangePw(e) {
   const err = m => { $('aErr').textContent = m; $('aErr').hidden = false; }; $('aErr').hidden = true;
   if ($('a_new').value !== $('a_conf').value) return err('The two new passwords don\'t match.');
   $('aBtn').disabled = true;
-  try { await api('/password', { old: await srvHash(AUTH.email, $('a_cur').value), hash: await srvHash(AUTH.email, $('a_new').value), code: $('a_code').value }); await vaultRekey($('a_new').value); e.target.reset(); toast('Password changed.'); }
+  try { await api('/password', { old: await srvHash(ME.email, $('a_cur').value), hash: await srvHash(ME.email, $('a_new').value), code: $('a_code').value }); await vaultRekey($('a_new').value); e.target.reset(); if (ME.mustChange) { ME.mustChange = false; route(); } toast('Password changed.'); }
   catch (er) { err(er.message); }
   $('aBtn').disabled = false;
 }

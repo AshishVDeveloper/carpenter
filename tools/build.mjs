@@ -34,6 +34,15 @@ const V = Date.now().toString(36);
   }
   if (made) console.log('Made ' + made + ' smaller photo copies' + (sharp ? '' : ' (copied — install sharp to resize)'));
 }
+/* minified copies of the site scripts (made with terser when it is installed; otherwise the readable files are used) */
+const JS = { render: 'render.js', store: 'store.js' };
+{
+  let terser = null; try { terser = await import('terser'); } catch (e) { }
+  if (terser) for (const k of Object.keys(JS)) {
+    const out = await terser.minify(fs.readFileSync(path.join(ROOT, 'assets', k + '.js'), 'utf8'), { compress: true, mangle: true, format: { comments: false } });
+    if (out.code) { fs.writeFileSync(path.join(ROOT, 'assets', k + '.min.js'), out.code + '\n'); JS[k] = k + '.min.js'; }
+  }
+}
 /* fonts: fewer files (one variable font per family), loaded without blocking the first paint */
 const FONTS = lang => 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400..700' + (lang === 'en' ? '' : '&family=Noto+Sans+Devanagari:wght@400..800') + '&display=swap';
 /* page CSS goes inside each page, so the browser can draw it without waiting for another file */
@@ -96,7 +105,7 @@ ${alts}
 @media (prefers-reduced-motion:reduce){#ldr .lt,#ldr img{animation:none}}</style>
 </head>
 <body>
-<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-76.webp" srcset="/assets/logo-152.webp 2x" alt="" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
+<div id="ldr" aria-hidden="true"><div class="lb"><img src="/assets/logo-76.webp" srcset="/assets/logo-152.webp 2x" alt="${esc(S.name)} logo" width="76" height="76"/><div class="lt">${[0,1,2,3,4,5,6,7,8,9].map(i => `<span style="left:${i * 10}%">${i * 10}</span>`).join('')}</div><p>${esc(S.name)}</p></div></div>
 <script>(function(){var l=document.getElementById('ldr'),t0=Date.now(),h=function(){setTimeout(function(){l.classList.add('done');setTimeout(function(){l.remove()},600)},Math.max(0,700-(Date.now()-t0)))};if(document.readyState==='complete')h();else{addEventListener('load',h);setTimeout(h,3500)}})()</script>
 <div id="hdr" data-sig="${VI.sig(hdr)}">${hdr}</div>
 <main id="app" tabindex="-1" data-sig="${VI.sig(p.body)}">
@@ -104,8 +113,8 @@ ${p.body}
 </main>
 <div id="ftr" data-sig="${VI.sig(ftr)}">${ftr}</div>
 <script>window.VI_LANG=${view === 'notfound' ? "(location.pathname.match(/^\\/(hi|mr)(?=\\/|$)/)||[])[1]||'en'" : JSON.stringify(lang)}</script>
-<script src="/assets/render.js?v=${V}" defer></script>
-<script src="/assets/store.js?v=${V}" defer></script>
+<script src="/assets/${JS.render}?v=${V}" defer></script>
+<script src="/assets/${JS.store}?v=${V}" defer></script>
 </body>
 </html>
 `;

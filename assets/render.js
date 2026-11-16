@@ -449,7 +449,9 @@ function fitTitle(t, brand, max = 60) {
   for (const g of segs) {
     if ((out + g).length <= max) { out += g; continue; }
     const cut = g.split(', '); while (cut.length > 1 && (out + cut.join(', ')).length > max) cut.pop();
-    if ((out + cut.join(', ')).length <= max && cut.join(', ').replace(/^( \| | — )/, '').length > 3) out += cut.join(', ');
+    if ((out + cut.join(', ')).length <= max && cut.join(', ').replace(/^( \| | — )/, '').length > 3) { out += cut.join(', '); break; }
+    const w = g.split(' '); while (w.length && ((out + w.join(' ')).length > max || /^(in|and|&|for|of|the|to|with|—|\|)$/i.test(w[w.length - 1]))) w.pop();
+    if (w.join(' ').replace(/^( \| | — )/, '').length > 10) out += w.join(' ');
     break;
   }
   if (!out) out = clip(t, max);

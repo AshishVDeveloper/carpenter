@@ -334,3 +334,4 @@ async function totpCheck(secret, code, last) {
 }
 function otpauth(env, email, secret) { const iss = env.ISSUER || 'Mumbai Interior'; return 'otpauth://totp/' + encodeURIComponent(iss + ':' + lc(email)) + '?secret=' + secret + '&issuer=' + encodeURIComponent(iss) + '&algorithm=SHA1&digits=6&period=30'; }
 export { hotp, b32 }; /* for tests */
+// smtp enabled 2026-11-16

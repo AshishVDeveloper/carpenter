@@ -48,7 +48,10 @@ function badge() { const n = list.get().reduce((a, l) => a + l.q, 0); document.q
 function save(rec) { try { const a = JSON.parse(localStorage.getItem(ORD_KEY) || '[]'); a.unshift(Object.assign({ id: Date.now(), date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }, rec)); localStorage.setItem(ORD_KEY, JSON.stringify(a.slice(0, 100))); } catch (e) {} }
 function emailCopy(subject, fields) {
   if (!D || !D.S.email) return;
-  fetch('https://formsubmit.co/ajax/' + D.S.email, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.assign({}, fields, { _subject: subject, _template: 'table', _captcha: 'false' })) }).catch(() => {});
+  const fallback = () => fetch('https://formsubmit.co/ajax/' + D.S.email, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(Object.assign({}, fields, { _subject: subject, _template: 'table', _captcha: 'false' })) }).catch(() => {});
+  /* own mail server first (sends from noreply@ to info@); old form service only if it is unavailable */
+  get('api.json').then(a => fetch(a.url + '/enquiry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ subject, fields, page: location.href }) }))
+    .then(r => { if (!r.ok && r.status !== 429) fallback(); }).catch(fallback);
 }
 const okPhone = p => /^\+?\d[\d\s-]{8,}$/.test(String(p || '').trim());
 

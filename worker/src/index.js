@@ -9,6 +9,8 @@
      fail:<ip>       {n, until}                                         wrong-try counter
 */
 
+import { connect } from 'cloudflare:sockets';
+
 const SESSION_TTL = 12 * 3600, TICKET_TTL = 300, PENDING_TTL = 900, MAX_FAIL = 5;
 
 export default {
@@ -38,6 +40,25 @@ export default {
 async function route(req, env, url) {
   const p = url.pathname, m = req.method, KV = env.AUTH;
   if (p === '/' && m === 'GET') return json({ ok: true, ready: !!(await KV.get('acct')) });
+
+  // ── website enquiry → email to the business inbox via own SMTP (public, rate-limited) ──
+  if (p === '/enquiry' && m === 'POST') {
+    const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
+    if (b._honey) return json({ ok: true });
+    if (!env.SMTP_PASS) throw err(503, 'nosmtp', 'Email sending is not set up yet.');
+    const f = b.fields && typeof b.fields === 'object' ? b.fields : {};
+    const keys = Object.keys(f).slice(0, 15);
+    if (!keys.length || !String(b.subject || '').trim()) throw err(400, 'bad', 'Empty enquiry.');
+    const day = new Date().toISOString().slice(0, 10), ipk = 'enq:' + ip + ':' + day, dk = 'enq:day:' + day;
+    const [ipn, dn] = await Promise.all([KV.get(ipk), KV.get(dk)]);
+    if ((+ipn || 0) >= 8) throw err(429, 'limit', 'Too many enquiries from this connection today. Please call or WhatsApp us.');
+    if ((+dn || 0) >= 45) throw err(429, 'limit', 'Daily email limit reached. Please call or WhatsApp us.');
+    const clip = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n);
+    const text = keys.map(k => clip(k, 40) + ': ' + clip(f[k], 2000)).join('\n') + '\n\n--\nSent from ' + clip(b.page || 'www.mumbai-interior.in', 200) + '\nIP: ' + ip + ' · ' + new Date().toISOString();
+    await smtpSend(env, { to: env.ENQUIRY_TO || 'info@mumbai-interior.in', subject: clip(b.subject, 180), text });
+    await Promise.all([KV.put(ipk, String((+ipn || 0) + 1), { expirationTtl: 90000 }), KV.put(dk, String((+dn || 0) + 1), { expirationTtl: 90000 })]);
+    return json({ ok: true });
+  }
 
   // ── one-time setup: owner proves control of the GitHub repo, scans QR, confirms a code ──
   if (p === '/setup/start' && m === 'POST') {
@@ -190,6 +211,39 @@ async function route(req, env, url) {
     return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json' } });
   }
   throw err(404, 'notfound', 'Not found.');
+}
+
+/* ── minimal SMTP client (implicit TLS, AUTH LOGIN) for sending from the business mailbox ── */
+const b64u = str => { const b = new TextEncoder().encode(str); let o = ''; for (const x of b) o += String.fromCharCode(x); return btoa(o); };
+const encHead = v => /^[\x20-\x7e]*$/.test(v) ? v : '=?UTF-8?B?' + b64u(v) + '?=';
+async function smtpSend(env, { to, subject, text, replyTo }) {
+  const user = env.SMTP_USER || 'noreply@mumbai-interior.in', host = env.SMTP_HOST || 'smtppro.zoho.in', port = +(env.SMTP_PORT || 465);
+  const sock = connect({ hostname: host, port }, { secureTransport: env.SMTP_TLS === 'off' ? 'off' : 'on', allowHalfOpen: false });
+  const w = sock.writable.getWriter(), r = sock.readable.getReader(), dec = new TextDecoder(), enc = new TextEncoder();
+  let buf = '';
+  const reply = async () => {
+    const t0 = Date.now();
+    for (;;) {
+      const lines = buf.split('\r\n');
+      for (let i = 0; i < lines.length - 1; i++) if (/^\d{3} /.test(lines[i])) { const out = lines.slice(0, i + 1).join('\n'); buf = lines.slice(i + 1).join('\r\n'); return out; }
+      if (Date.now() - t0 > 15000) throw err(504, 'smtp', 'Mail server did not answer.');
+      const { value, done } = await r.read(); if (done) throw err(502, 'smtp', 'Mail server closed the connection.');
+      buf += dec.decode(value, { stream: true });
+    }
+  };
+  const cmd = async (c, ok) => { if (c != null) await w.write(enc.encode(c + '\r\n')); const res = await reply(); if (!res.startsWith(ok)) throw err(502, 'smtp', 'Mail server said: ' + res.split('\n').pop().slice(0, 160)); return res; };
+  try {
+    await cmd(null, '220'); await cmd('EHLO mumbai-interior.in', '250');
+    await cmd('AUTH LOGIN', '334'); await cmd(b64u(user), '334'); await cmd(b64u(env.SMTP_PASS), '235');
+    await cmd('MAIL FROM:<' + user + '>', '250');
+    for (const t of String(to).split(',').map(x => x.trim()).filter(Boolean)) await cmd('RCPT TO:<' + t + '>', '25');
+    await cmd('DATA', '354');
+    const bodyB64 = b64u(text).replace(/.{1,76}/g, '$&\r\n');
+    const msg = ['From: ' + encHead('Mumbai Interior Website') + ' <' + user + '>', 'To: ' + to, 'Reply-To: ' + (replyTo || env.ENQUIRY_TO || 'info@mumbai-interior.in'), 'Subject: ' + encHead(subject),
+      'Date: ' + new Date().toUTCString().replace('GMT', '+0000'), 'Message-ID: <' + crypto.randomUUID() + '@mumbai-interior.in>', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', bodyB64].join('\r\n');
+    await cmd(msg + '\r\n.', '250');
+    await cmd('QUIT', '221').catch(() => {});
+  } finally { try { await w.close(); } catch (e) { } try { sock.close(); } catch (e) { } }
 }
 
 /* ── Zoho helpers ── */

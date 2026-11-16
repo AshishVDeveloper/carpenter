@@ -5,6 +5,8 @@ on:
   push:
     branches: [main]
     paths: ['worker/**', '.github/workflows/auth-server.yml']
+  repository_dispatch:
+    types: [smtp-secret]
   workflow_dispatch:
 permissions:
   contents: write
@@ -69,6 +71,13 @@ jobs:
       - name: Deploy
         working-directory: worker
         run: npx -y wrangler@4 deploy
+
+      - name: Email sending password (from repository secret ZOHO_SMTP_PASSWORD)
+        working-directory: worker
+        env:
+          SMTP_PASS: ${{ secrets.ZOHO_SMTP_PASSWORD }}
+        run: |
+          if [ -n "$SMTP_PASS" ]; then printf '%s' "$SMTP_PASS" | npx -y wrangler@4 secret put SMTP_PASS; else echo "ZOHO_SMTP_PASSWORD not set yet - website will keep using the fallback form service"; fi
 
       - name: Check it answers and save its address
         run: |

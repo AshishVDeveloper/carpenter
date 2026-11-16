@@ -2,6 +2,7 @@
    Loaded before admin.js; uses its helpers ($, esc, C, toast) only when the page is opened. */
 let MAIL = { folders: [], folder: null, list: [], start: 1, open: null, email: '' };
 const MAIL_BOXES = [['info@mumbai-interior.in', 'Main business inbox'], ['asheesh@mumbai-interior.in', 'Asheesh Vishwakarma'], ['ramkumar@mumbai-interior.in', 'Ramkumar Vishwakarma']];
+const un = v => { const t = document.createElement('textarea'); t.innerHTML = v == null ? '' : String(v); return t.value; };
 const mailTime = t => { if (!t) return ''; const d = new Date(t), n = new Date(); return d.toDateString() === n.toDateString() ? d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', ...(d.getFullYear() !== n.getFullYear() ? { year: 'numeric' } : {}) }); };
 const mailBoxesCard = () => '<div class="card"><h2>All mailboxes</h2><p class="hint" style="margin-top:-.4rem">Each person signs in to their own inbox in Zoho Mail (website or the Zoho Mail app).</p><div class="mboxes">' +
   MAIL_BOXES.map(b => '<a class="mbox" href="https://mail.zoho.in/zm/" target="_blank" rel="noopener"><b>' + esc(b[0]) + '</b><span>' + esc(b[1]) + '</span></a>').join('') + '</div></div>';
@@ -34,7 +35,7 @@ async function mailLoad() {
   const box = $('mList'); if (!box) return;
   box.innerHTML = '<p class="hint" style="padding:1rem">Loading…</p>';
   try {
-    const r = await api('/mail/list?folder=' + encodeURIComponent(MAIL.folder) + '&start=' + MAIL.start); MAIL.list = r.messages;
+    const r = await api('/mail/list?folder=' + encodeURIComponent(MAIL.folder) + '&start=' + MAIL.start); MAIL.list = r.messages.map(m => ({ ...m, from: un(m.from), fromAddress: un(m.fromAddress), to: un(m.to), subject: un(m.subject), summary: un(m.summary) }));
     box.innerHTML = (MAIL.list.length ? MAIL.list.map((m, i) => '<button class="mitem' + (m.unread ? ' unread' : '') + (MAIL.open === m.id ? ' on' : '') + '" onclick="mailOpen(' + i + ')"><span class="mfrom">' + esc(m.from || m.fromAddress || '') + '</span><span class="mtime">' + mailTime(m.time) + '</span><span class="msub">' + (m.attach ? '📎 ' : '') + esc(m.subject || '(no subject)') + '</span><span class="msum">' + esc(m.summary || '') + '</span></button>').join('') : '<div class="empty">No emails here.</div>') +
       '<div class="mpager">' + (MAIL.start > 1 ? '<button class="btn sm" onclick="MAIL.start=Math.max(1,MAIL.start-30);mailLoad()">Newer</button>' : '<span></span>') + (MAIL.list.length === 30 ? '<button class="btn sm" onclick="MAIL.start+=30;mailLoad()">Older</button>' : '') + '</div>';
   } catch (e) { box.innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
@@ -44,15 +45,16 @@ async function mailOpen(i) {
   document.querySelectorAll('.mitem').forEach((b, j) => b.classList.toggle('on', j === i));
   const r = $('mRead'); r.innerHTML = '<p class="hint">Opening…</p>'; document.querySelector('.mailgrid').classList.add('reading');
   try {
-    const d = await api('/mail/read?folder=' + encodeURIComponent(m.folder) + '&id=' + encodeURIComponent(m.id));
+    const d0 = await api('/mail/read?folder=' + encodeURIComponent(m.folder) + '&id=' + encodeURIComponent(m.id)); const d = { ...d0, from: un(d0.from), fromAddress: un(d0.fromAddress), to: un(d0.to), cc: un(d0.cc), subject: un(d0.subject) };
     if (m.unread) { m.unread = false; document.querySelectorAll('.mitem')[i].classList.remove('unread'); mailBadge(true); }
     r.innerHTML = '<button class="btn sm mback" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\')">← Back</button><h2 class="mh">' + esc(d.subject || m.subject || '(no subject)') + '</h2>' +
       '<div class="mmeta"><b>' + esc(d.from || m.from || '') + '</b> &lt;' + esc(d.fromAddress || m.fromAddress || '') + '&gt;<br/>To: ' + esc(d.to || '') + (d.cc ? '<br/>Cc: ' + esc(d.cc) : '') + '<br/>' + (d.time ? new Date(d.time).toLocaleString('en-IN') : '') + '</div>' +
-      '<iframe class="mbody" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Email content"></iframe>' +
+      '<iframe class="mbody" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" scrolling="no" referrerpolicy="no-referrer" title="Email content"></iframe>' +
       '<div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="mailCompose(' + i + ')">Reply</button></div>';
     const f = r.querySelector('iframe');
-    f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><style>body{font:15px/1.5 system-ui,sans-serif;color:#222;margin:0;padding:4px;word-wrap:break-word}img{max-width:100%;height:auto}</style>' + mailClean(d.content || '');
-    f.onload = () => { try { f.style.height = Math.min(2000, f.contentDocument.body.scrollHeight + 24) + 'px'; } catch (e) { f.style.height = '480px'; } };
+    f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0}body{font:15px/1.55 system-ui,sans-serif;color:#222;padding:12px;overflow-wrap:anywhere;word-break:break-word}img{max-width:100%!important;height:auto!important}table{max-width:100%!important;width:auto!important}td,th{word-break:break-word}*{max-width:100%;box-sizing:border-box}pre{white-space:pre-wrap}</style>' + mailClean(d.content || '');
+    const fit = () => { try { const h = f.contentDocument.documentElement.scrollHeight; if (h) f.style.height = (h + 4) + 'px'; } catch (e) { f.style.height = '520px'; } };
+    f.onload = () => { fit(); try { f.contentDocument.querySelectorAll('img').forEach(i => i.addEventListener('load', fit)); new ResizeObserver(fit).observe(f.contentDocument.body); } catch (e) { } setTimeout(fit, 600); };
   } catch (e) { r.innerHTML = '<div class="msg err">' + esc(e.message) + '</div>'; }
 }
 /* strip scripts, event handlers and active content from email HTML before showing it */

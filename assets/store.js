@@ -168,10 +168,13 @@ function hdrFx() {
   const h = document.documentElement;
   h.classList.toggle('ovl', !!document.querySelector('#app > .hero:first-child, #app > .phero:first-child'));
   if (hdrFx.on) return; hdrFx.on = 1;
-  let raf = 0;
-  const upd = () => { raf = 0; const y = scrollY, max = document.documentElement.scrollHeight - innerHeight; h.classList.toggle('scrolled', y > 24); h.style.setProperty('--sp', max > 0 ? Math.min(1, y / max).toFixed(4) : 0); };
-  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
-  addEventListener('resize', upd); upd();
+  /* page height is measured only when the page size changes (ResizeObserver runs after layout), never right after a class change, so scrolling never forces an extra layout */
+  let raf = 0, max = 0;
+  const upd = () => { raf = 0; const y = scrollY; h.classList.toggle('scrolled', y > 24); h.style.setProperty('--sp', max > 0 ? Math.min(1, y / max).toFixed(4) : 0); };
+  const tick = () => { if (!raf) raf = requestAnimationFrame(upd); };
+  if ('ResizeObserver' in window) new ResizeObserver(en => { max = en[0].contentRect.height - innerHeight; tick(); }).observe(document.body);
+  addEventListener('scroll', tick, { passive: true });
+  addEventListener('resize', tick); tick();
 }
 hdrFx();
 function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }

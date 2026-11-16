@@ -517,3 +517,5 @@ html.dark .nf .nf-mark b{color:var(--tape)}
 .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .mh80{min-height:80px}
 .logo-i{display:inline-block;background:url(/assets/logo-88.webp) center/cover no-repeat}
+/* English pages: show the हिंदी / मराठी switch in the phone's own font so the large Hindi web font only loads on Hindi and Marathi pages */
+html[lang^=en] [lang=hi],html[lang^=en] [lang=mr]{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}

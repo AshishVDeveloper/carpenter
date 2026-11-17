@@ -271,10 +271,10 @@ function bindHero() {
   const show = i => { if (i === cur) return; load(i); const old = cur; S[old].classList.add('out'); setTimeout(() => S[old].classList.remove('out'), 1100);
     [S, T].forEach(L => { L[old].classList.remove('on'); L[old].setAttribute('aria-hidden', 'true'); L[i].classList.add('on'); L[i].removeAttribute('aria-hidden'); });
     dots.forEach((d, k) => d.toggleAttribute('aria-current', k === i)); cur = i; pos = order.indexOf(i); load(order[(pos + 1) % n]); restart(); };
-  const step = d => show(order[(pos + d + n) % n]);
-  const restart = () => { clearTimeout(timer); h.classList.remove('playing'); if (stopped || hold) return; void h.offsetWidth; h.classList.add('playing'); timer = setTimeout(() => step(1), ms); };
+  const step = d => { h.classList.toggle('back', d < 0); show(order[(pos + d + n) % n]); };
+  const restart = () => { clearTimeout(timer); h.classList.remove('playing'); h.classList.toggle('stopped', stopped); if (stopped || hold) return; void h.offsetWidth; h.classList.add('playing'); timer = setTimeout(() => step(1), ms); };
   const pause = v => { hold = v; restart(); };
-  h.addEventListener('click', e => { if (e.target.closest('[data-hnext]')) step(1); else if (e.target.closest('[data-hprev]')) step(-1); else { const g = e.target.closest('[data-hgo]'); if (g) show(+g.dataset.hgo); }
+  h.addEventListener('click', e => { if (e.target.closest('[data-hnext]')) step(1); else if (e.target.closest('[data-hprev]')) step(-1); else { const g = e.target.closest('[data-hgo]'); if (g) { h.classList.toggle('back', order.indexOf(+g.dataset.hgo) < pos); show(+g.dataset.hgo); } }
     if (e.target.closest('[data-hplay]')) { stopped = !stopped; play.setAttribute('aria-pressed', stopped); play.setAttribute('aria-label', stopped ? 'Play the slides' : 'Pause the slides'); restart(); } });
   h.addEventListener('mouseenter', () => pause(1)); h.addEventListener('mouseleave', () => pause(0));
   h.addEventListener('focusin', () => pause(1)); h.addEventListener('focusout', e => { if (!h.contains(e.relatedTarget)) pause(0); });

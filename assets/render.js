@@ -60,7 +60,7 @@ function prep(raw) {
   const B0 = raw.BANNERS && typeof raw.BANNERS === 'object' ? raw.BANNERS : {};
   let BI = (B0.items || []).filter(b => b && b.visible !== false && b.image && b.title).sort((a, b) => (a.order || 99) - (b.order || 99));
   if (!BI.length) BI = [{ image: 'images/site/hero.webp', alt: 'Living and dining room interior', kicker: 'World-class furniture, made in India · Custom furniture', title: S.hero_title || S.name, text: S.hero_text || '', btn: 'Get a free estimate', link: '/get-quote/', btn2: 'Our services', link2: '/services/' }];
-  const BANNERS = { auto: B0.auto !== false, interval: Math.max(3, Math.min(20, +B0.interval || 6)), random: !!B0.random, items: BI };
+  const BANNERS = { fx: ['pan', 'zoom', 'fade'].includes(B0.fx) ? B0.fx : 'pan', auto: B0.auto !== false, interval: Math.max(3, Math.min(20, +B0.interval || 6)), random: !!B0.random, items: BI };
   return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG, CATALOGUE, BANNERS };
 }
 const catName = (D, slug) => (D.CATS.find(c => c.slug === slug) || {}).name || slug;
@@ -145,7 +145,7 @@ function heroSlides(D) {
     '<div class="hdots" role="group" aria-label="Choose a banner">' + L.map((b, i) => '<button type="button" data-hgo="' + i + '" aria-label="Banner ' + (i + 1) + ': ' + esc(b.title) + '"' + (i ? '' : ' aria-current="true"') + '><i></i></button>').join('') + '</div>' +
     '<button type="button" class="hbtn" data-hnext aria-label="Next banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>' +
     (B.auto ? '<button type="button" class="hbtn" data-hplay aria-label="Pause the slides" aria-pressed="false"><svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg></button>' : '') + '</div>' : '';
-  return '<section class="hero" id="hero"' + (many ? ' aria-roledescription="carousel" aria-label="Highlights" data-auto="' + (B.auto ? 1 : 0) + '" data-int="' + B.interval + '" data-rand="' + (B.random ? 1 : 0) + '"' : '') + '><div class="hslides">' + L.map(pic).join('') + '</div>' +
+  return '<section class="hero" id="hero" data-fx="' + B.fx + '"' + (many ? ' aria-roledescription="carousel" aria-label="Highlights" data-auto="' + (B.auto ? 1 : 0) + '" data-int="' + B.interval + '" data-rand="' + (B.random ? 1 : 0) + '"' : '') + '><div class="hslides">' + L.map(pic).join('') + '</div>' +
     '<div class="wrap"><div class="hero-in"><div class="htexts">' + L.map(txt).join('') + '</div>' + ctl +
     (many && B.random ? '<script>(function(){var h=document.getElementById("hero"),s=h.querySelectorAll(".hslide"),t=h.querySelectorAll(".htext"),n=s.length,i=Math.floor(Math.random()*n);h.dataset.start=i;if(!i)return;[s,t].forEach(function(L){L[0].classList.remove("on");L[0].setAttribute("aria-hidden","true");L[i].classList.add("on");L[i].removeAttribute("aria-hidden")});var p=s[i];p.querySelectorAll("[data-src]").forEach(function(e){e.src=e.getAttribute("data-src");e.removeAttribute("data-src")});p.querySelectorAll("[data-srcset]").forEach(function(e){e.srcset=e.getAttribute("data-srcset");e.removeAttribute("data-srcset")})})()</script>' : '');
 }

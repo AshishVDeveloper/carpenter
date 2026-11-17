@@ -655,3 +655,16 @@ nav.main a:not(.btn){white-space:nowrap}.brand{white-space:nowrap}
 .hero:focus-within .hbtn:focus-visible,.hdots button:focus-visible{outline:2px solid var(--tape);outline-offset:2px}
 @media (max-width:700px){.hctl{margin-top:1rem}.hbtn{width:36px;height:36px}.hdots i{width:18px}}
 @media (prefers-reduced-motion:reduce){.hslide,.htext,.htext.on{transition:none}.hslide.on img{animation:none}}
+
+/* banner motion (admin → Banners → Animation): pan = photo glides right to left like a camera; slide in from the right on change */
+.hero[data-fx=pan] .hslide img,.hero[data-fx=pan] .hslide.on img{animation:none;transform:scale(1.18) translateX(7%);will-change:transform}
+.hero[data-fx=pan] .hslide.on img{animation:hpan calc(var(--hint,6s) + 1.5s) linear both}
+.hero[data-fx=pan] .hslide.out img{animation:none;transform:scale(1.18) translateX(-7%)}
+.hero[data-fx=pan] .hslide{transition:opacity .9s ease,transform 1.1s cubic-bezier(.65,0,.35,1)}
+.hero[data-fx=pan] .hslide:not(.on):not(.out){transform:translateX(8%)}
+.hero[data-fx=pan] .hslide.out{transform:translateX(-8%);opacity:0}
+.hero[data-fx=pan].back .hslide:not(.on):not(.out){transform:translateX(-8%)}.hero[data-fx=pan].back .hslide.out{transform:translateX(8%)}
+@keyframes hpan{from{transform:scale(1.18) translateX(7%)}to{transform:scale(1.18) translateX(-7%)}}
+.hero[data-fx=fade] .hslide.on img{animation:none}
+.hero.stopped .hslide.on img{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.hero[data-fx] .hslide.on img,.hero[data-fx] .hslide img{animation:none;transform:none}.hero[data-fx=pan] .hslide,.hero[data-fx=pan] .hslide.out,.hero[data-fx=pan] .hslide:not(.on):not(.out){transform:none}}

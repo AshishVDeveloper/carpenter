@@ -1,6 +1,6 @@
 /* Banners (data/banners.json): the slides at the top of the home page.
    { auto, interval (seconds), random, items: [{ id, order, visible, image, alt, kicker, title, text, btn, link, btn2, link2 }] } */
-const BN_DEF = () => ({ auto: true, interval: 6, random: false, items: [] });
+const BN_DEF = () => ({ fx: 'pan', auto: true, interval: 6, random: false, items: [] });
 const BN_LINKS = [['/get-quote/', 'Get a quote form'], ['/services/', 'All services'], ['/furniture/', 'Furniture'], ['/catalogue/', 'Catalogue'], ['/our-work/', 'Our work'], ['/blog/', 'Blog'], ['/contact/', 'Contact']];
 const BN_IMGS = ['images/site/hero.webp', 'images/site/living.webp', 'images/site/bedroom.webp', 'images/site/open-plan.webp', 'images/site/home-interiors.webp', 'images/site/modular-kitchens.webp', 'images/site/kitchen-2.webp', 'images/site/office-interiors.webp', 'images/site/shops-showrooms.webp', 'images/site/mall-work.webp', 'images/site/furniture-to-measure.webp', 'images/site/workshop.webp'];
 let BNE = null;
@@ -14,6 +14,7 @@ function pgBanners() {
     '<div class="card"><h2>Slider settings</h2><div class="g3 bnset">' +
     '<div class="check"><input type="checkbox" id="bn_auto"' + (B.auto !== false ? ' checked' : '') + ' onchange="bnSet(\'auto\',this.checked)"/><label for="bn_auto">Slide automatically</label></div>' +
     '<div class="field"><label for="bn_int">Seconds on each banner</label><input id="bn_int" type="number" min="3" max="20" value="' + (B.interval || 6) + '" onchange="bnSet(\'interval\',Math.max(3,Math.min(20,+this.value||6)))"/></div>' +
+    '<div class="field"><label for="bn_fx">Animation</label><select id="bn_fx" class="keep" onchange="bnSet(\'fx\',this.value)">' + [['pan', 'Pan — photo moves right to left (like a video)'], ['zoom', 'Slow zoom in'], ['fade', 'Simple fade']].map(o => '<option value="' + o[0] + '"' + ((B.fx || 'pan') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
     '<div class="check"><input type="checkbox" id="bn_rand"' + (B.random ? ' checked' : '') + ' onchange="bnSet(\'random\',this.checked)"/><label for="bn_rand">Random order (a different banner first on each visit)</label></div></div>' +
     '<p class="hint">' + live + ' banner' + (live === 1 ? '' : 's') + ' shown on the website. The slider pauses while a visitor points at it or taps it, and visitors can pause it.</p></div>' +
     '<div class="card"><h2>Banners <a class="btn sm pri" data-perm="banners.add" href="#banners/new">Add banner</a></h2>' +

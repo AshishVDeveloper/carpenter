@@ -6,7 +6,7 @@
   "items": [
     {
       "id": 1,
-      "order": 1,
+      "order": 2,
       "visible": true,
       "image": "images/site/hero.webp",
       "alt": "Living and dining room interior with an L-shaped sofa, dining table and wall panelling",
@@ -20,7 +20,7 @@
     },
     {
       "id": 2,
-      "order": 2,
+      "order": 1,
       "visible": true,
       "image": "images/site/modular-kitchens.webp",
       "alt": "Modular kitchen with wooden shutters and lofts",

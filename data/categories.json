@@ -52,5 +52,17 @@
     "order": 9,
     "name": "Tables",
     "slug": "tables"
+  },
+  {
+    "id": 10,
+    "order": 10,
+    "name": "Kitchen Units",
+    "slug": "kitchen"
+  },
+  {
+    "id": 11,
+    "order": 11,
+    "name": "Doors & Panelling",
+    "slug": "doors"
   }
 ]

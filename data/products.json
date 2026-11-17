@@ -277,5 +277,309 @@
     "in_stock": true,
     "price_min": 7500,
     "price_max": 14000
+  },
+  {
+    "id": 14,
+    "order": 14,
+    "name": "Two-Tone Sliding Wardrobe",
+    "category": "wardrobes",
+    "price": 55000,
+    "mrp": null,
+    "material": "Plywood carcass, aluminium sliding frame",
+    "size": "Made to fit your wall",
+    "finish": "Brown marble-look laminate with white band",
+    "description": "Floor-to-ceiling sliding wardrobe with a brown marble-look finish and a white band across the doors. Sliding doors save space in compact Mumbai bedrooms. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/sliding-wardrobe-two-tone.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 55000,
+    "price_max": 85000
+  },
+  {
+    "id": 15,
+    "order": 15,
+    "name": "Marble-Finish Storage Bed",
+    "category": "beds",
+    "price": 35000,
+    "mrp": null,
+    "material": "Plywood with laminate",
+    "size": "Queen or king size",
+    "finish": "Marble-look laminate",
+    "description": "Bed with a padded headboard and a marble-finish laminate frame, with storage underneath. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/storage-bed-marble.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 35000,
+    "price_max": 55000
+  },
+  {
+    "id": 16,
+    "order": 16,
+    "name": "Dressing Unit with Full-Length Mirror",
+    "category": "storage",
+    "price": 15000,
+    "mrp": null,
+    "material": "Plywood with laminate",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with mirror",
+    "description": "Wall-mounted dressing unit with a full-length mirror and drawers for daily essentials. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/dressing-unit-mirror.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 15000,
+    "price_max": 25000
+  },
+  {
+    "id": 17,
+    "order": 17,
+    "name": "Kitchen Drawer Unit with Wire Baskets",
+    "category": "kitchen",
+    "price": 25000,
+    "mrp": null,
+    "material": "BWP plywood, stainless steel baskets",
+    "size": "Made to fit your kitchen",
+    "finish": "Laminate with profile handles",
+    "description": "Modular kitchen base unit with soft-close drawers, wire baskets for utensils and slim profile handles. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/kitchen-drawer-unit.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 25000,
+    "price_max": 45000
+  },
+  {
+    "id": 18,
+    "order": 18,
+    "name": "TV Unit with Back-Lit Jali Pooja Niche",
+    "category": "tv-units",
+    "price": 60000,
+    "mrp": null,
+    "material": "Plywood, CNC-cut MDF jali, LED strips",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with back-lit jali",
+    "description": "Full-wall TV unit with a back-lit CNC jali pooja niche, open shelves and closed storage. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/tv-unit-jali-pooja.webp",
+      "images/products/tv-unit-jali-pooja-2.webp",
+      "images/products/tv-unit-jali-pooja-3.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 60000,
+    "price_max": 95000
+  },
+  {
+    "id": 19,
+    "order": 19,
+    "name": "Tall Crockery Unit with Frosted Glass",
+    "category": "storage",
+    "price": 25000,
+    "mrp": null,
+    "material": "Plywood with laminate, frosted glass",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with frosted-glass door",
+    "description": "Tall crockery unit with a frosted-glass door on top and closed storage below. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/crockery-unit-frosted-glass.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 25000,
+    "price_max": 40000
+  },
+  {
+    "id": 20,
+    "order": 20,
+    "name": "Floating TV Unit with Fluted Panel",
+    "category": "tv-units",
+    "price": 35000,
+    "mrp": null,
+    "material": "Plywood, fluted panel",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with fluted wall panel",
+    "description": "Wall-hung TV unit with a fluted back panel and drawers below. Floating design keeps the floor clear for easy cleaning. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/tv-unit-fluted-panel.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 35000,
+    "price_max": 60000
+  },
+  {
+    "id": 21,
+    "order": 21,
+    "name": "6-Door Hinged Wardrobe with Lofts",
+    "category": "wardrobes",
+    "price": 80000,
+    "mrp": null,
+    "material": "Plywood carcass with laminate",
+    "size": "Made to fit your wall",
+    "finish": "Light oak laminate",
+    "description": "Floor-to-ceiling 6-door wardrobe in light oak with loft storage above, hanging space and shelves inside. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/wardrobe-6-door-loft.webp",
+      "images/products/wardrobe-6-door-loft-2.webp",
+      "images/products/wardrobe-6-door-loft-3.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 80000,
+    "price_max": 120000
+  },
+  {
+    "id": 22,
+    "order": 22,
+    "name": "Bed with Pull-Out Base and Drawers",
+    "category": "beds",
+    "price": 40000,
+    "mrp": null,
+    "material": "Plywood with laminate, slatted base",
+    "size": "Queen or king size",
+    "finish": "Laminate",
+    "description": "Bed with a slatted base and large storage drawers below, for bedding and luggage. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/bed-pull-out-drawers.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 40000,
+    "price_max": 65000
+  },
+  {
+    "id": 23,
+    "order": 23,
+    "name": "Safety Door with CNC Jali and Wall Cladding",
+    "category": "doors",
+    "price": 30000,
+    "mrp": null,
+    "material": "Wood frame with CNC-cut jali, wall panelling",
+    "size": "Made to fit your doorway",
+    "finish": "Laminate with CNC jali",
+    "description": "Main-door safety door with a CNC-cut jali and matching wall cladding around the entrance. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/safety-door-cnc-jali.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 30000,
+    "price_max": 55000
+  },
+  {
+    "id": 24,
+    "order": 24,
+    "name": "High-Gloss Kitchen Loft Cabinets",
+    "category": "kitchen",
+    "price": 20000,
+    "mrp": null,
+    "material": "BWP plywood",
+    "size": "Made to fit your kitchen",
+    "finish": "High-gloss blue acrylic",
+    "description": "Overhead kitchen loft cabinets in high-gloss blue, using the full height up to the ceiling. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/kitchen-loft-gloss-blue.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 20000,
+    "price_max": 35000
+  },
+  {
+    "id": 25,
+    "order": 25,
+    "name": "Two-Tone Kitchen Base Cabinets",
+    "category": "kitchen",
+    "price": 45000,
+    "mrp": null,
+    "material": "BWP plywood",
+    "size": "Made to fit your kitchen",
+    "finish": "Two-tone laminate",
+    "description": "Modular kitchen base cabinets in a two-tone finish, with drawers and shutters under the counter. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/kitchen-base-two-tone.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 45000,
+    "price_max": 75000
+  },
+  {
+    "id": 26,
+    "order": 26,
+    "name": "5-Door Wardrobe with Loft and Drawers",
+    "category": "wardrobes",
+    "price": 70000,
+    "mrp": null,
+    "material": "Plywood carcass with laminate",
+    "size": "Made to fit your wall",
+    "finish": "Laminate",
+    "description": "5-door wardrobe with loft storage above and drawers at the bottom. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/wardrobe-5-door-loft.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 70000,
+    "price_max": 110000
+  },
+  {
+    "id": 27,
+    "order": 27,
+    "name": "Bed Back Panel with Lights",
+    "category": "beds",
+    "price": 30000,
+    "mrp": null,
+    "material": "Plywood panel with LED strips",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with back lighting",
+    "description": "Bed back wall panel with built-in lights and a matching side unit. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/bed-back-panel-lights.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 30000,
+    "price_max": 50000
+  },
+  {
+    "id": 28,
+    "order": 28,
+    "name": "TV Unit with Glass Display Cabinet",
+    "category": "tv-units",
+    "price": 40000,
+    "mrp": null,
+    "material": "Plywood with laminate, glass",
+    "size": "Made to fit your wall",
+    "finish": "Laminate with glass shutters",
+    "description": "TV unit with a glass display cabinet for showpieces and closed storage below. A real project made by Mumbai Interior.",
+    "images": [
+      "images/products/tv-unit-glass-display.webp"
+    ],
+    "featured": false,
+    "customizable": true,
+    "in_stock": true,
+    "price_min": 40000,
+    "price_max": 65000
   }
 ]

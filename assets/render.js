@@ -166,7 +166,7 @@ V.services = D => {
 
 V.service = (D, slug) => {
   const S = D.S, s = S.services.find(x => x.slug === slug); if (!s) return null;
-  const rel = D.PRODUCTS.filter(p => slug === 'furniture-to-measure' || (slug === 'home-interiors' && /wardrobes|beds|tv-units|storage/.test(p.category)) || (slug === 'office-interiors' && /study|chairs/.test(p.category))).slice(0, 4);
+  const rel = D.PRODUCTS.filter(p => slug === 'furniture-to-measure' || (slug === 'home-interiors' && /wardrobes|beds|tv-units|storage|kitchen|doors/.test(p.category)) || (slug === 'office-interiors' && /study|chairs/.test(p.category))).slice(0, 4);
   const others = S.services.filter(x => x.slug !== slug);
   const body = photoHead(s.image, s.title + ' in Mumbai, Thane & Navi Mumbai', s.desc, crumbs([['Services', '/services/'], [s.title]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/#' + qslug(s.title) + '">Get a free estimate</a><a class="btn btn-light" href="' + esc(waLink(S, 'Hi, I want a quote for ' + s.title.toLowerCase() + '.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div>') +
     '<section class="sec"><div class="wrap split"><div><h2>What we do</h2><p class="lede">' + esc(s.intro || s.desc) + '</p>' + (s.points.length ? '<ul class="ticks">' + s.points.map(p => '<li>' + I.check + esc(p) + '</li>').join('') + '</ul>' : '') + '</div>' +

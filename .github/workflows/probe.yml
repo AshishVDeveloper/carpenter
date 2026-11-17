@@ -1,0 +1,14 @@
+name: Probe review endpoint
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/probe.yml']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "root:"; curl -s https://mi-admin.mumbai-interior.workers.dev/
+          echo; echo "review (honeypot, not stored):"; curl -s -X POST https://mi-admin.mumbai-interior.workers.dev/review -H 'Content-Type: application/json' -H 'Origin: https://www.mumbai-interior.in' -d '{"_honey":"x"}' -D - | sed -n '1p;/access-control-allow-origin/Ip;$p'
+          echo; echo "page:"; curl -s https://www.mumbai-interior.in/furniture/sofas/grey-l-shape-sofa/ -D - -o /tmp/p.html | grep -i 'cache-control\|last-modified\|age:'; grep -o 'data-pid="[^"]*"\|site.min.js?v=[a-z0-9]*' /tmp/p.html
+          curl -s https://www.mumbai-interior.in/data/api.json

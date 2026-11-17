@@ -1,7 +1,7 @@
 /* Users & roles: team members, the role master (Super admin, Admin, Employee, Sale, plus your own roles)
    and per-person custom permissions. Everything is checked again on the sign-in server. */
 let UR = { users: [], roles: {}, mods: {}, q: '', role: '', tab: 'users', edit: null, rk: null, rdraft: null };
-const MOD_LABEL = { dashboard: 'Dashboard', documents: 'Documents (quotations, bills, invoices)', rates: 'Rate list', letterhead: 'Letterhead', settings: 'Business details', projects: 'Our work', testimonials: 'Reviews', products: 'Products', categories: 'Categories', catalogue: 'Catalogue', blog: 'Blog', orders: 'Orders & enquiries', mail: 'Mail', publishing: 'Publishing (GitHub key)', users: 'Users & roles' };
+const MOD_LABEL = { dashboard: 'Dashboard', documents: 'Documents (quotations, bills, invoices)', rates: 'Rate list', letterhead: 'Letterhead', settings: 'Business details', projects: 'Our work', testimonials: 'Reviews', products: 'Products', categories: 'Categories', catalogue: 'Catalogue', blog: 'Blog', banners: 'Home page banners', orders: 'Orders & enquiries', mail: 'Mail', publishing: 'Publishing (GitHub key)', users: 'Users & roles' };
 const ACT_LABEL = { view: 'View', add: 'Add', edit: 'Edit', delete: 'Delete', send: 'Send', manage: 'Manage mailboxes' };
 const COLS = ['view', 'add', 'edit', 'delete'];
 const whenTxt = t => t ? new Date(t).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : 'Never';

@@ -633,3 +633,25 @@ nav.main a:not(.btn){white-space:nowrap}.brand{white-space:nowrap}
 .split>*,.svc-row>*{min-width:0}
 @media (max-width:380px){.esttable td,.esttable th{padding-left:.5rem;padding-right:.5rem}.esttable td:last-child{white-space:normal}}
 .btn{max-width:100%}.svc-row .btn{white-space:normal;text-align:center;height:auto}
+/* ── home banner slider ── */
+.hslides{position:absolute;inset:0;z-index:-1}
+.hslide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;visibility:hidden}
+.hslide.on{opacity:1;visibility:visible}.hslide.out{visibility:visible}
+.hslide:not(.on) img{animation:none}
+.hslide.on img{animation:slowzoom 14s ease-out both}
+.htexts{display:grid}.htext{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease,visibility 0s .6s}
+.htext.on{opacity:1;visibility:visible;transform:none;transition:opacity .7s ease .25s,transform .7s ease .25s,visibility 0s}
+.hero .h1{font-family:var(--display);font-weight:800;line-height:1.08;letter-spacing:-.01em;font-size:clamp(2.2rem,5vw,4rem);text-wrap:balance;margin:0;color:#fff}
+.hctl{display:flex;align-items:center;gap:.5rem;margin:1.3rem 0 .2rem}
+.hbtn{width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,.45);background:rgba(18,28,21,.35);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0;backdrop-filter:blur(4px);transition:background .2s,border-color .2s}
+.hbtn:hover{background:rgba(255,255,255,.18);border-color:#fff}.hbtn svg{width:18px;height:18px}
+.hbtn .i-play{display:none}.hbtn[aria-pressed=true] .i-play{display:block}.hbtn[aria-pressed=true] .i-pause{display:none}
+.hdots{display:flex;gap:.35rem;align-items:center;padding:0 .2rem}
+.hdots button{width:30px;height:30px;padding:0;border:0;background:none;cursor:pointer;display:grid;place-items:center}
+.hdots i{display:block;width:26px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);overflow:hidden;position:relative}
+.hdots button[aria-current] i::after{content:"";position:absolute;inset:0;background:var(--tape);transform-origin:left;transform:scaleX(1)}
+.hero.playing .hdots button[aria-current] i::after{animation:hbar var(--hint,6s) linear both}
+@keyframes hbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.hero:focus-within .hbtn:focus-visible,.hdots button:focus-visible{outline:2px solid var(--tape);outline-offset:2px}
+@media (max-width:700px){.hctl{margin-top:1rem}.hbtn{width:36px;height:36px}.hdots i{width:18px}}
+@media (prefers-reduced-motion:reduce){.hslide,.htext,.htext.on{transition:none}.hslide.on img{animation:none}}

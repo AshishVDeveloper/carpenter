@@ -258,8 +258,37 @@ function hdrFx() {
   addEventListener('resize', tick); tick();
 }
 hdrFx();
+
+/* home banner slider: auto, random order, arrows, dots, swipe; pauses on hover, focus, touch and hidden tab */
+function bindHero() {
+  const h = $('hero'); if (!h || h._b) return; const S = [...h.querySelectorAll('.hslide')], T = [...h.querySelectorAll('.htext')], n = S.length; if (n < 2) return; h._b = 1;
+  const dots = [...h.querySelectorAll('[data-hgo]')], play = h.querySelector('[data-hplay]'), ms = (+h.dataset.int || 6) * 1000, calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let order = [...Array(n).keys()];
+  if (h.dataset.rand === '1') { for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } const st = +h.dataset.start || 0; order = [st].concat(order.filter(x => x !== st)); }
+  let pos = 0, cur = order[0], timer = 0, stopped = h.dataset.auto !== '1' || calm, hold = 0;
+  h.style.setProperty('--hint', ms + 'ms');
+  const load = i => { S[i].querySelectorAll('[data-src]').forEach(e => { e.src = e.dataset.src; e.removeAttribute('data-src'); }); S[i].querySelectorAll('[data-srcset]').forEach(e => { e.srcset = e.dataset.srcset; e.removeAttribute('data-srcset'); }); };
+  const show = i => { if (i === cur) return; load(i); const old = cur; S[old].classList.add('out'); setTimeout(() => S[old].classList.remove('out'), 1100);
+    [S, T].forEach(L => { L[old].classList.remove('on'); L[old].setAttribute('aria-hidden', 'true'); L[i].classList.add('on'); L[i].removeAttribute('aria-hidden'); });
+    dots.forEach((d, k) => d.toggleAttribute('aria-current', k === i)); cur = i; pos = order.indexOf(i); load(order[(pos + 1) % n]); restart(); };
+  const step = d => show(order[(pos + d + n) % n]);
+  const restart = () => { clearTimeout(timer); h.classList.remove('playing'); if (stopped || hold) return; void h.offsetWidth; h.classList.add('playing'); timer = setTimeout(() => step(1), ms); };
+  const pause = v => { hold = v; restart(); };
+  h.addEventListener('click', e => { if (e.target.closest('[data-hnext]')) step(1); else if (e.target.closest('[data-hprev]')) step(-1); else { const g = e.target.closest('[data-hgo]'); if (g) show(+g.dataset.hgo); }
+    if (e.target.closest('[data-hplay]')) { stopped = !stopped; play.setAttribute('aria-pressed', stopped); play.setAttribute('aria-label', stopped ? 'Play the slides' : 'Pause the slides'); restart(); } });
+  h.addEventListener('mouseenter', () => pause(1)); h.addEventListener('mouseleave', () => pause(0));
+  h.addEventListener('focusin', () => pause(1)); h.addEventListener('focusout', e => { if (!h.contains(e.relatedTarget)) pause(0); });
+  h.addEventListener('keydown', e => { if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1); });
+  let x0 = null, y0 = 0; h.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pause(1); }, { passive: true });
+  h.addEventListener('touchend', e => { if (x0 !== null) { const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1); } x0 = null; setTimeout(() => pause(0), 2500); }, { passive: true });
+  document.addEventListener('visibilitychange', () => pause(document.hidden ? 1 : 0));
+  if (calm && play) { play.setAttribute('aria-pressed', 'true'); play.setAttribute('aria-label', 'Play the slides'); }
+  dots.forEach((d, k) => d.toggleAttribute('aria-current', k === cur));
+  addEventListener('load', () => load(order[1 % n]), { once: true }); if (document.readyState === 'complete') load(order[1 % n]);
+  restart();
+}
 function bindCat() { const t = location.hash.slice(1), a = t && document.querySelector('#ctypes [data-ct="' + CSS.escape(t) + '"]'); if (a) a.click(); }
-function bind() { bindCat(); bindWish(); bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
+function bind() { bindHero(); bindCat(); bindWish(); bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
 function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(html)) { el.innerHTML = html; el.dataset.sig = VI.sig(html); return true; } return false; }
@@ -269,7 +298,7 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   await new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }));
   let raw;
   try { const [S, CATS, PRODUCTS] = await Promise.all(['settings.json', 'categories.json', 'products.json'].map(get));
-    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []), BLOG: await get('blog.json').catch(() => []), CATALOGUE: await get('catalogue.json').catch(() => []) };
+    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []), BLOG: await get('blog.json').catch(() => []), CATALOGUE: await get('catalogue.json').catch(() => []), BANNERS: await get('banners.json').catch(() => ({})) };
     if (LANG !== 'en') VI.setLang(LANG, await get('i18n.json'));
   } catch (e) { return; }
   D = VI.prep(raw);

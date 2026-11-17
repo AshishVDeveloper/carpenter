@@ -57,7 +57,11 @@ function prep(raw) {
     const area = VS ? VS.area(c.type, c.p || {}) : 0, est = +c.rate > 0 ? Math.round(area * c.rate / 100) * 100 : 0;
     return Object.assign({}, c, { slug: s, url: '/catalogue/' + s + '/', area, est, images: c.images || [] });
   });
-  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG, CATALOGUE };
+  const B0 = raw.BANNERS && typeof raw.BANNERS === 'object' ? raw.BANNERS : {};
+  let BI = (B0.items || []).filter(b => b && b.visible !== false && b.image && b.title).sort((a, b) => (a.order || 99) - (b.order || 99));
+  if (!BI.length) BI = [{ image: 'images/site/hero.webp', alt: 'Living and dining room interior', kicker: 'World-class furniture, made in India · Custom furniture', title: S.hero_title || S.name, text: S.hero_text || '', btn: 'Get a free estimate', link: '/get-quote/', btn2: 'Our services', link2: '/services/' }];
+  const BANNERS = { auto: B0.auto !== false, interval: Math.max(3, Math.min(20, +B0.interval || 6)), random: !!B0.random, items: BI };
+  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG, CATALOGUE, BANNERS };
 }
 const catName = (D, slug) => (D.CATS.find(c => c.slug === slug) || {}).name || slug;
 const waNum = S => String(S.whatsapp || S.phone || '').replace(/\D/g, '');
@@ -127,14 +131,30 @@ function crumbLD(D, list) {
 
 /* ── pages ── */
 const V = {};
+
+/* home banner slider: images fade one into the next; text changes with them (admin → Banners) */
+function heroSlides(D) {
+  const B = D.BANNERS, L = B.items, many = L.length > 1;
+  const pic = (b, i) => { const u = src(b.image), a = i ? 'data-src' : 'src';
+    return '<div class="hslide' + (i ? '' : ' on') + '"' + (many ? ' role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' of ' + L.length + '"' : '') + (i ? ' aria-hidden="true"' : '') + '><picture><img ' + a + '="' + esc(u) + '" alt="' + esc(b.alt || b.title) + '"' + (i ? ' loading="lazy"' : ' fetchpriority="high"') + ' width="1920" height="1080"/></picture></div>'; };
+  const btn = (t, l, cls) => t && l ? '<a class="btn ' + cls + '" href="' + esc(l) + '">' + esc(t) + '</a>' : '';
+  const txt = (b, i) => '<div class="htext' + (i ? '' : ' on') + '"' + (i ? ' aria-hidden="true"' : '') + '>' + (b.kicker ? '<p class="hero-k">' + esc(b.kicker) + '</p>' : '') +
+    (i ? '<p class="h1">' + esc(b.title) + '</p>' : '<h1>' + esc(b.title) + '</h1>') + (b.text ? '<p class="lede">' + esc(b.text) + '</p>' : '') +
+    '<div class="ctas">' + btn(b.btn, b.link, 'btn-tape') + btn(b.btn2, b.link2, 'btn-light') + '</div></div>';
+  const ctl = many ? '<div class="hctl"><button type="button" class="hbtn" data-hprev aria-label="Previous banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>' +
+    '<div class="hdots" role="group" aria-label="Choose a banner">' + L.map((b, i) => '<button type="button" data-hgo="' + i + '" aria-label="Banner ' + (i + 1) + ': ' + esc(b.title) + '"' + (i ? '' : ' aria-current="true"') + '><i></i></button>').join('') + '</div>' +
+    '<button type="button" class="hbtn" data-hnext aria-label="Next banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>' +
+    (B.auto ? '<button type="button" class="hbtn" data-hplay aria-label="Pause the slides" aria-pressed="false"><svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg></button>' : '') + '</div>' : '';
+  return '<section class="hero" id="hero"' + (many ? ' aria-roledescription="carousel" aria-label="Highlights" data-auto="' + (B.auto ? 1 : 0) + '" data-int="' + B.interval + '" data-rand="' + (B.random ? 1 : 0) + '"' : '') + '><div class="hslides">' + L.map(pic).join('') + '</div>' +
+    '<div class="wrap"><div class="hero-in"><div class="htexts">' + L.map(txt).join('') + '</div>' + ctl +
+    (many && B.random ? '<script>(function(){var h=document.getElementById("hero"),s=h.querySelectorAll(".hslide"),t=h.querySelectorAll(".htext"),n=s.length,i=Math.floor(Math.random()*n);h.dataset.start=i;if(!i)return;[s,t].forEach(function(L){L[0].classList.remove("on");L[0].setAttribute("aria-hidden","true");L[i].classList.add("on");L[i].removeAttribute("aria-hidden")});var p=s[i];p.querySelectorAll("[data-src]").forEach(function(e){e.src=e.getAttribute("data-src");e.removeAttribute("data-src")});p.querySelectorAll("[data-srcset]").forEach(function(e){e.srcset=e.getAttribute("data-srcset");e.removeAttribute("data-srcset")})})()</script>' : '');
+}
+
 V.home = D => {
   const S = D.S, feat = D.PRODUCTS.filter(p => p.featured).concat(D.PRODUCTS.filter(p => !p.featured)).slice(0, 8);
   const ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (S.faqs || []).map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }];
   const body =
-    '<section class="hero"><picture><source media="(max-width:700px)" srcset="/images/site/hero-sm.webp"/><img src="/images/site/hero.webp" alt="Living and dining room interior with an L-shaped sofa, dining table and wall panelling" fetchpriority="high" width="1920" height="1080"/></picture>' +
-    '<div class="wrap"><div class="hero-in"><p class="hero-k">World-class furniture, made in India · Custom furniture</p>' +
-    '<h1>' + esc(S.hero_title) + '</h1><p class="lede">' + esc(S.hero_text) + '</p>' +
-    '<div class="ctas"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-light" href="/services/">Our services</a></div>' +
+    heroSlides(D) +
     '<div class="tape" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => '<span>' + (i * 10) + '</span>').join('') + '</div>' +
     '<ul class="trust"><li><b>' + D.AREAS.length + '</b> areas served</li><li><b>2 ways</b> to hire — contract or labour</li><li><b>Free</b> site visit</li></ul></div></div></section>' +
 

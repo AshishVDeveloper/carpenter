@@ -196,3 +196,15 @@ async function srvSaveGh(e) {
   try { await api('/github', { github: $('g_token').value.trim() }); e.target.reset(); toast('GitHub key updated.'); } catch (er) { toast(er.message, true); }
   $('gBtn').disabled = false;
 }
+
+/* 6-digit code boxes: sign in / confirm by themselves as soon as a full code is pasted or typed.
+   Backup codes (letters and a dash) still need the button. A wrong code is not sent again until it is changed. */
+document.addEventListener('input', e => {
+  const el = e.target; if (!el || el.tagName !== 'INPUT' || el.autocomplete !== 'one-time-code' || !el.form) return;
+  const v = el.value.replace(/\s+/g, ''); if (!/^\d{6}$/.test(v)) return;
+  if (v !== el.value) el.value = v;
+  const btn = el.form.querySelector('button.pri, button[type=submit], button:not([type=button])');
+  if (el.dataset.sent === v || (btn && btn.disabled)) return;
+  el.dataset.sent = v;
+  setTimeout(() => { if (el.isConnected && el.value.replace(/\s+/g, '') === v) { el.form.requestSubmit ? el.form.requestSubmit(btn || undefined) : btn && btn.click(); } }, 120);
+});

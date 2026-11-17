@@ -79,6 +79,12 @@ function bindShop() {
   $('search').oninput = draw; $('sort').onchange = draw;
 }
 function bindProduct() {
+  const rf = $('rvf'); if (rf) rf.onsubmit = e => {
+    e.preventDefault(); const d = Object.fromEntries(new FormData(rf)); if (d._honey) return;
+    if (!d.name.trim() || d.text.trim().length < 10) { toast(tt('Add your name and a few words about the product.'), true); return; }
+    emailCopy('Product review — ' + rf.dataset.product + ' — ' + d.rating + '★', { Product: rf.dataset.product, Rating: d.rating + ' out of 5', Name: d.name, Area: d.place || '-', Phone: d.phone || '-', Review: d.text, Page: location.href });
+    rf.reset(); rf.closest('details').open = false; toast(tt('Thank you! Your review will appear after we check it.'));
+  };
   const t = $('thumbs'); if (t) t.onclick = e => { const b = e.target.closest('button'); if (!b) return; $('mainImg').src = b.dataset.src; [...t.children].forEach(x => x.setAttribute('aria-pressed', x === b)); };
 }
 function bindList() {

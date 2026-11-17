@@ -196,6 +196,7 @@ V.category = (D, cat) => {
 V.product = (D, cat, slug) => {
   const S = D.S, p = D.PRODUCTS.find(x => x.category === cat && x.slug === slug); if (!p) return null;
   const imgs = p.images && p.images.length ? p.images : ['assets/logo.svg'];
+  const RV = (p.reviews || []).filter(r => r && r.name && r.text && +r.rating >= 1 && +r.rating <= 5);
   const rel = D.PRODUCTS.filter(x => x.category === p.category && x.id !== p.id).concat(D.PRODUCTS.filter(x => x.category !== p.category && x.featured)).slice(0, 4);
   const body = '<section class="sec tight"><div class="wrap">' + crumbs([['Furniture', '/furniture/'], [catName(D, p.category), '/furniture/' + p.category + '/'], [p.name]]) + '<div class="pd">' +
     '<div class="gallery"><div class="main"><img id="mainImg" src="' + esc(src(imgs[0])) + '" alt="' + esc(p.name) + '" width="1200" height="900"/></div>' + (imgs.length > 1 ? '<div class="thumbs" id="thumbs">' + imgs.map((s, i) => '<button type="button" data-src="' + esc(src(s)) + '" aria-pressed="' + (i === 0) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(small(s)) + '" alt="' + esc(p.name) + ' photo ' + (i + 1) + '"/></button>').join('') + '</div>' : '') + '<p class="hint">Photo is a design reference. We make it to your size and finish.</p></div>' +
@@ -205,11 +206,24 @@ V.product = (D, cat, slug) => {
     '<div class="buy"><button class="btn btn-primary" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote list</button><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I am interested in: ' + p.name + ' (estimate ' + range(p) + ').\n' + S.site_url + p.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a></div>' +
     '<div class="note">' + I.ruler + '<span>The final price depends on the size, wood or board and finish you choose. <a class="link" href="/get-quote/#' + qslug(p.name) + '">Get an exact quote</a></span></div>' +
     (S.delivery_note ? '<p class="hint mt08">' + esc(S.delivery_note) + '</p>' : '') + '</div></div>' +
+    reviewsHTML(p, RV) +
     (rel.length ? '<h2 class="mh35">You may also like</h2><div class="grid">' + rel.map(x => card(D, x)).join('') + '</div>' : '') + '</div></section>';
   const ld = [crumbLD(D, [['Furniture', '/furniture/'], [catName(D, p.category), '/furniture/' + p.category + '/'], [p.name, p.url]]),
     { '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: S.site_url + src(imgs[0]), material: p.material, brand: { '@type': 'Brand', name: S.name }, offers: { '@type': 'AggregateOffer', priceCurrency: 'INR', lowPrice: p.lo, highPrice: p.hi, offerCount: 1, availability: 'https://schema.org/MadeToOrder', url: S.site_url + p.url } }];
+  /* star ratings for Google only from real customer reviews added in the admin */
+  if (RV.length) Object.assign(ld[1], { aggregateRating: { '@type': 'AggregateRating', ratingValue: +(RV.reduce((a, r) => a + +r.rating, 0) / RV.length).toFixed(1), reviewCount: RV.length, bestRating: 5, worstRating: 1 },
+    review: RV.slice(0, 10).map(r => Object.assign({ '@type': 'Review', author: { '@type': 'Person', name: r.name }, reviewRating: { '@type': 'Rating', ratingValue: +r.rating, bestRating: 5, worstRating: 1 }, reviewBody: r.text }, r.date ? { datePublished: r.date } : {})) });
   return { title: p.name + ' — Est. ' + range(p).replace(/ – /, '–') + ' | ' + S.name, desc: p.name + ' made to order in Mumbai & Thane. ' + (p.material ? p.material + '. ' : '') + 'Estimated price ' + range(p) + '. Custom size, wood and finish. Free site visit.', body, ld, image: src(imgs[0]) };
 };
+
+function reviewsHTML(p, RV) {
+  const avg = RV.length ? RV.reduce((a, r) => a + +r.rating, 0) / RV.length : 0, star = n => '<span class="stars" aria-hidden="true">' + '★'.repeat(n) + '<span class="off">' + '★'.repeat(5 - n) + '</span></span>';
+  return '<section class="previews" id="reviews"><div class="prv-head"><h2>Customer reviews</h2>' + (RV.length ? '<p class="prv-avg">' + star(Math.round(avg)) + '<b>' + avg.toFixed(1) + '</b> out of 5 · ' + RV.length + ' review' + (RV.length === 1 ? '' : 's') + '</p>' : '<p class="lede">No reviews yet for this piece. Bought it from us? Your review helps other families decide.</p>') + '</div>' +
+    (RV.length ? '<div class="prv-list">' + RV.map(r => '<figure class="prv"><div aria-label="' + r.rating + ' out of 5">' + star(+r.rating) + '</div><blockquote>' + esc(r.text) + '</blockquote><figcaption><b>' + esc(r.name) + '</b>' + (r.place ? ' · ' + esc(r.place) : '') + (r.date ? ' · <time datetime="' + esc(r.date) + '">' + fdate(r.date) + '</time>' : '') + '</figcaption></figure>').join('') + '</div>' : '') +
+    '<details class="prv-form"><summary>Bought this? Share your review</summary><form id="rvf" novalidate data-product="' + esc(p.name) + '"><div class="row2"><div class="field"><label for="rvName">Your name</label><input id="rvName" name="name" autocomplete="name" required/></div><div class="field"><label for="rvPlace">Area (optional)</label><input id="rvPlace" name="place" placeholder="e.g. Airoli"/></div></div>' +
+    '<div class="row2"><div class="field"><label for="rvRate">Rating</label><select id="rvRate" name="rating"><option value="5">★★★★★ Excellent</option><option value="4">★★★★ Good</option><option value="3">★★★ Okay</option><option value="2">★★ Poor</option><option value="1">★ Bad</option></select></div><div class="field"><label for="rvPhone">Phone (not shown)</label><input id="rvPhone" name="phone" type="tel" autocomplete="tel"/></div></div>' +
+    '<div class="field"><label for="rvText">Your review</label><textarea id="rvText" name="text" required></textarea></div><input class="hp" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/><p class="hint">We check every review with our order records before it appears here.</p><button class="btn btn-primary">Send review</button></form></details></section>';
+}
 
 V.work = D => {
   const S = D.S;

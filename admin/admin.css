@@ -265,3 +265,4 @@ h3.uh{font-size:1rem;margin:1.2rem 0 .6rem}
 .bseo ul{list-style:none;margin:.4rem 0 0;padding:0;display:grid;gap:.2rem}.bseo li.ok{color:var(--ok)}.bseo li.warn{color:var(--amber)}
 @media (max-width:700px){.bcover{grid-template-columns:1fr}.bcover img{width:100%}.btool{top:56px}}
 .mt14{margin-top:1.4rem}
+.rvrow{border:1px solid var(--line);border-radius:10px;padding:.7rem;margin-bottom:.6rem;background:#FAFBF8}

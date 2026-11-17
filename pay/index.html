@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<meta name="referrer" content="no-referrer"/>
+<meta name="theme-color" content="#1F2A22"/>
+<title>Pay Mumbai Interior by UPI</title>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
+<link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin/>
+<style>
+@font-face{font-family:'Bricolage Grotesque';src:url(/assets/fonts/bricolage-grotesque-latin-wght-normal.woff2) format('woff2');font-weight:200 800;font-display:swap}
+@font-face{font-family:'Figtree';src:url(/assets/fonts/figtree-latin-wght-normal.woff2) format('woff2');font-weight:300 900;font-display:swap}
+:root{--bg:#F2F3EE;--ink:#1F2A22;--muted:#56635A;--line:#DCE0D6;--forest:#2F4A3A;--tape:#E9C46A;--green:#1F8F4E}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:400 1rem/1.55 'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;padding:1.2rem 1rem 2rem}
+.top{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:var(--ink);margin:.4rem 0 1.2rem}.top img{width:44px;height:44px;border-radius:10px}.top b{font:800 1.25rem 'Bricolage Grotesque',sans-serif}.top small{display:block;color:var(--muted);font-size:.8rem}
+main{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 40px -24px rgba(0,0,0,.35)}
+.head{background:linear-gradient(135deg,#1F2A22,#2F4A3A);color:#fff;padding:1.3rem 1.4rem 1.2rem;position:relative}
+.head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:repeating-linear-gradient(90deg,rgba(0,0,0,.35) 0 1px,transparent 1px 7px) bottom/100% 4px no-repeat,var(--tape)}
+.k{color:var(--tape);font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
+.amt{font:800 2.6rem/1.1 'Bricolage Grotesque',sans-serif;margin:.35rem 0 .2rem;font-variant-numeric:tabular-nums}
+.to{color:#D7E1D9;font-size:.95rem}.for{margin-top:.35rem;font-size:.9rem;color:#fff;opacity:.9}
+.body{padding:1.3rem 1.4rem 1.4rem;text-align:center}
+.btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:54px;border-radius:14px;border:0;font:700 1.05rem 'Figtree',sans-serif;text-decoration:none;cursor:pointer}
+.pay{background:var(--green);color:#fff;box-shadow:0 10px 20px -12px rgba(31,143,78,.8)}.pay:active{transform:translateY(1px)}
+.alt{background:#fff;color:var(--ink);border:1.5px solid var(--line);margin-top:.6rem}
+.or{display:flex;align-items:center;gap:.8rem;color:var(--muted);font-size:.85rem;margin:1.1rem 0}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.qr{display:inline-block;padding:10px;border:1px solid var(--line);border-radius:16px;background:#fff}.qr img{display:block;width:216px;height:216px;image-rendering:pixelated}
+.upi{margin:.8rem 0 .2rem;font-size:.95rem}.upi b{background:#F7F3E6;border:1px dashed #D9B655;border-radius:8px;padding:.2rem .5rem;font-variant-numeric:tabular-nums}
+.apps{color:var(--muted);font-size:.85rem;margin:.6rem 0 0}
+.after{border-top:1px solid var(--line);margin-top:1.2rem;padding-top:1rem;font-size:.9rem;color:var(--muted)}
+.wa{background:#fff;color:var(--green);border:1.5px solid #BFDCC9;margin-top:.6rem}
+.set{display:grid;gap:.5rem;text-align:left;margin:0 0 1rem}.set[hidden]{display:none}.set label{font-weight:700;font-size:.9rem}.set input{font:700 1.4rem 'Figtree',sans-serif;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:12px;width:100%}
+.note{font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;max-width:440px}
+.desk .pay{display:none}.desk .or{display:none}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1511}.top{color:#E6ECE6}.top small,.note{color:#A5B3A8}}
+</style>
+</head>
+<body>
+<a class="top" href="/"><img src="/assets/logo-96.png" alt=""/><span><b>Mumbai Interior</b><small>Interiors &amp; custom furniture</small></span></a>
+<main id="m">
+<div class="head"><div class="k">Payment request <span id="no"></span></div><div class="amt" id="amt">Enter amount</div><div class="to">to <b>Ramkumar Vishwakarma</b></div><div class="for" id="for" hidden></div></div>
+<div class="body">
+<div class="set" id="set" hidden><label for="am">Amount to pay (₹)</label><input id="am" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 10000"/></div>
+<a class="btn pay" id="pay" href="#">Pay with a UPI app</a>
+<div class="or">or scan with any UPI app</div>
+<div class="qr"><img id="qr" alt="UPI QR code to pay Ramkumar Vishwakarma"/></div>
+<p class="upi">UPI ID: <b id="vpa">9004200401@upi</b></p>
+<button class="btn alt" id="copy" type="button">Copy UPI ID</button>
+<p class="apps">Google Pay · PhonePe · Paytm · BHIM · any bank UPI app</p>
+<div class="after">After paying, send us the screenshot so we can confirm it.<a class="btn wa" id="wa" href="https://wa.me/919004200401" target="_blank" rel="noopener">Send screenshot on WhatsApp</a></div>
+</div>
+</main>
+<p class="note">This page always pays <b>Ramkumar Vishwakarma</b> (UPI ID 9004200401@upi). Check the name in your UPI app before you pay.</p>
+<script src="/assets/vendor/qrcode.js"></script>
+<script>
+(function(){var Q=new URLSearchParams(location.search),VPA="9004200401@upi",PN="Ramkumar Vishwakarma",no=(Q.get('n')||'').replace(/[^\w\-\/]/g,'').slice(0,30),fr=(Q.get('f')||'').replace(/[^\w .,\-\/&()]/g,'').slice(0,60),am=parseFloat(Q.get('am')),$=function(i){return document.getElementById(i)};
+var mob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(!mob)document.body.classList.add('desk');
+if(no)$('no').textContent='· '+no;if(fr||no){$('for').hidden=false;$('for').textContent=(fr?'For: '+fr:'')+(no?(fr?' · ':'')+'Ref. '+no:'')}
+function fmt(n){return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2})}
+function draw(a){var ok=a>0&&a<=1000000,u='upi://pay?pa='+VPA+'&pn='+encodeURIComponent(PN)+(ok?'&am='+a.toFixed(2):'')+'&cu=INR'+(no?'&tn='+encodeURIComponent((no+' '+fr).trim().slice(0,50))+'&tr='+encodeURIComponent(no):'');
+ $('amt').textContent=ok?fmt(a):'Enter amount';$('pay').href=u;$('pay').textContent=ok?'Pay '+fmt(a)+' with a UPI app':'Pay with a UPI app';
+ var q=qrcode(0,'M');q.addData(u);q.make();$('qr').src=q.createDataURL(8,2);
+ $('wa').href='https://wa.me/919004200401?text='+encodeURIComponent('Hi, I have paid '+(ok?fmt(a):'')+(no?' for '+no:'')+' to '+VPA+'. Screenshot attached.')}
+if(!(am>0&&am<=1000000)){$('set').hidden=false;$('am').oninput=function(){draw(parseFloat(this.value))}}
+draw(am>0&&am<=1000000?Math.round(am*100)/100:0);
+$('copy').onclick=function(){var b=this;(navigator.clipboard?navigator.clipboard.writeText(VPA):Promise.reject()).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy UPI ID'},1800)},function(){prompt('UPI ID',VPA)})};
+})();
+</script>
+</body>
+</html>

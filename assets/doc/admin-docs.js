@@ -190,7 +190,7 @@ window.pgDoc = function(arg, preset){
       '<div class="field"><label for="e_terms">Terms — one per line</label><textarea id="e_terms" style="min-height:130px">' + esc((E.terms || []).join('\n')) + '</textarea>' + (E.type === 'agreement' ? '<div class="hint">These are general clauses — read them carefully and change them to match your deal. They are not legal advice.</div>' : '') + '</div>' + f('footer_note', 'Footer message', 'text', 'Thank you for your business!') + '</div>' +
     '<div class="docbar"><a class="btn" href="#documents">Back</a><button class="btn pri" onclick="docSave(this)">Save</button><button class="btn" onclick="docPDFcur(this)">Download PDF</button><button class="btn" onclick="docPrint()">Print</button>' +
       (E.type === 'quotation' ? '<select class="btn" aria-label="Convert" onchange="docConvert(this.value);this.value=\'\'"><option value="">Make from this…</option><option value="agreement">Agreement</option><option value="bill">Bill</option><option value="invoice">Invoice</option></select>' : '') +
-      (!E.isNew ? '<button class="btn" onclick="docDup()">Duplicate</button>' : '') + '</div>' +
+      (!E.isNew ? '<button class="btn" onclick="docDup()">Duplicate</button>' : '') + (!E.isNew && E.type !== 'agreement' ? '<a class="btn" data-perm="payments.add" href="#payments/from-' + E.id + '">Request payment</a>' : '') + '</div>' +
     '</div><div class="docprev' + (innerWidth <= 1150 ? ' shut' : '') + '" id="docprev"><div class="prevhead"><b>Preview</b><span class="hint" style="margin:0">A4 · updates as you type</span><button type="button" class="btn sm prevtoggle" aria-expanded="' + (innerWidth > 1150) + '" aria-controls="prevbox" onclick="togglePrev(this)">' + (innerWidth <= 1150 ? 'Show preview' : 'Hide preview') + '</button></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
   document.querySelectorAll('[data-e]').forEach(el => el.oninput = el.onchange = () => { E[el.dataset.e] = el.value; dirtyDoc(); });
   document.getElementById('e_terms').oninput = e => { E.terms = e.target.value.split('\n'); dirtyDoc(); };
@@ -314,4 +314,6 @@ window.pgLetterhead = function(){
 };
 window.lhSavePriv = async b => { b.disabled = true; await saveVault(true); b.disabled = false; toast('Saved.'); };
 window.vaultCount = () => V ? V.docs.length : 0;
+/* for payment requests (admin/payments.js): same encrypted store, letterhead and preview sizing */
+window.VLT = { data: () => V, save: n => saveVault(n), lh: letterheadData, fit: fitPreview, sync: setSync, today, docTotal: d => D.totals(d) };
 })();

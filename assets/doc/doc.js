@@ -137,5 +137,5 @@ function render(d, L, opt = {}){
   return '<div class="docpage">' + (d.status === 'draft' && opt.watermark ? '<div class="stamp">DRAFT</div>' : '') + letterhead(L) + body + '<div class="grow"></div>' + signs + footer(L, d) + '</div>';
 }
 
-window.DOCS = {TYPES, area, lineAmount, totals, words, render, rs, inr, fmtDate};
+window.DOCS = {TYPES, area, lineAmount, totals, words, render, rs, inr, fmtDate, letterhead, footer, esc};
 })();

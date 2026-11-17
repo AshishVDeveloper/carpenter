@@ -209,7 +209,7 @@ async function route(req, env, url) {
 
   // ── shared key for private documents (quotations, bills…), only for people allowed to see them ──
   if (p === '/vault/key' && m === 'GET') {
-    if (!['documents', 'rates', 'letterhead'].some(x => can(x, 'view'))) throw err(403, 'perm', 'No access to documents.');
+    if (!['documents', 'rates', 'letterhead', 'payments'].some(x => can(x, 'view'))) throw err(403, 'perm', 'No access to documents.');
     let k = await KV.get('vaultkey'); if (!k) { k = btoa(String.fromCharCode(...rand(32))); await KV.put('vaultkey', k); }
     return json({ key: k });
   }
@@ -277,6 +277,33 @@ async function route(req, env, url) {
     for (const k of Object.keys(R)) if (k !== 'super_admin' && !out[k] && used.has(k)) throw err(400, 'bad', 'The role "' + R[k].name + '" is still given to someone. Change their role first.');
     await KV.put('roles', JSON.stringify(out));
     return json({ roles: await rolesLoad(KV) });
+  }
+
+  // ── payment request: branded email with the PDF (and visiting card) attached; from the first business mailbox, else from noreply@ ──
+  if (p === '/pay/send' && m === 'POST') {
+    need('payments', 'send');
+    const b = await body(req), to = String(b.to || '').trim();
+    if (!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(to)) throw err(400, 'bad', 'Enter a valid customer email address.');
+    const sub = String(b.subject || 'Payment request').replace(/[\r\n]+/g, ' ').slice(0, 200);
+    const html = brandMail(env, { preheader: String(b.preheader || sub).slice(0, 200), bodyHtml: String(b.content || '').slice(0, 80000) });
+    const files = (Array.isArray(b.attachments) ? b.attachments : []).slice(0, 3).filter(a => a && /^[\w.\- ]{1,90}\.(pdf|png|jpe?g)$/i.test(a.name || '') && typeof a.b64 === 'string' && /^[A-Za-z0-9+/=\s]+$/.test(a.b64.slice(0, 200)) && a.b64.length < 6e6);
+    const Z = await zLoad(KV);
+    if (Z.boxes.length) {
+      const z = Z.boxes[0], A = '/api/accounts/' + z.acc, att = [];
+      for (const f of files) {
+        const bin = Uint8Array.from(atob(f.b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+        const up = async retry => { const t = await zToken(env, KV, z.conn, retry); return fetch(zMail(env) + A + '/messages/attachments?fileName=' + encodeURIComponent(f.name), { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + t, Accept: 'application/json', 'Content-Type': 'application/octet-stream' }, body: bin }); };
+        let r = await up(); if (r.status === 401) r = await up(true);
+        const j = await r.json().catch(() => ({})), d = Array.isArray(j.data) ? j.data[0] : j.data;
+        if (!r.ok || !d || !d.storeName) throw err(502, 'zoho', 'Could not attach ' + f.name + ' (' + ((j.status && j.status.description) || r.status) + ').');
+        att.push({ storeName: d.storeName, attachmentPath: d.attachmentPath, attachmentName: d.attachmentName || f.name });
+      }
+      await zApi(env, KV, z.conn, A + '/messages', { method: 'POST', body: JSON.stringify({ fromAddress: z.email, toAddress: to, subject: sub, content: html, mailFormat: 'html', ...(att.length ? { attachments: att } : {}) }) });
+      return json({ ok: true, from: z.email });
+    }
+    if (!env.SMTP_PASS) throw err(409, 'nomail', 'No mailbox is connected. Connect one in Mail, or send the PDF on WhatsApp.');
+    await smtpSend(env, { to, subject: sub, text: String(b.text || sub), html, replyTo: env.ENQUIRY_TO || 'info@mumbai-interior.in', attachments: files });
+    return json({ ok: true, from: env.SMTP_USER || 'noreply@mumbai-interior.in' });
   }
 
   // ── Zoho Mail: several mailboxes (info@, asheesh@, …), each connected once with its own Zoho login ──
@@ -368,7 +395,7 @@ async function route(req, env, url) {
 /* ── minimal SMTP client (implicit TLS, AUTH LOGIN) for sending from the business mailbox ── */
 const b64u = str => { const b = new TextEncoder().encode(str); let o = ''; for (const x of b) o += String.fromCharCode(x); return btoa(o); };
 const encHead = v => /^[\x20-\x7e]*$/.test(v) ? v : '=?UTF-8?B?' + b64u(v) + '?=';
-async function smtpSend(env, { to, subject, text, html, replyTo }) {
+async function smtpSend(env, { to, subject, text, html, replyTo, attachments }) {
   const user = env.SMTP_USER || 'noreply@mumbai-interior.in', host = env.SMTP_HOST || 'smtppro.zoho.in', port = +(env.SMTP_PORT || 465);
   const sock = connect({ hostname: host, port }, { secureTransport: env.SMTP_TLS === 'off' ? 'off' : 'on', allowHalfOpen: false });
   const w = sock.writable.getWriter(), r = sock.readable.getReader(), dec = new TextDecoder(), enc = new TextEncoder();
@@ -396,7 +423,11 @@ async function smtpSend(env, { to, subject, text, html, replyTo }) {
     let msg;
     if (html) {
       const bd = 'mi_' + crypto.randomUUID().replace(/-/g, '');
-      msg = head.concat(['Content-Type: multipart/alternative; boundary="' + bd + '"', '', '--' + bd, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(text || ''), '--' + bd, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(html), '--' + bd + '--']).join('\r\n');
+      const alt = ['Content-Type: multipart/alternative; boundary="' + bd + '"', '', '--' + bd, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(text || ''), '--' + bd, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(html), '--' + bd + '--'];
+      if (attachments && attachments.length) {
+        const mx = 'mx_' + crypto.randomUUID().replace(/-/g, ''), type = n => /\.pdf$/i.test(n) ? 'application/pdf' : /\.png$/i.test(n) ? 'image/png' : 'image/jpeg';
+        msg = head.concat(['Content-Type: multipart/mixed; boundary="' + mx + '"', '', '--' + mx].concat(alt).concat(attachments.flatMap(a => ['--' + mx, 'Content-Type: ' + type(a.name) + '; name="' + a.name + '"', 'Content-Disposition: attachment; filename="' + a.name + '"', 'Content-Transfer-Encoding: base64', '', a.b64.replace(/\s/g, '').replace(/.{1,76}/g, '$&\r\n')])).concat(['--' + mx + '--'])).join('\r\n');
+      } else msg = head.concat(alt).join('\r\n');
     } else msg = head.concat(['Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap(text)]).join('\r\n');
     await cmd(msg + '\r\n.', '250');
     await cmd('QUIT', '221').catch(() => {});
@@ -488,21 +519,21 @@ async function ghOwner(env, token) {
    owner lives in 'acct' (always super admin); others in 'user:<email>', listed in 'users' */
 const MODS = { dashboard: ['view'], documents: ['view', 'add', 'edit', 'delete'], rates: ['view', 'edit'], letterhead: ['view', 'edit'], settings: ['view', 'edit'],
   projects: ['view', 'add', 'edit', 'delete'], testimonials: ['view', 'add', 'edit', 'delete'], products: ['view', 'add', 'edit', 'delete'], categories: ['view', 'add', 'edit', 'delete'],
-  blog: ['view', 'add', 'edit', 'delete'], catalogue: ['view', 'add', 'edit', 'delete'], banners: ['view', 'add', 'edit', 'delete'], orders: ['view', 'delete'], mail: ['view', 'send', 'manage'], publishing: ['view', 'edit'], users: ['view', 'add', 'edit', 'delete'] };
+  blog: ['view', 'add', 'edit', 'delete'], catalogue: ['view', 'add', 'edit', 'delete'], banners: ['view', 'add', 'edit', 'delete'], payments: ['view', 'add', 'edit', 'delete', 'send'], card: ['view', 'edit'], orders: ['view', 'delete'], mail: ['view', 'send', 'manage'], publishing: ['view', 'edit'], users: ['view', 'add', 'edit', 'delete'] };
 const ALL = Object.entries(MODS).flatMap(([k, a]) => a.map(x => k + '.' + x));
 const pick = (spec) => ALL.filter(x => { const [mo, ac] = x.split('.'); return spec[mo] === '*' || (spec[mo] || []).includes(ac); });
 const ROLE_DEF = {
   super_admin: { name: 'Super admin', perms: ALL, system: true },
   admin: { name: 'Admin', perms: ALL.filter(x => !['users.delete', 'publishing.edit', 'mail.manage'].includes(x)) },
-  employee: { name: 'Employee', perms: pick({ blog: ['view', 'add', 'edit'], catalogue: ['view', 'add', 'edit'], banners: ['view'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], projects: ['view', 'add', 'edit'], products: ['view'], categories: ['view'], orders: ['view'], mail: ['view'] }) },
-  sale: { name: 'Sale', perms: pick({ blog: ['view'], catalogue: ['view'], banners: ['view'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], products: ['view'], categories: ['view'], testimonials: ['view'], orders: ['view'], mail: ['view', 'send'] }) }
+  employee: { name: 'Employee', perms: pick({ blog: ['view', 'add', 'edit'], catalogue: ['view', 'add', 'edit'], banners: ['view'], payments: ['view'], card: ['view'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], projects: ['view', 'add', 'edit'], products: ['view'], categories: ['view'], orders: ['view'], mail: ['view'] }) },
+  sale: { name: 'Sale', perms: pick({ blog: ['view'], catalogue: ['view'], banners: ['view'], payments: ['view', 'add', 'edit', 'send'], card: ['view'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], products: ['view'], categories: ['view'], testimonials: ['view'], orders: ['view'], mail: ['view', 'send'] }) }
 };
 async function rolesLoad(KV) {
   const saved = JSON.parse(await KV.get('roles') || 'null');
   const r = saved ? { super_admin: ROLE_DEF.super_admin, ...saved } : { ...ROLE_DEF };
   r.super_admin = ROLE_DEF.super_admin;
   /* new modules added after roles were saved: give saved built-in roles their default permissions for them */
-  for (const [k, def] of Object.entries(ROLE_DEF)) if (saved && saved[k]) for (const mod of ['blog', 'catalogue', 'banners']) if (!(r[k].mods || []).includes(mod)) r[k] = { ...r[k], perms: [...new Set((r[k].perms || []).concat(def.perms.filter(x => x.startsWith(mod + '.'))))] };
+  for (const [k, def] of Object.entries(ROLE_DEF)) if (saved && saved[k]) for (const mod of ['blog', 'catalogue', 'banners', 'payments', 'card']) if (!(r[k].mods || []).includes(mod)) r[k] = { ...r[k], perms: [...new Set((r[k].perms || []).concat(def.perms.filter(x => x.startsWith(mod + '.'))))] };
   return r;
 }
 const userList = async KV => JSON.parse(await KV.get('users') || '[]');
@@ -517,8 +548,8 @@ function permsOf(u, R) { if (u.role === 'super_admin') return ALL.slice(); const
 const pubUser = (u, R) => ({ email: u.email, name: u.name || '', phone: u.phone || '', role: u.role, roleName: (R[u.role] || {}).name || u.role, custom: Array.isArray(u.custom) ? u.custom : null, active: u.active !== false, owner: !!u.owner, has2fa: !!u.totp, mustChange: !!u.mustChange, created: u.created || null, last: u.lastLogin || null });
 /* which permission module may write which file in the repo */
 function ghMods(f) {
-  if (f === 'data/vault.json') return ['documents', 'rates', 'letterhead'];
-  if (f === 'data/settings.json') return ['settings', 'letterhead'];
+  if (f === 'data/vault.json') return ['documents', 'rates', 'letterhead', 'payments'];
+  if (f === 'data/settings.json') return ['settings', 'letterhead', 'card'];
   const m = f.match(/^data\/(products|categories|projects|testimonials|blog|catalogue|banners)\.json$/); if (m) return [m[1]];
   if (/^images\/blog\/[\w.-]+$/.test(f)) return ['blog'];
   if (/^images\/catalogue\/[\w.-]+$/.test(f)) return ['catalogue'];

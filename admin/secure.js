@@ -58,7 +58,7 @@ function showTfa() {
 }
 async function finishLogin() {
   const P = PENDING || {}, me = await api('/me');
-  if (me.perms.some(x => /^(documents|rates|letterhead)\.view$/.test(x))) {
+  if (me.perms.some(x => /^(documents|rates|letterhead|payments)\.view$/.test(x))) {
     try {
       const { key } = await api('/vault/key');
       try { await vaultOpenKey(key, me.owner ? P.pw : null); }

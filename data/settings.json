@@ -644,5 +644,9 @@
     }
   },
   "google_verification": "",
-  "bing_verification": ""
+  "bing_verification": "",
+  "payment": {
+    "upi": "9004200401@upi",
+    "name": "Ramkumar Vishwakarma"
+  }
 }

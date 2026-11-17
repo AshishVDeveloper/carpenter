@@ -62,3 +62,18 @@
   html,body{margin:0;background:#fff}
   .docpage{min-height:auto}
 }
+
+/* payment request */
+.docpage .stamp.paid{color:rgba(30,122,70,.13)}
+.docpage .pay{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center;border:1.5px solid var(--maroon);border-radius:10px;padding:14px 16px;margin:4px 0 14px;background:#fff;page-break-inside:avoid;break-inside:avoid}
+.docpage .pay .qr{width:170px;text-align:center}
+.docpage .pay .qr img{width:160px;height:160px;image-rendering:pixelated;display:block;margin:0 auto;border:1px solid var(--rule);border-radius:6px;padding:4px;background:#fff}
+.docpage .pay .qr small{display:block;font-size:10px;color:var(--muted);margin-top:4px}
+.docpage .pay h4{margin:0 0 6px;font:800 15px 'Bricolage Grotesque','Figtree',Arial,sans-serif;color:var(--maroon);letter-spacing:.5px;text-transform:uppercase}
+.docpage .pay .amt{font:800 26px 'Bricolage Grotesque','Figtree',Arial,sans-serif;color:var(--ink);margin:2px 0 6px}
+.docpage .pay .upi{display:inline-block;font-weight:800;font-size:13.5px;background:var(--tint);border:1px dashed var(--saffron);border-radius:6px;padding:4px 9px;margin:2px 0 6px}
+.docpage .pay .apps{font-size:11px;color:var(--muted)}
+.docpage .ctx{display:flex;gap:10px;margin:0 0 12px}
+.docpage .ctx div{flex:1;border:1px solid var(--rule);border-radius:6px;padding:7px 10px;background:var(--tint)}
+.docpage .ctx b{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--maroon)}
+.docpage .ctx span{font-weight:800;font-size:14px}

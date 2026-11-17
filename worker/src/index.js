@@ -552,6 +552,7 @@ function ghMods(f) {
   if (f === 'data/settings.json') return ['settings', 'letterhead', 'card'];
   const m = f.match(/^data\/(products|categories|projects|testimonials|blog|catalogue|banners)\.json$/); if (m) return [m[1]];
   if (/^images\/blog\/[\w.-]+$/.test(f)) return ['blog'];
+  if (f === 'data/payreq.json') return ['payments'];
   if (/^images\/catalogue\/[\w.-]+$/.test(f)) return ['catalogue'];
   if (/^images\/banners\/[\w.-]+$/.test(f)) return ['banners'];
   if (/^images\/products\/[\w.-]+$/.test(f)) return ['products'];

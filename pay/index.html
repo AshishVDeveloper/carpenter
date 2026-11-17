@@ -34,6 +34,7 @@ main{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);bor
 .set{display:grid;gap:.5rem;text-align:left;margin:0 0 1rem}.set[hidden]{display:none}.set label{font-weight:700;font-size:.9rem}.set input{font:700 1.4rem 'Figtree',sans-serif;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:12px;width:100%}
 .note{font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;max-width:440px}
 .desk .pay{display:none}.desk .or{display:none}
+.done{padding:1.6rem 1.4rem}.done h1{font:800 1.5rem 'Bricolage Grotesque',sans-serif;margin:.4rem 0 .4rem}.done p{color:var(--muted);margin:0 0 1.2rem}.tick{width:64px;height:64px;border-radius:50%;background:#E8F3EC;color:var(--green);font:800 2rem/64px sans-serif;margin:0 auto}
 @media (prefers-color-scheme:dark){:root{--bg:#0F1511}.top{color:#E6ECE6}.top small,.note{color:#A5B3A8}}
 </style>
 </head>
@@ -65,6 +66,10 @@ function draw(a){var ok=a>0&&a<=1000000,u='upi://pay?pa='+VPA+'&pn='+encodeURICo
  $('wa').href='https://wa.me/919004200401?text='+encodeURIComponent('Hi, I have paid '+(ok?fmt(a):'')+(no?' for '+no:'')+' to '+VPA+'. Screenshot attached.')}
 if(!(am>0&&am<=1000000)){$('set').hidden=false;$('am').oninput=function(){draw(parseFloat(this.value))}}
 draw(am>0&&am<=1000000?Math.round(am*100)/100:0);
+if(no&&am>0&&window.crypto&&crypto.subtle){fetch('/data/payreq.json?t='+Date.now()).then(function(r){return r.ok?r.json():{}}).then(function(S){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(no+'|'+am.toFixed(2))).then(function(b){var k=Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('').slice(0,24),st=S[k];if(!st)return;
+ var m=$('m');if(st.s==='paid'){var d=st.d?new Date(st.d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';m.innerHTML='<div class="head"><div class="k">Payment request · '+no+'</div><div class="amt">'+fmt(am)+'</div><div class="to">Paid to <b>'+PN.replace(/[<>&]/g,'')+'</b></div></div><div class="body done"><div class="tick">✓</div><h1>Payment received</h1><p>Received with thanks'+(d?' on <b>'+d+'</b>':'')+'. No need to pay again.</p><a class="btn alt" href="/">Visit our website</a></div>';}
+ else if(st.s==='cancelled'){m.innerHTML='<div class="body done"><h1>This payment request was cancelled</h1><p>Please do not pay using this link. Call or WhatsApp us if you have a question.</p><a class="btn wa" href="https://wa.me/919004200401">WhatsApp us</a></div>';}
+ document.querySelector('.note').hidden=true;})}).catch(function(){})}
 $('copy').onclick=function(){var b=this;(navigator.clipboard?navigator.clipboard.writeText(VPA):Promise.reject()).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy UPI ID'},1800)},function(){prompt('UPI ID',VPA)})};
 })();
 </script>

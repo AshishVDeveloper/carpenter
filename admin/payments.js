@@ -52,6 +52,20 @@ async function prPDF(r, mode) {
   } finally { host.remove(); document.querySelectorAll('.html2pdf__overlay').forEach(o => o.remove()); }
 }
 
+
+/* public payment status for the website's /pay/ page: only a hash of "request no.|amount" → paid / cancelled.
+   No names, phone numbers or other customer details are published. */
+async function prKey(r) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(r.no) + '|' + prSum(r).toFixed(2))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('').slice(0, 24); }
+async function prPublishStatus(r) {
+  const cfg = gh(); if (!cfg || !cfg.token || !r.no) return;
+  try {
+    let cur = {}, sha; try { const j = await ghApi(cfg, '/contents/data/payreq.json?ref=' + encodeURIComponent(cfg.branch)); sha = j.sha; cur = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\s/g, '')), c => c.charCodeAt(0)))) || {}; } catch (e) { if (e.status !== 404) throw e; }
+    const k = await prKey(r);
+    if (r.status === 'paid') cur[k] = { s: 'paid', d: r.paid_on || VLT.today() }; else if (r.status === 'cancelled') cur[k] = { s: 'cancelled' }; else delete cur[k];
+    await ghPutRaw(cfg, 'data/payreq.json', b64(JSON.stringify(cur, null, 1) + '\n'), 'Update payment status');
+  } catch (e) { toast('Saved, but the website\'s payment page could not be updated: ' + (e.message || e), true); }
+}
+
 /* ── list ── */
 function pgPayments() {
   if (!prV()) { C('<div class="card"><h2>Documents are locked</h2><p>Sign out and sign in again to open payment requests.</p></div>'); return; }
@@ -83,12 +97,12 @@ async function prSaveSettings(btn) {
   if (upi && !UPI_RE.test(upi)) { toast('That doesn\'t look like a UPI ID. It looks like name@bank, e.g. 9004200401@okicici.', true); $('ps_upi').focus(); return; }
   DB.settings.payment = { upi, name }; markDirty('settings'); await publish('settings', btn); pgPayments();
 }
-async function prDel(id) { const L = prList(), r = L.find(x => x.id === id); if (!await confirmBox('Delete payment request?', 'Delete ' + r.no + ' for ' + (r.client || 'this customer') + '? This can\'t be undone.')) return; L.splice(L.indexOf(r), 1); await VLT.save(true); drawPayments(); toast('Deleted.'); }
+async function prDel(id) { const L = prList(), r = L.find(x => x.id === id); if (!await confirmBox('Delete payment request?', 'Delete ' + r.no + ' for ' + (r.client || 'this customer') + '? This can\'t be undone.')) return; L.splice(L.indexOf(r), 1); await VLT.save(true); if (r.status !== 'pending') await prPublishStatus({ ...r, status: 'pending' }); drawPayments(); toast('Deleted.'); }
 async function prMarkPaid(id, fromEditor) {
   const r = prList().find(x => x.id === id) || PRE; if (!r) return;
   const box = document.createElement('div'); box.className = 'modal'; box.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="mpT"><h2 id="mpT">Mark ' + esc(r.no) + ' as paid</h2><p>' + prMoney(prSum(r)) + ' from ' + esc(r.client || 'customer') + '</p><div class="g2"><div class="field"><label for="mp_d">Received on</label><input id="mp_d" type="date" value="' + VLT.today() + '"/></div><div class="field"><label for="mp_m">Paid by</label><select id="mp_m">' + PR_MODES.map(m => '<option>' + m + '</option>').join('') + '</select></div></div><div class="field"><label for="mp_r">Transaction / UTR number (optional)</label><input id="mp_r" placeholder="e.g. 431245678901"/></div><div class="bar"><button class="btn" id="mp_no">Cancel</button><button class="btn pri" id="mp_ok">Mark as paid</button></div></div>';
   document.body.appendChild(box); $('mp_d').focus();
-  await new Promise(res => { $('mp_no').onclick = () => { box.remove(); res(); }; $('mp_ok').onclick = async () => { Object.assign(r, { status: 'paid', paid_on: $('mp_d').value || VLT.today(), paid_mode: $('mp_m').value, paid_ref: $('mp_r').value.trim(), updated: Date.now() }); const real = prList().find(x => x.id === r.id); if (real && real !== r) Object.assign(real, r); box.remove(); await VLT.save(true); toast('Marked as paid.'); res(); }; });
+  await new Promise(res => { $('mp_no').onclick = () => { box.remove(); res(); }; $('mp_ok').onclick = async () => { Object.assign(r, { status: 'paid', paid_on: $('mp_d').value || VLT.today(), paid_mode: $('mp_m').value, paid_ref: $('mp_r').value.trim(), updated: Date.now() }); const real = prList().find(x => x.id === r.id); if (real && real !== r) Object.assign(real, r); box.remove(); await VLT.save(true); await prPublishStatus(r); toast('Marked as paid. The payment page now shows it as paid.'); res(); }; });
   if (fromEditor) pgPayReq(r.id); else drawPayments();
 }
 
@@ -151,7 +165,7 @@ async function prSave(btn, quiet) {
 function prLog(what) { const r = prList().find(x => x.id === PRE.id); const e = { t: Date.now(), what }; PRE.log = (PRE.log || []).concat(e); if (r) r.log = PRE.log; }
 async function prDownload(btn) { if (!prCheck()) return; if (PRE.isNew && !await prSave(null, 1)) return; const l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Making PDF…'; try { await prPDF(PRE, 'save'); toast('PDF downloaded.'); } catch (e) { toast('Couldn\'t make the PDF.', true); } finally { btn.disabled = false; btn.innerHTML = l; } }
 async function prCopyLink() { if (!prCheck()) return; if (PRE.isNew && !await prSave(null, 1)) return; if (!prPayee().upi) { toast('Add your UPI ID in Payment requests → Payment settings first.', true); return; } try { await navigator.clipboard.writeText(prPayLink(PRE)); toast('Pay link copied. Paste it in any chat.'); } catch (e) { prompt('Copy this link:', prPayLink(PRE)); } }
-async function prCancel() { if (!await confirmBox('Cancel this request?', 'Mark ' + PRE.no + ' as cancelled? The customer is not told automatically.', 'Cancel request')) return; PRE.status = 'cancelled'; prLog('Cancelled'); await prSave(null, 1); toast('Request cancelled.'); pgPayReq(PRE.id); }
+async function prCancel() { if (!await confirmBox('Cancel this request?', 'Mark ' + PRE.no + ' as cancelled? The customer is not told automatically.', 'Cancel request')) return; PRE.status = 'cancelled'; prLog('Cancelled'); await prSave(null, 1); await prPublishStatus(PRE); toast('Request cancelled.'); pgPayReq(PRE.id); }
 function prMsg() { const u = prPayee(), C2 = DB.settings.card || {}; return 'Namaste ' + (PRE.client || '') + ',\n\nPayment request ' + PRE.no + ' from ' + (DB.settings.name || 'Mumbai Interior') + (PRE.title ? ' — ' + PRE.title : '') + '\nAmount: ' + prMoney(prSum(PRE)) + (PRE.due ? '\nPlease pay by: ' + prDate(PRE.due) : '') + (PRE.ref ? '\nReference: ' + PRE.ref : '') +
   (u.upi ? '\n\nPay by UPI (Google Pay, PhonePe, Paytm, BHIM):\n' + prPayLink(PRE) + '\nUPI ID: ' + u.upi : '') + '\n\nThank you,\n' + (C2.name || u.name || '') + '\n' + (DB.settings.name || 'Mumbai Interior') + ' · ' + ((DB.settings.letterhead || {}).phones || [DB.settings.phone]).filter(Boolean).join(' / '); }
 async function prWhatsApp() { if (!prCheck('wa')) return; if (!await prSave(null, 1)) return; let n = String(PRE.client_phone).replace(/\D/g, ''); if (n.length === 10) n = '91' + n; prLog('Shared on WhatsApp'); await VLT.save(); window.open('https://wa.me/' + n + '?text=' + encodeURIComponent(prMsg()), '_blank', 'noopener'); toast('WhatsApp opened. Attach the PDF there if you like — use Download PDF.'); }

@@ -214,7 +214,7 @@ self.addEventListener('fetch', e => {
 `);
 
 const today = new Date().toISOString().slice(0, 10);
-const index = routes.filter(r => !['list', 'thanks'].includes(r[1]));
+const index = routes.filter(r => !['list', 'thanks', 'wish'].includes(r[1]));
 const pri = v => ({ guides: '0.7', guide: '0.7', home: '1.0', services: '0.9', service: '0.9', furniture: '0.8', category: '0.7', area: '0.8', product: '0.6' }[v] || '0.5');
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

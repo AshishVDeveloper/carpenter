@@ -14,6 +14,8 @@ const small = s => { const u = src(s); return /^\/images\/(products|site|blog)\/
 
 const I = {
   wa: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>',
+  heart: '<svg class="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.8 7.4-4.3M8.3 13.2l7.4 4.3"/></svg>',
   list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 5h11M9 12h11M9 19h11"/><circle cx="4.5" cy="5" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="19" r="1.2"/></svg>',
   pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
@@ -63,9 +65,14 @@ function priceHTML(p, big) {
 }
 function card(D, p) {
   return '<article class="card"><a class="ph" href="' + p.url + '"><img src="' + esc(small((p.images || [])[0])) + '"' + RS(small((p.images || [])[0])) + ' alt="' + esc(p.name) + '" loading="lazy" width="600" height="450"/>' +
-    (p.customizable ? '<span class="badge">Made to your size</span>' : '') + '</a>' +
+    (p.customizable ? '<span class="badge">Made to your size</span>' : '') + '</a>' + cardActs(p) +
     '<div class="body"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h3><a href="' + p.url + '">' + esc(p.name) + '</a></h3>' + priceHTML(p) +
     '<div class="acts"><button class="btn btn-primary btn-sm" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote</button><a class="btn btn-ghost btn-sm" href="' + p.url + '">Details<span class="sr"> of ' + esc(p.name) + '</span></a></div></div></article>';
+}
+/* heart (wishlist) and share buttons on the top right of a product photo */
+function cardActs(p) {
+  return '<div class="cacts"><button type="button" class="cbtn" data-wish="' + p.id + '" aria-pressed="false" aria-label="Save ' + esc(p.name) + ' to wishlist" title="Save to wishlist">' + I.heart + '</button>' +
+    '<button type="button" class="cbtn" data-share="' + esc(p.url) + '" data-title="' + esc(p.name) + '" aria-label="Share ' + esc(p.name) + '" title="Share">' + I.share + '</button></div>';
 }
 function svcTile(s) {
   return '<a class="svc" href="/services/' + s.slug + '/"><span class="svc-ph"><img src="' + esc(small(s.image || 'images/site/home-interiors.webp')) + '"' + RS(small(s.image || 'images/site/home-interiors.webp')) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></span>' +
@@ -203,7 +210,7 @@ V.product = (D, cat, slug) => {
     '<div class="pd-info"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h1>' + esc(p.name) + '</h1>' + priceHTML(p, true) +
     '<p class="pd-desc">' + esc(p.description) + '</p>' +
     '<dl class="specs">' + [['Material', p.material], ['Size', p.size], ['Finish', p.finish], ['Made to size', p.customizable ? 'Yes — any size, wood or finish' : 'Standard size only']].filter(r => r[1]).map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' +
-    '<div class="buy"><button class="btn btn-primary" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote list</button><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I am interested in: ' + p.name + ' (estimate ' + range(p) + ').\n' + S.site_url + p.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a></div>' +
+    '<div class="buy"><button class="btn btn-primary" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote list</button><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I am interested in: ' + p.name + ' (estimate ' + range(p) + ').\n' + S.site_url + p.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a><button class="btn btn-ghost wishb" type="button" data-wish="' + p.id + '" aria-pressed="false">' + I.heart + '<span>Save</span></button><button class="btn btn-ghost" type="button" data-share="' + esc(p.url) + '" data-title="' + esc(p.name) + '">' + I.share + 'Share</button></div>' +
     '<div class="note">' + I.ruler + '<span>The final price depends on the size, wood or board and finish you choose. <a class="link" href="/get-quote/#' + qslug(p.name) + '">Get an exact quote</a></span></div>' +
     (S.delivery_note ? '<p class="hint mt08">' + esc(S.delivery_note) + '</p>' : '') + '</div></div>' +
     reviewsHTML(p, RV) +
@@ -276,6 +283,9 @@ V.quote = D => {
 
 V.list = D => ({ title: 'Your quote list | ' + D.S.name, desc: 'Furniture you have picked for a quote.', noindex: true,
   body: pageHead('Your quote list', 'Pieces you have picked. Send the list on WhatsApp and we will confirm sizes and the exact price.', crumbs([['Quote list']])) + '<section class="sec tight"><div class="wrap" id="listApp"><div class="empty">Loading your list…</div></div></section>' });
+
+V.wish = D => ({ title: 'Your wishlist | ' + D.S.name, desc: 'Furniture you have saved to look at later.', noindex: true,
+  body: pageHead('Your wishlist', 'Furniture you have saved. Add it to your quote list when you are ready, or share it with your family.', crumbs([['Wishlist']])) + '<section class="sec tight"><div class="wrap" id="wishApp"><div class="empty">Loading your wishlist…</div></div></section>' });
 
 V.thanks = D => ({ title: 'Thank you | ' + D.S.name, desc: 'Thank you for contacting us.', noindex: true,
   body: '<section class="sec"><div class="wrap narrow center"><h1>Thank you!</h1><p class="lede">WhatsApp should have opened with your details. Tap <b>Send</b> there, and we will reply with an estimate and a time for a site visit. If WhatsApp didn\'t open, call us on <a class="link" href="' + tel(D.S) + '">' + esc(D.S.phone) + '</a>.</p><div class="ctas center"><a class="btn btn-primary" href="/furniture/">Browse furniture</a><a class="btn btn-ghost" href="/">Back to home</a></div></div></section>' });
@@ -577,7 +587,7 @@ function clip(s, n) { s = String(s || ''); if (s.length <= n) return s; const c 
 
 /* ── routing ── */
 function routes(D) {
-  const R = [['/', 'home'], ['/services/', 'services'], ['/furniture/', 'furniture'], ['/our-work/', 'work'], ['/about/', 'about'], ['/contact/', 'contact'], ['/get-quote/', 'quote'], ['/quote-list/', 'list'], ['/thanks/', 'thanks']];
+  const R = [['/', 'home'], ['/services/', 'services'], ['/furniture/', 'furniture'], ['/our-work/', 'work'], ['/about/', 'about'], ['/contact/', 'contact'], ['/get-quote/', 'quote'], ['/quote-list/', 'list'], ['/wishlist/', 'wish'], ['/thanks/', 'thanks']];
   D.S.services.forEach(s => R.push(['/services/' + s.slug + '/', 'service', s.slug]));
   D.CATS.forEach(c => R.push(['/furniture/' + c.slug + '/', 'category', c.slug]));
   D.PRODUCTS.forEach(p => R.push([p.url, 'product', p.category, p.slug]));
@@ -622,7 +632,9 @@ function header(D, path) {
     '<header class="site"><div class="wrap"><a class="brand" href="/" aria-label="' + esc(S.name) + ' home"><span class="logo-i" role="img" aria-label="' + esc(S.name) + ' logo"></span><span>' + esc(S.short || S.name) + '<small>Custom furniture · Made in India</small></span></a>' +
     '<nav class="main" id="nav" aria-label="Main">' + NAV.map(n => '<a href="' + n[0] + '"' + (path.indexOf(n[0]) === 0 ? ' aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
     '<a class="nav-list" href="/quote-list/"' + (path.indexOf('/quote-list/') === 0 ? ' aria-current="page"' : '') + '>' + I.list + 'Quote list<b data-count hidden>0</b></a>' +
+    '<a class="nav-list" href="/wishlist/"' + (path.indexOf('/wishlist/') === 0 ? ' aria-current="page"' : '') + '>' + I.heart + 'Wishlist<b data-wcount hidden>0</b></a>' +
     '<div class="nav-tools"><span>Text size</span>' + fs + '</div><a class="btn btn-primary btn-sm nav-cta" href="/get-quote/">Get a quote</a></nav>' +
+    '<a class="listbtn wishbtn" href="/wishlist/" aria-label="Wishlist" title="Wishlist">' + I.heart + '<b data-wcount hidden>0</b></a>' +
     '<a class="listbtn" href="/quote-list/" aria-label="Quote list">' + I.list + '<b id="cartCount" data-count hidden>0</b></a>' +
     '<button class="menubtn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span><b class="mdot" data-count hidden>0</b></button></div></header>';
 }

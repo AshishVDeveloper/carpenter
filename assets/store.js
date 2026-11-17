@@ -44,7 +44,26 @@ const list = {
   set(c) { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (e) {} badge(); },
   add(id) { const c = list.get(), l = c.find(x => x.id === id); if (l) l.q += 1; else c.push({ id, q: 1 }); list.set(c); }
 };
-function badge() { const n = list.get().reduce((a, l) => a + l.q, 0); document.querySelectorAll('[data-count]').forEach(b => { b.textContent = n; b.hidden = !n; }); }
+/* wishlist: saved product ids in this browser */
+const WISH_KEY = 'carpenter_wish';
+const wish = {
+  get() { try { return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); } catch (e) { return []; } },
+  set(a) { try { localStorage.setItem(WISH_KEY, JSON.stringify(a)); } catch (e) {} wishSync(); },
+  has(id) { return wish.get().includes(id); },
+  toggle(id) { const a = wish.get(), on = !a.includes(id); wish.set(on ? a.concat(id) : a.filter(x => x !== id)); return on; }
+};
+function wishSync() {
+  const a = wish.get();
+  document.querySelectorAll('[data-wish]').forEach(b => { const on = a.includes(+b.dataset.wish); b.setAttribute('aria-pressed', on); b.classList.toggle('on', on); const t = b.querySelector('span'); if (t) t.textContent = tt(on ? 'Saved' : 'Save'); });
+  document.querySelectorAll('[data-wcount]').forEach(b => { b.textContent = a.length; b.hidden = !a.length; });
+}
+async function shareLink(url, title) {
+  const full = location.origin + home(url);
+  if (navigator.share) { try { await navigator.share({ title, text: title + ' — ' + (D ? D.S.name : 'Mumbai Interior'), url: full }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(full); } catch (e) { }
+  toast(tt('Link copied.') + ' <a href="https://wa.me/?text=' + encodeURIComponent(title + ' ' + full) + '" target="_blank" rel="noopener">' + tt('Share on WhatsApp') + '</a>');
+}
+function badge() { wishSync(); const n = list.get().reduce((a, l) => a + l.q, 0); document.querySelectorAll('[data-count]').forEach(b => { b.textContent = n; b.hidden = !n; }); }
 function save(rec) { try { const a = JSON.parse(localStorage.getItem(ORD_KEY) || '[]'); a.unshift(Object.assign({ id: Date.now(), date: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }, rec)); localStorage.setItem(ORD_KEY, JSON.stringify(a.slice(0, 100))); } catch (e) {} }
 function emailCopy(subject, fields, email) {
   email = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((email || '').trim()) ? email.trim() : '';
@@ -58,6 +77,10 @@ function emailCopy(subject, fields, email) {
 const okPhone = p => /^\+?\d[\d\s-]{8,}$/.test(String(p || '').trim());
 
 document.addEventListener('click', e => {
+  const w = e.target.closest('[data-wish]');
+  if (w) { e.preventDefault(); const on = wish.toggle(+w.dataset.wish); toast(on ? tt('Saved to your wishlist.') + ' <a href="' + home('/wishlist/') + '">' + tt('View wishlist') + '</a>' : tt('Removed from your wishlist.')); if ($('wishApp')) bindWish(); }
+  const sh = e.target.closest('[data-share]');
+  if (sh) { e.preventDefault(); shareLink(sh.dataset.share, sh.dataset.title || document.title); }
   const b = e.target.closest('[data-add]');
   if (b) { list.add(+b.dataset.add); toast(tt('Added to your quote list.') + ' <a href="' + home('/quote-list/') + '">' + tt('View list') + '</a>'); b.classList.add('added'); setTimeout(() => b.classList.remove('added'), 900); }
   const m = e.target.closest('#menuBtn');
@@ -73,7 +96,7 @@ function bindShop() {
     let Li = D.PRODUCTS.filter(p => (!cat || p.category === cat) && (!q || (p.name + ' ' + p.material + ' ' + VI.catName(D, p.category)).toLowerCase().includes(q)));
     if (sort === 'low') Li.sort((a, b) => a.lo - b.lo); if (sort === 'high') Li.sort((a, b) => b.lo - a.lo);
     $('count').textContent = tt(Li.length + (Li.length === 1 ? ' design' : ' designs'));
-    box.innerHTML = L(Li.length ? '<div class="grid">' + Li.map(p => VI.card(D, p)).join('') + '</div>' : '<div class="empty">Nothing matches. Try another word, or <a class="link" href="/get-quote/">ask us to make it</a>.</div>');
+    box.innerHTML = L(Li.length ? '<div class="grid">' + Li.map(p => VI.card(D, p)).join('') + '</div>' : '<div class="empty">Nothing matches. Try another word, or <a class="link" href="/get-quote/">ask us to make it</a>.</div>'); wishSync();
   };
   const q0 = new URLSearchParams(location.search).get('q'); if (q0) { $('search').value = q0; draw(); }
   $('search').oninput = draw; $('sort').onchange = draw;
@@ -89,6 +112,16 @@ function bindProduct() {
     return;
   };
   const t = $('thumbs'); if (t) t.onclick = e => { const b = e.target.closest('button'); if (!b) return; $('mainImg').src = b.dataset.src; [...t.children].forEach(x => x.setAttribute('aria-pressed', x === b)); };
+}
+function bindWish() {
+  const app = $('wishApp'); if (!app || !D) return;
+  const items = wish.get().map(id => D.PRODUCTS.find(p => p.id === id)).filter(Boolean);
+  if (!items.length) { app.innerHTML = L('<div class="empty">Your wishlist is empty. Tap the ♡ on any furniture to save it here. <a class="link" href="/furniture/">Browse furniture</a></div>'); return; }
+  const text = 'My furniture wishlist from ' + D.S.name + ':\n' + items.map(p => '• ' + p.name + ' — ' + location.origin + home(p.url)).join('\n');
+  app.innerHTML = L('<div class="wishbar"><b>' + items.length + ' saved</b><button class="btn btn-primary btn-sm" type="button" id="wishAll">' + VI.I.plus + 'Add all to quote list</button><a class="btn btn-wa btn-sm" href="https://wa.me/?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">' + VI.I.wa + 'Share list</a><button class="btn btn-ghost btn-sm" type="button" id="wishClear">Clear</button></div><div class="grid">' + items.map(p => VI.card(D, p)).join('') + '</div>');
+  $('wishAll').onclick = () => { items.forEach(p => list.add(p.id)); toast(tt('Added to your quote list.') + ' <a href="' + home('/quote-list/') + '">' + tt('View list') + '</a>'); };
+  $('wishClear').onclick = () => { wish.set([]); bindWish(); };
+  wishSync();
 }
 function bindList() {
   const app = $('listApp'); if (!app) return;
@@ -186,7 +219,7 @@ function hdrFx() {
   addEventListener('resize', tick); tick();
 }
 hdrFx();
-function bind() { bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
+function bind() { bindWish(); bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
 function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(html)) { el.innerHTML = html; el.dataset.sig = VI.sig(html); return true; } return false; }

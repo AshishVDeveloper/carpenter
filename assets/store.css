@@ -555,3 +555,14 @@ html[lang^=en] [lang=hi],html[lang^=en] [lang=mr]{font-family:system-ui,-apple-s
 .prv-form{margin-top:1.2rem;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1rem 1.2rem}
 .prv-form summary{cursor:pointer;font-weight:700;color:var(--link)}
 .prv-form form{margin-top:1rem;max-width:720px}
+/* wishlist + share */
+.card{position:relative}
+.cacts{position:absolute;top:.6rem;right:.6rem;display:flex;flex-direction:column;gap:.4rem;z-index:2}
+.cbtn{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.94);color:var(--ink);cursor:pointer;box-shadow:0 4px 14px -6px rgba(0,0,0,.4);transition:transform .15s,color .15s}
+.cbtn:hover{transform:scale(1.08)}.cbtn svg{width:19px;height:19px}
+.cbtn.on,.wishb.on{color:#D2384C}.cbtn.on .i-heart,.wishb.on .i-heart{fill:currentColor}
+html.dark .cbtn{background:rgba(20,28,22,.9);color:#E6ECE6}html.dark .cbtn.on{color:#FF6B7D}
+.buy .btn svg{width:18px;height:18px}
+.wishbtn b{background:#D2384C;color:#fff}
+.wishbar{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin-bottom:1.2rem}.wishbar b{margin-right:auto}
+@media (max-width:1100px){.wishbtn{display:grid!important;width:42px;height:42px}}

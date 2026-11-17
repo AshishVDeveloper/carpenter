@@ -78,7 +78,16 @@
     "customizable": true,
     "in_stock": true,
     "price_min": 28000,
-    "price_max": 45000
+    "price_max": 45000,
+    "reviews": [
+      {
+        "name": "ANJALI VISHWAKARMA",
+        "place": "Airoli",
+        "rating": 5,
+        "date": "2026-11-17",
+        "text": "Excellent Work."
+      }
+    ]
   },
   {
     "id": 5,

@@ -72,12 +72,23 @@ jobs:
         working-directory: worker
         run: npx -y wrangler@4 deploy
 
-      - name: Email sending password (from repository secret ZOHO_SMTP_PASSWORD)
+      - name: Email sending password (repository secret SMTP_PASS, or ZOHO_SMTP_PASSWORD)
         working-directory: worker
         env:
-          SMTP_PASS: ${{ secrets.ZOHO_SMTP_PASSWORD }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS || secrets.ZOHO_SMTP_PASSWORD }}
+          SENT_TEST: ${{ contains(github.event.head_commit.message, '[mail-test]') && 'yes' || '' }}
         run: |
-          if [ -n "$SMTP_PASS" ]; then printf '%s' "$SMTP_PASS" | npx -y wrangler@4 secret put SMTP_PASS; else echo "ZOHO_SMTP_PASSWORD not set yet - website will keep using the fallback form service"; fi
+          if [ -z "$SMTP_PASS" ]; then echo "No email password secret yet - website will keep using the fallback form service"; exit 0; fi
+          # check the password with Zoho before using it (logs in, sends nothing)
+          if ! curl -sS --max-time 30 --url smtps://smtp.zoho.in:465 --user "noreply@mumbai-interior.in:$SMTP_PASS" -X NOOP >/dev/null 2>/tmp/smtp.err; then
+            echo "::error::Zoho rejected the noreply@ app password: $(tail -c 300 /tmp/smtp.err). Create a new app password for noreply@ (accounts.zoho.in > Security > App Passwords) and update the GitHub secret."; exit 1
+          fi
+          echo "Zoho accepted the noreply@ app password"
+          printf '%s' "$SMTP_PASS" | npx -y wrangler@4 secret put SMTP_PASS
+          if [ -n "$SENT_TEST" ]; then
+            printf 'From: Mumbai Interior <noreply@mumbai-interior.in>\r\nTo: info@mumbai-interior.in\r\nSubject: Website email test - working\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nThis is a one-time test from your website server.\r\nIf you can read this in info@, enquiry and review emails from www.mumbai-interior.in are working again.\r\n' > /tmp/m.txt
+            curl -sS --max-time 30 --url smtps://smtp.zoho.in:465 --user "noreply@mumbai-interior.in:$SMTP_PASS" --mail-from noreply@mumbai-interior.in --mail-rcpt info@mumbai-interior.in -T /tmp/m.txt && echo "Test email sent to info@mumbai-interior.in"
+          fi
 
       - name: Check it answers and save its address
         run: |

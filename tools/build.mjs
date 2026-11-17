@@ -159,7 +159,7 @@ for (const r of routes) {
   }
 }
 /* structure sketches: one SVG picture per catalogue design (shown as the 2nd image after the photo) */
-for (const c of D.CATALOGUE) fs.writeFileSync(path.join(ROOT, 'catalogue', c.slug, 'structure.svg'), '<?xml version="1.0" encoding="UTF-8"?>\n' + VS.svg(VS.docOf(c), { label: 'Structure sketch of ' + c.name + ' with sizes' }).replace(/font-family="[^"]*"/, 'font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif"') + '\n');
+for (const c of D.CATALOGUE) for (const [f, doc] of [['structure.svg', VS.docOf(c)], ['structure-card.svg', VS.docOf(c, 1)]]) fs.writeFileSync(path.join(ROOT, 'catalogue', c.slug, f), '<?xml version="1.0" encoding="UTF-8"?>\n' + VS.svg(doc, { label: 'Structure sketch of ' + c.name + ' with sizes' }).replace(/font-family="[^"]*"/, 'font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif"') + '\n');
 fs.writeFileSync(path.join(ROOT, '404.html'), hideMail(tidy(page('/404/', 'notfound', [], 'en'))));
 
 // offline page (served by /sw.js when there is no internet) — standalone, works without other files

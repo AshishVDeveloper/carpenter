@@ -67,13 +67,14 @@ function drawSizes() {
       return '<div class="field cs-len"><label for="' + id + '">' + esc(f.label) + '</label><div class="ftin"><input id="' + id + '" type="number" min="0" step="1" inputmode="numeric" data-k="' + f.key + '" data-u="ft" value="' + ft + '" aria-label="' + esc(f.label) + ' feet"/><span>ft</span><input type="number" min="0" max="11.5" step="0.5" inputmode="decimal" data-k="' + f.key + '" data-u="in" value="' + inch + '" aria-label="' + esc(f.label) + ' inches"/><span>in</span></div><div class="hint" data-tot="' + f.key + '">' + VS.ftin(v) + ' = ' + v + ' in</div></div>'; }
     if (f.kind === 'int') return '<div class="field"><label for="' + id + '">' + esc(f.label) + '</label><input id="' + id + '" type="number" min="' + f.min + '" max="' + f.max + '" data-k="' + f.key + '" value="' + v + '"/></div>';
     if (f.kind === 'bool') return '<div class="check cs-bool"><input type="checkbox" id="' + id + '" data-k="' + f.key + '"' + (v ? ' checked' : '') + '/><label for="' + id + '">' + esc(f.label) + '</label></div>';
+    if (f.kind === 'text') return '<div class="field cs-text"><label for="' + id + '">' + esc(f.label) + '</label><input id="' + id + '" type="text" maxlength="60" data-k="' + f.key + '" value="' + esc(v) + '"/></div>';
     if (f.kind === 'sel') return '<div class="field"><label for="' + id + '">' + esc(f.label) + '</label><select id="' + id + '" class="keep" data-k="' + f.key + '">' + f.opts.map(o => '<option value="' + o[0] + '"' + (o[0] === v ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>';
     return '<div class="field cs-col"><label for="' + id + '">' + esc(f.label) + '</label><input id="' + id + '" type="color" data-k="' + f.key + '" value="' + esc(/^#[0-9a-f]{6}$/i.test(v) ? v : '#ffffff') + '"/></div>';
   }).join('');
   const box = $('cSizes');
   box.oninput = box.onchange = e => { const el = e.target, k = el.dataset.k; if (!k) return; const f = T0.fields.find(x => x.key === k);
     if (f.kind === 'len') { const ins = box.querySelectorAll('[data-k="' + k + '"]'), v = (+ins[0].value || 0) * 12 + (+ins[1].value || 0); p[k] = v; const t = box.querySelector('[data-tot="' + k + '"]'); if (t) t.textContent = VS.ftin(v) + ' = ' + v + ' in'; }
-    else if (f.kind === 'int') p[k] = +el.value || 0; else if (f.kind === 'bool') p[k] = el.checked; else p[k] = el.value;
+    else if (f.kind === 'int') p[k] = +el.value || 0; else if (f.kind === 'text') p[k] = el.value; else if (f.kind === 'bool') p[k] = el.checked; else p[k] = el.value;
     clearTimeout(box._t); box._t = setTimeout(() => { catChanged(); catEst(); }, 120); };
 }
 /* sizes changed: a drawing nobody edited is simply made again; an edited one asks first */

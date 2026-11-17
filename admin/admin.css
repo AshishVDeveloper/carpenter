@@ -312,3 +312,4 @@ h3.uh{font-size:1rem;margin:1.2rem 0 .6rem}
 .ebtns{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.8rem}
 @media (max-width:820px){.edwrap{grid-template-columns:1fr}.edprops{border-left:0;border-top:1px solid var(--line,#ddd);height:auto}.edstage{height:56vh}}
 html.dark .edsvg{box-shadow:0 2px 12px rgba(0,0,0,.5)}
+.csizes .cs-text{grid-column:span 2}@media (max-width:600px){.csizes .cs-text{grid-column:auto}}

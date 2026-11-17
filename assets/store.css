@@ -616,3 +616,12 @@ nav.main a:not(.btn){white-space:nowrap}.brand{white-space:nowrap}
 .gallery img[src$=".svg"],.thumbs img[src$=".svg"],.ccard .ph.sk img,.lb-stage img[src$=".svg"]{object-fit:contain;background:#fff}
 .ccard .ph.sk{background:#fff}
 .cpd .cinfo{display:block;margin-top:0}.cpd .cinfo h2{margin-top:0}.cpd .cact{margin-top:1.4rem}
+/* services: groups and the compact "also" list on the home page */
+.svc-group{margin:0 0 1.4rem;font-size:clamp(1.4rem,2.4vw,1.9rem)}.svc-row h3.h2{font-size:clamp(1.35rem,2.2vw,1.75rem);margin:0 0 .5rem}
+.svc-more-h{margin:2.4rem 0 1rem;font-size:1.15rem}
+.svc-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+.svc-mini a{display:flex;align-items:center;gap:.8rem;padding:.6rem;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-decoration:none;color:var(--ink);transition:border-color .2s,transform .2s}
+.svc-mini a:hover{border-color:var(--link);transform:translateY(-2px)}
+.svc-mini img{width:96px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0}
+.svc-mini b{display:block;font-size:.98rem;line-height:1.25}.svc-mini small{display:block;color:var(--muted);font-size:.82rem;margin-top:.2rem}
+@media (max-width:900px){.svc-mini{grid-template-columns:1fr 1fr}}@media (max-width:560px){.svc-mini{grid-template-columns:1fr}}

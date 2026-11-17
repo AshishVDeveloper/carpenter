@@ -138,7 +138,8 @@ V.home = D => {
     '<div class="tape" aria-hidden="true">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => '<span>' + (i * 10) + '</span>').join('') + '</div>' +
     '<ul class="trust"><li><b>' + D.AREAS.length + '</b> areas served</li><li><b>2 ways</b> to hire — contract or labour</li><li><b>Free</b> site visit</li></ul></div></div></section>' +
 
-    '<section class="sec"><div class="wrap"><div class="sec-head"><div><h2>What we do</h2><p class="lede">Complete interiors and carpentry for homes and businesses — with an estimate for every kind of work.</p></div><a class="link" href="/services/">All services</a></div><div class="svcs">' + S.services.map(svcTile).join('') + '</div></div></section>' +
+    '<section class="sec"><div class="wrap"><div class="sec-head"><div><h2>What we do</h2><p class="lede">Complete interiors and carpentry for homes and businesses — with an estimate for every kind of work.</p></div><a class="link" href="/services/">All services</a></div><div class="svcs">' + S.services.filter(x => x.group !== 'works').map(svcTile).join('') + '</div>' +
+      (S.services.some(x => x.group === 'works') ? '<h3 class="svc-more-h">Also: finishing, fitting and repair work</h3><div class="svc-mini">' + S.services.filter(x => x.group === 'works').map(x => '<a href="/services/' + x.slug + '/"><img src="' + esc(small(x.image)) + '" alt="" loading="lazy" width="96" height="72"/><span><b>' + esc(x.title) + '</b>' + (x.est[0] ? '<small>' + esc(x.est[0].item) + ': ' + esc(x.est[0].range) + '</small>' : '') + '</span></a>').join('') + '</div>' : '') + '</div></section>' +
 
     '<section class="sec alt"><div class="wrap split"><div><h2>Contract basis or labour basis</h2><p class="lede">Choose how you want to hire us. Either way, our own carpenters do the work.</p>' + modesHTML(D) + '</div>' +
     '<figure class="photo"><img src="/images/site/workshop-sm.webp" alt="Carpenter drilling a wooden plank in the workshop" loading="lazy" width="600" height="450"/><figcaption>Our carpenters build on site and in our workshop.</figcaption></figure></div></section>' +
@@ -163,20 +164,23 @@ V.home = D => {
 
 V.services = D => {
   const S = D.S;
-  const body = pageHead('Interior services and estimated costs', 'Homes, kitchens, offices, shops, showrooms and malls — and furniture made in our own workshop. Every service comes with an indicative cost so you can plan your budget.', crumbs([['Services']])) +
-    '<section class="sec tight"><div class="wrap svc-list">' + S.services.map((s, i) =>
-      '<article class="svc-row' + (i % 2 ? ' flip' : '') + '"><a class="svc-row-ph" href="/services/' + s.slug + '/"><img src="' + esc(small(s.image)) + '"' + RS(small(s.image)) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></a><div><h2><a href="/services/' + s.slug + '/">' + esc(s.title) + '</a></h2><p>' + esc(s.intro || s.desc) + '</p>' + estTable(s.est.slice(0, 3)) + '<a class="btn btn-primary btn-sm" href="/services/' + s.slug + '/">' + esc(s.title) + ' details</a></div></article>').join('') + '</div></section>' +
+  const body = pageHead('Interior services and estimated costs', 'Homes, kitchens, offices, shops and malls, furniture from our own workshop — plus ceilings, painting, electrical, plumbing, aluminium, ACP, name boards, grills and repairs. Every service comes with an indicative cost.', crumbs([['Services']])) +
+    [['Interiors and furniture', S.services.filter(x => x.group !== 'works')], ['Finishing, fitting and repair work', S.services.filter(x => x.group === 'works')]].filter(g => g[1].length).map((g, gi) =>
+    '<section class="sec tight' + (gi ? ' alt' : '') + '"><div class="wrap svc-list">' + (S.services.some(x => x.group === 'works') ? '<h2 class="svc-group">' + g[0] + '</h2>' : '') + g[1].map((s, i) =>
+      '<article class="svc-row' + (i % 2 ? ' flip' : '') + '"><a class="svc-row-ph" href="/services/' + s.slug + '/"><img src="' + esc(small(s.image)) + '"' + RS(small(s.image)) + ' alt="' + esc(s.title) + '" loading="lazy" width="600" height="450"/></a><div><h3 class="h2"><a href="/services/' + s.slug + '/">' + esc(s.title) + '</a></h3><p>' + esc(s.intro || s.desc) + '</p>' + estTable(s.est.slice(0, 3)) + '<a class="btn btn-primary btn-sm" href="/services/' + s.slug + '/">' + esc(s.title) + ' details</a></div></article>').join('') + '</div></section>').join('') +
     '<section class="sec alt"><div class="wrap"><h2>Two ways to work with us</h2><p class="lede mb14">Pick what suits your budget and how involved you want to be.</p>' + modesHTML(D) + '</div></section>' + ctaBand(D, 'Not sure what it will cost?', 'Send us your room sizes or a photo on WhatsApp and we will give you a quick estimate.');
-  return { title: 'Interior Services & Cost Estimates in Mumbai, Thane | ' + S.name, desc: 'Home interiors, modular kitchens, office interiors, shop & showroom fit-outs, mall work and furniture to measure — with estimated costs per sq ft. Contract or labour basis.', body, ld: [crumbLD(D, [['Services', '/services/']])] };
+  return { title: 'Interior Services & Cost Estimates in Mumbai, Thane | ' + S.name, desc: 'Interiors, modular kitchens, furniture, false ceiling & POP, painting, electrical, plumbing, aluminium sliding, ACP, name boards, grills and repairs — with estimated costs. Contract or labour basis.', body, ld: [crumbLD(D, [['Services', '/services/']])] };
 };
 
 V.service = (D, slug) => {
   const S = D.S, s = S.services.find(x => x.slug === slug); if (!s) return null;
   const rel = D.PRODUCTS.filter(p => slug === 'furniture-to-measure' || (slug === 'home-interiors' && /wardrobes|beds|tv-units|storage|kitchen|doors/.test(p.category)) || (slug === 'office-interiors' && /study|chairs/.test(p.category))).slice(0, 4);
-  const others = S.services.filter(x => x.slug !== slug);
+  const others = S.services.filter(x => x.slug !== slug && (x.group === 'works') === (s.group === 'works')).concat(S.services.filter(x => x.slug !== slug && (x.group === 'works') !== (s.group === 'works')));
+  const SKT = { 'false-ceiling-pop': ['ceiling'], 'aluminium-sliding-work': ['alu', 'partition'], 'acp-composite-panels': ['acp'], 'name-boards': ['board'], 'grill-fitting': ['grill'], 'home-interiors': ['wardrobe', 'sliding', 'tv', 'mandir'], 'modular-kitchens': ['kitchen', 'cabinet'] }[slug] || [], csk = (D.CATALOGUE || []).filter(c => SKT.includes(c.type)).slice(0, 4);
   const body = photoHead(s.image, s.title + ' in Mumbai, Thane & Navi Mumbai', s.desc, crumbs([['Services', '/services/'], [s.title]]), '<div class="ctas"><a class="btn btn-tape" href="/get-quote/#' + qslug(s.title) + '">Get a free estimate</a><a class="btn btn-light" href="' + esc(waLink(S, 'Hi, I want a quote for ' + s.title.toLowerCase() + '.')) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp us</a></div>') +
     '<section class="sec"><div class="wrap split"><div><h2>What we do</h2><p class="lede">' + esc(s.intro || s.desc) + '</p>' + (s.points.length ? '<ul class="ticks">' + s.points.map(p => '<li>' + I.check + esc(p) + '</li>').join('') + '</ul>' : '') + '</div>' +
     '<div><h2>Estimated cost</h2>' + (estTable(s.est) || '<p class="lede">Call us for a quick estimate.</p>') + '</div></div></section>' +
+    (csk.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><h2>Designs with sizes</h2><a class="link" href="/catalogue/">Full catalogue</a></div><div class="grid cgrid">' + csk.map(c => catCard(D, c)).join('') + '</div></div></section>' : '') +
     (rel.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><h2>Related furniture</h2><a class="link" href="/furniture/">All furniture</a></div><div class="grid">' + rel.map(p => card(D, p)).join('') + '</div></div></section>' : '') +
     '<section class="sec"><div class="wrap"><h2>Contract basis or labour basis</h2><p class="lede mb14">Hire us for the complete job, or just for the labour.</p>' + modesHTML(D) + '</div></section>' +
     '<section class="sec alt"><div class="wrap"><h2>' + esc(s.title) + ' near you</h2><p class="lede mb10">Our teams work in these areas.</p>' + areasHTML(D) + '</div></section>' +
@@ -569,8 +573,8 @@ function fitTitle(t, brand, max = 60) {
   for (const g of segs) {
     if ((out + g).length <= max) { out += g; continue; }
     const cut = g.split(', '); while (cut.length > 1 && (out + cut.join(', ')).length > max) cut.pop();
-    if ((out + cut.join(', ')).length <= max && cut.join(', ').replace(/^( \| | — )/, '').length > 3) { out += cut.join(', '); break; }
-    const w = g.split(' '); while (w.length && ((out + w.join(' ')).length > max || /^(in|and|&|for|of|the|to|with|—|\|)$/i.test(w[w.length - 1]))) w.pop();
+    if ((out + cut.join(', ')).length <= max && cut.join(', ').replace(/^( \| | — )/, '').length > 20) { out += cut.join(', '); break; }
+    const w = g.split(' '); while (w.length && ((out + w.join(' ')).length > max || /^(in|and|&|for|of|the|to|with|—|\||और|के|की|का|में|आणि|व|चे|ची|मध्ये)$/i.test(w[w.length - 1]))) w.pop();
     if (w.join(' ').replace(/^( \| | — )/, '').length > 10) out += w.join(' ');
     break;
   }
@@ -601,7 +605,7 @@ const drawSVG = (c, cls, thumb) => VS ? VS.svg(VS.docOf(c, thumb), { cls: cls ||
 function catImgs(D, c) { if ((c.images || []).length) return c.images; const p = c.product_id && D.PRODUCTS.find(x => String(x.id) === String(c.product_id)); return p ? p.images || [] : []; }
 function catCard(D, c) {
   const img = catImgs(D, c)[0];
-  return '<article class="card ccard" data-ctype="' + esc(c.type) + '"><a class="ph' + (img ? '' : ' sk') + '" href="' + c.url + '"><img src="' + esc(img ? small(img) : sketchUrl(c)) + '"' + (img ? RS(small(img)) : '') + ' alt="' + esc(c.name) + (img ? '' : ' — structure sketch with sizes') + '" loading="lazy" width="600" height="450"/>' + (img ? '<span class="badge">Photo + sketch</span>' : '<span class="badge">Sketch</span>') + '</a>' +
+  return '<article class="card ccard" data-ctype="' + esc(c.type) + '"><a class="ph' + (img ? '' : ' sk') + '" href="' + c.url + '"><img src="' + esc(img ? small(img) : c.url + 'structure-card.svg') + '"' + (img ? RS(small(img)) : '') + ' alt="' + esc(c.name) + (img ? '' : ' — structure sketch with sizes') + '" loading="lazy" width="600" height="450"/>' + (img ? '<span class="badge">Photo + sketch</span>' : '<span class="badge">Sketch</span>') + '</a>' +
     '<div class="body"><span class="kicker">' + esc(catType(c)) + '</span><h3><a href="' + c.url + '">' + esc(c.name) + '</a></h3>' +
     '<p class="cc-size">' + esc(VS ? VS.sizeText(c.type, c.p || {}) : '') + '</p>' +
     (c.est ? '<p class="price"><span class="from">Estimate</span> ' + inr(c.est) + '</p>' : '') +
@@ -693,7 +697,7 @@ function footer(D) {
     '<div class="fbrand"><a class="fbrand-name" href="/"><span class="logo-i" role="img" aria-label="' + esc(S.name) + ' logo"></span><span>' + esc(S.name) + '</span></a><p>' + esc(S.tagline || '') + '</p>' +
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
-    '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +
+    '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.filter(s => s.group !== 'works').map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + (S.services.some(s => s.group === 'works') ? '<a href="/services/">Ceiling, painting, electrical, plumbing & more</a>' : '') + '</nav>' +
     '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/catalogue/">Catalogue</a><a href="/our-work/">Our work</a><a href="/blog/">Blog</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
     '<div class="fcol"><h3>Reach us</h3><ul class="flist">' + (S.phone ? '<li><a href="' + tel(S) + '">' + I.phone + '<span>+91 ' + esc(S.phone) + '</span></a></li>' : '') +
     (waNum(S) ? '<li><a href="' + esc(waLink(S, 'Hi, I want a quote for interior / furniture work.')) + '" target="_blank" rel="noopener">' + I.wa + '<span>WhatsApp us</span></a></li>' : '') +

@@ -214,6 +214,372 @@
           "range": "₹50,000 – ₹85,000"
         }
       ]
+    },
+    {
+      "title": "False ceiling & POP",
+      "slug": "false-ceiling-pop",
+      "image": "images/site/ceiling-pop.webp",
+      "group": "works",
+      "desc": "Gypsum, POP, PVC and grid ceilings with cove lighting, plus POP punning for walls.",
+      "intro": "We design and fit false ceilings for homes, offices and shops — gypsum board, POP, PVC panels and grid ceilings — with cove lighting, spot lights and fan points planned with the electrician. POP punning gives walls a smooth finish before painting.",
+      "points": [
+        "Gypsum board and POP false ceilings",
+        "Cove (hidden LED) lighting and profile lights",
+        "PVC ceilings for kitchens, bathrooms and balconies",
+        "Grid (mineral fibre) ceilings for offices",
+        "POP punning and wall plaster finishing",
+        "Ceiling repair and crack filling"
+      ],
+      "est": [
+        {
+          "item": "Gypsum false ceiling (per sq ft)",
+          "range": "₹90 – ₹140"
+        },
+        {
+          "item": "POP false ceiling (per sq ft)",
+          "range": "₹110 – ₹180"
+        },
+        {
+          "item": "PVC ceiling (per sq ft)",
+          "range": "₹110 – ₹180"
+        },
+        {
+          "item": "Grid ceiling for offices (per sq ft)",
+          "range": "₹70 – ₹110"
+        },
+        {
+          "item": "Cove / profile lighting (per running ft)",
+          "range": "₹150 – ₹300"
+        },
+        {
+          "item": "POP punning on walls (per sq ft)",
+          "range": "₹25 – ₹45"
+        }
+      ]
+    },
+    {
+      "title": "Painting",
+      "slug": "painting",
+      "image": "images/site/painting.webp",
+      "group": "works",
+      "desc": "Interior and exterior painting, texture walls, wood polish and waterproofing.",
+      "intro": "Fresh paint for a single room or a full flat, with wall putty, primer and two coats from trusted brands. We cover furniture and floors, clean up every day, and can also polish wooden furniture and fix damp walls.",
+      "points": [
+        "Interior repainting with putty and primer",
+        "Exterior and building painting",
+        "Texture and designer walls",
+        "Wood polish, PU and lacquer finish",
+        "Waterproofing for terraces and damp walls",
+        "Enamel paint for grills and doors"
+      ],
+      "est": [
+        {
+          "item": "Interior emulsion paint (per sq ft of wall)",
+          "range": "₹14 – ₹28"
+        },
+        {
+          "item": "1 BHK full repaint",
+          "range": "₹25,000 – ₹45,000"
+        },
+        {
+          "item": "2 BHK full repaint",
+          "range": "₹40,000 – ₹75,000"
+        },
+        {
+          "item": "Texture wall (per sq ft)",
+          "range": "₹60 – ₹180"
+        },
+        {
+          "item": "Exterior painting (per sq ft)",
+          "range": "₹18 – ₹35"
+        },
+        {
+          "item": "Wood polish / PU (per sq ft)",
+          "range": "₹150 – ₹350"
+        }
+      ]
+    },
+    {
+      "title": "Electrical work",
+      "slug": "electrical-work",
+      "image": "images/site/electrical.webp",
+      "group": "works",
+      "desc": "Wiring, new points, lights, fans, MCB boards and repairs by trained electricians.",
+      "intro": "Safe electrical work for homes, offices and shops — new wiring, extra points for your furniture and kitchen, lights, fans and distribution boards with MCBs. We plan points together with your interior work so nothing has to be broken later.",
+      "points": [
+        "Concealed and open wiring",
+        "New switch, socket and AC points",
+        "Light, fan, geyser and chimney fitting",
+        "MCB / distribution board and earthing",
+        "Profile and cove lighting connections",
+        "Fault finding and repairs"
+      ],
+      "est": [
+        {
+          "item": "New electrical point",
+          "range": "₹350 – ₹700"
+        },
+        {
+          "item": "1 BHK full rewiring",
+          "range": "₹45,000 – ₹90,000"
+        },
+        {
+          "item": "2 BHK full rewiring",
+          "range": "₹70,000 – ₹1.4 lakh"
+        },
+        {
+          "item": "Light or fan fitting (each)",
+          "range": "₹150 – ₹400"
+        },
+        {
+          "item": "MCB board change",
+          "range": "₹2,500 – ₹8,000"
+        },
+        {
+          "item": "Visit and small repair",
+          "range": "₹300 – ₹600"
+        }
+      ]
+    },
+    {
+      "title": "Plumbing",
+      "slug": "plumbing",
+      "image": "images/site/plumbing.webp",
+      "group": "works",
+      "desc": "Bathroom and kitchen plumbing, leak repair, taps, geysers and water tanks.",
+      "intro": "Plumbing for new bathrooms and kitchens and quick repairs at home — concealed piping, taps and mixers, sinks, geysers, motors and tanks. We find and fix leaks without breaking more tiles than needed.",
+      "points": [
+        "Concealed bathroom plumbing",
+        "Kitchen sink, RO and dishwasher points",
+        "Tap, mixer, shower and WC fitting",
+        "Leakage finding and repair",
+        "Geyser, motor and water tank fitting",
+        "Drainage and blockage clearing"
+      ],
+      "est": [
+        {
+          "item": "Tap / mixer fitting (each)",
+          "range": "₹250 – ₹600"
+        },
+        {
+          "item": "Bathroom concealed plumbing",
+          "range": "₹25,000 – ₹60,000"
+        },
+        {
+          "item": "Leak repair",
+          "range": "₹500 – ₹3,000"
+        },
+        {
+          "item": "Geyser fitting",
+          "range": "₹500 – ₹1,200"
+        },
+        {
+          "item": "Motor / tank fitting",
+          "range": "₹1,500 – ₹4,000"
+        },
+        {
+          "item": "Visit and small repair",
+          "range": "₹300 – ₹600"
+        }
+      ]
+    },
+    {
+      "title": "Aluminium sliding & aluminium work",
+      "slug": "aluminium-sliding-work",
+      "image": "images/site/aluminium.webp",
+      "group": "works",
+      "desc": "Sliding windows and doors, mosquito mesh, glass partitions and aluminium sections.",
+      "intro": "Aluminium sliding windows and balcony doors in 2 and 3 track systems, with mosquito mesh and glass of your choice. We also make aluminium glass partitions for offices and shops, section doors, kitchen shutters and bathroom windows.",
+      "points": [
+        "2 and 3 track sliding windows",
+        "Sliding balcony doors",
+        "Mosquito mesh shutters",
+        "Aluminium glass partitions and cabins",
+        "Aluminium section doors and louvres",
+        "Old window repair, rollers and locks"
+      ],
+      "est": [
+        {
+          "item": "2-track sliding window (per sq ft)",
+          "range": "₹350 – ₹550"
+        },
+        {
+          "item": "3-track window with mesh (per sq ft)",
+          "range": "₹450 – ₹700"
+        },
+        {
+          "item": "Sliding balcony door (per sq ft)",
+          "range": "₹500 – ₹800"
+        },
+        {
+          "item": "Glass partition (per sq ft)",
+          "range": "₹350 – ₹650"
+        },
+        {
+          "item": "Mosquito mesh shutter (per sq ft)",
+          "range": "₹120 – ₹250"
+        },
+        {
+          "item": "Roller / lock replacement",
+          "range": "₹300 – ₹1,200"
+        }
+      ]
+    },
+    {
+      "title": "ACP & composite panel work",
+      "slug": "acp-composite-panels",
+      "image": "images/site/acp-cladding.webp",
+      "group": "works",
+      "desc": "ACP cladding for shop fronts and buildings, HPL and WPC composite panels and doors.",
+      "intro": "Aluminium composite panel (ACP) cladding gives shop fronts, showrooms and building elevations a clean, weather-proof finish. We also fit HPL exterior panels and WPC composite panels and doors that don't swell in the monsoon.",
+      "points": [
+        "ACP shop front and elevation cladding",
+        "Fire-rated ACP for commercial buildings",
+        "HPL exterior cladding",
+        "WPC composite doors and frames",
+        "WPC panels for bathrooms and balconies",
+        "Sign band and fascia frames"
+      ],
+      "est": [
+        {
+          "item": "ACP cladding (per sq ft)",
+          "range": "₹180 – ₹350"
+        },
+        {
+          "item": "Fire-rated ACP (per sq ft)",
+          "range": "₹300 – ₹500"
+        },
+        {
+          "item": "HPL cladding (per sq ft)",
+          "range": "₹350 – ₹650"
+        },
+        {
+          "item": "WPC composite door",
+          "range": "₹6,000 – ₹14,000"
+        },
+        {
+          "item": "WPC wall panel (per sq ft)",
+          "range": "₹180 – ₹320"
+        }
+      ]
+    },
+    {
+      "title": "Shop & building name boards",
+      "slug": "name-boards",
+      "image": "images/site/name-boards.webp",
+      "group": "works",
+      "desc": "Shop sign boards, LED letters, glow sign boxes and building name boards.",
+      "intro": "Name boards that people can read from the road — ACP boards with acrylic 3D letters, LED lit letters, glow sign boxes, and stainless steel or acrylic letters for building and society names. We make, deliver and fix them, including at height.",
+      "points": [
+        "ACP boards with 3D acrylic letters",
+        "LED lit channel letters",
+        "Glow sign (flex / backlit) boxes",
+        "Stainless steel and brass letters",
+        "Building and society name boards",
+        "Office reception logo walls"
+      ],
+      "est": [
+        {
+          "item": "ACP board with 3D letters (per sq ft)",
+          "range": "₹600 – ₹1,200"
+        },
+        {
+          "item": "LED lit letters (per sq ft)",
+          "range": "₹900 – ₹1,800"
+        },
+        {
+          "item": "Glow sign box (per sq ft)",
+          "range": "₹250 – ₹450"
+        },
+        {
+          "item": "SS letters (per inch of height, per letter)",
+          "range": "₹60 – ₹150"
+        },
+        {
+          "item": "Building name board (complete)",
+          "range": "₹25,000 – ₹1.5 lakh"
+        }
+      ]
+    },
+    {
+      "title": "Grill fitting",
+      "slug": "grill-fitting",
+      "image": "images/site/grills.webp",
+      "group": "works",
+      "desc": "Window, balcony and safety door grills in MS and stainless steel.",
+      "intro": "Strong grills for windows, balconies and doors, made to measure in mild steel (painted) or stainless steel. Choose straight bars, box grills with space for plants, or designer patterns. We also fix and repaint old grills.",
+      "points": [
+        "Box grills for windows",
+        "Balcony and terrace grills",
+        "Safety door grills",
+        "MS and stainless steel",
+        "Designer and invisible grills",
+        "Grill repair, welding and repainting"
+      ],
+      "est": [
+        {
+          "item": "MS window grill (per sq ft)",
+          "range": "₹180 – ₹320"
+        },
+        {
+          "item": "SS window grill (per sq ft)",
+          "range": "₹450 – ₹900"
+        },
+        {
+          "item": "Balcony grill, MS (per sq ft)",
+          "range": "₹250 – ₹450"
+        },
+        {
+          "item": "Safety door grill",
+          "range": "₹8,000 – ₹20,000"
+        },
+        {
+          "item": "Invisible grill (per sq ft)",
+          "range": "₹150 – ₹250"
+        }
+      ]
+    },
+    {
+      "title": "Repairs & maintenance",
+      "slug": "repairs-maintenance",
+      "image": "images/site/repairs.webp",
+      "group": "works",
+      "desc": "Carpenter, plumber, electrician and painter for every repair at home, office or shop.",
+      "intro": "One call for all repair work — a carpenter for loose hinges, broken channels, doors and furniture; a plumber for leaks and taps; an electrician for switches and lights; and a painter for touch-ups. We also take yearly maintenance for offices and shops.",
+      "points": [
+        "Furniture repair, hinges and drawer channels",
+        "Door, lock and handle repair",
+        "Sofa and chair repair and re-upholstery",
+        "Plumbing leaks and tap changes",
+        "Electrical faults, switches and lights",
+        "Yearly maintenance for offices and shops"
+      ],
+      "est": [
+        {
+          "item": "Carpenter visit and small repair",
+          "range": "₹500 – ₹800"
+        },
+        {
+          "item": "Carpenter (per day)",
+          "range": "₹1,200 – ₹1,800"
+        },
+        {
+          "item": "Hinge / channel replacement (each)",
+          "range": "₹150 – ₹400"
+        },
+        {
+          "item": "Furniture re-polish (per sq ft)",
+          "range": "₹80 – ₹250"
+        },
+        {
+          "item": "Sofa repair / re-upholstery (per seat)",
+          "range": "₹1,500 – ₹4,000"
+        },
+        {
+          "item": "Plumber or electrician visit",
+          "range": "₹300 – ₹600"
+        }
+      ]
     }
   ],
   "letterhead": {

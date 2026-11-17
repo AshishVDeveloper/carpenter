@@ -67,6 +67,8 @@ const int = (key, label, def, min, max) => ({ key, label, kind: 'int', def, min,
 const bool = (key, label, def) => ({ key, label, kind: 'bool', def });
 const col = (key, label, def) => ({ key, label, kind: 'color', def });
 const sel = (key, label, def, opts) => ({ key, label, kind: 'sel', def, opts });
+const text = (key, label, def) => ({ key, label, kind: 'text', def });
+const boardFont = p => { const t = String(p.text || 'NAME').trim() || 'NAME', h = p.sub && String(p.sub).trim() ? p.H * .46 : p.H * .62; return Math.max(2, Math.min(h, p.W * .88 / (t.length * .64))); };
 const WOODF = col('wood', 'Frame (carcass) colour', WOOD);
 const COMMON = [sel('view', 'Main view', '3d', [['3d', '3D view'], ['front', 'Front view (flat)']]), bool('top', 'Show top view', true), bool('side', 'Show side view', true)];
 
@@ -210,6 +212,79 @@ const TYPES = {
       if (p.lights) k.add(R(1.5, 1.5, W - 3, .9, { fill: LED, stroke: '#e0a800', sw: .2 }), T(W / 2, 1.5 + f * 1.4, 'LED strip', f * .7, { fill: '#6b5a48' }));
       if (sw > 0) for (const x of [0, W - sw]) { k.box(x, H - 11, sw, 11, 16); k.add(R(x, H - 11, sw, 11, { fill: p.wood, sw: .5 })); drawRow(k, x + .75, H - 10.25, sw - 1.5, 9.5, 1, p.color2); }
       k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f)); if (sw > 0) k.add(DM(0, H, sw, H, f * 2.6, f)); } },
+
+  ceiling: { name: 'False ceiling / POP', label: 'PLAN VIEW', noTop: true, sideLabel: 'SECTION', fields: [len('L', 'Room length', 144), len('W', 'Room width', 120), len('band', 'Ceiling band width', 24), len('drop', 'Ceiling drop', 9), bool('cove', 'Cove (hidden LED) lighting', true), int('lights', 'Spot lights', 10, 0, 40), bool('fan', 'Ceiling fan point', true), sel('kind', 'Material', 'gypsum', [['gypsum', 'Gypsum board'], ['pop', 'POP'], ['pvc', 'PVC panels'], ['grid', 'Grid (office) ceiling']]), col('color', 'Ceiling colour', '#f3efe6'), WOODF],
+    area: p => sqft(p.L, p.W), size: p => 'Room ' + ftin(p.L) + ' × ' + ftin(p.W) + ' · drop ' + ftin(p.drop),
+    draw(p, k) { const { L: Lg, W } = p, f = k.fs, b = Math.min(p.band, Math.min(Lg, W) / 2 - 6);
+      k.add(R(-5, -5, Lg + 10, W + 10, { fill: '#9aa0a6', sw: .5 }), R(0, 0, Lg, W, { fill: p.color, sw: .5 }));
+      if (p.kind === 'grid') { for (let x = 24; x < Lg; x += 24) k.add(L(x, 0, x, W, { stroke: '#b9bec4', sw: .5 })); for (let y = 24; y < W; y += 24) k.add(L(0, y, Lg, y, { stroke: '#b9bec4', sw: .5 })); }
+      else if (p.kind === 'pvc') { for (let y = 8; y < W; y += 8) k.add(L(0, y, Lg, y, { stroke: 'rgba(60,40,20,.25)', sw: .3 })); }
+      else if (b > 0) { k.add(R(b, b, Lg - 2 * b, W - 2 * b, { fill: '#ffffff', sw: .5 })); if (p.cove) k.add(R(b - 2, b - 2, Lg - 2 * b + 4, W - 2 * b + 4, { fill: 'none', stroke: '#e0a800', sw: .9, dash: '2 1.2' })); }
+      const n = p.lights; if (n > 0) { const per = 2 * (Lg + W - 4 * (b / 2)), c = b > 0 && p.kind !== 'grid' && p.kind !== 'pvc' ? b / 2 : 18; const pts = [];
+        const x1 = c, y1 = c, x2 = Lg - c, y2 = W - c, P2 = 2 * ((x2 - x1) + (y2 - y1)); for (let i = 0; i < n; i++) { let d = (i + .5) * P2 / n; let x, y; if (d < x2 - x1) { x = x1 + d; y = y1; } else if ((d -= x2 - x1) < y2 - y1) { x = x2; y = y1 + d; } else if ((d -= y2 - y1) < x2 - x1) { x = x2 - d; y = y2; } else { d -= x2 - x1; x = x1; y = y2 - d; } pts.push([x, y]); }
+        pts.forEach(q => k.add(C(q[0], q[1], 1.6, { fill: '#ffe39a', stroke: '#8a6a00', sw: .3 }))); }
+      if (p.fan) { const cx = Lg / 2, cy = W / 2; k.add(C(cx, cy, 3, { fill: '#c9ced3' })); [0, 120, 240].forEach(a => { const r = a * Math.PI / 180; k.add(L(cx, cy, cx + Math.cos(r) * 18, cy + Math.sin(r) * 18, { stroke: '#7d838a', sw: 1.4 })); }); }
+      k.add(DM(0, 0, Lg, 0, -f * 3.2, f), DM(Lg, 0, Lg, W, -f * 3.2, f));
+      if (b > 0 && p.kind !== 'grid' && p.kind !== 'pvc') k.add(DM(0, W, b, W, f * 3.2, f), DM(b, W - b, Lg - b, W - b, -f * 1.6, f * .85)); },
+    side(p, k, x0, y0) { const f = k.fs, W = p.W, b = Math.min(p.band, W / 2 - 6), d = p.drop, flat = p.kind === 'grid' || p.kind === 'pvc';
+      k.add(R(x0 - 3, y0, W + 6, 4, { fill: '#9aa0a6', sw: .4 }), R(x0 - 3, y0, 3, d + 18, { fill: '#9aa0a6', sw: .3 }), R(x0 + W, y0, 3, d + 18, { fill: '#9aa0a6', sw: .3 }));
+      if (flat) k.add(R(x0, y0 + 4 + d - 1, W, 1.2, { fill: p.color, sw: .4 }));
+      else { k.add(R(x0, y0 + 4 + d - 1.2, b, 1.2, { fill: p.color, sw: .4 }), R(x0 + W - b, y0 + 4 + d - 1.2, b, 1.2, { fill: p.color, sw: .4 }), R(x0 + b - .6, y0 + 4 + 3, .8, d - 3, { fill: p.color, sw: .3 }), R(x0 + W - b - .2, y0 + 4 + 3, .8, d - 3, { fill: p.color, sw: .3 }), R(x0 + b - .6, y0 + 4 + 3, 3, .8, { fill: p.color, sw: .3 }), R(x0 + W - b - 2.4, y0 + 4 + 3, 3, .8, { fill: p.color, sw: .3 }));
+        if (p.cove) k.add(C(x0 + b + 1.5, y0 + 4 + 5, .9, { fill: '#ffe39a', stroke: '#8a6a00', sw: .2 }), C(x0 + W - b - 1.5, y0 + 4 + 5, .9, { fill: '#ffe39a', stroke: '#8a6a00', sw: .2 })); }
+      for (let x = 6; x < W; x += 12) k.add(L(x0 + x, y0 + 4, x0 + x, y0 + 4 + d - 1.2, { stroke: '#7d838a', sw: .2, dash: '.8 .6' }));
+      k.add(DM(x0 + W, y0 + 4, x0 + W, y0 + 4 + d, -f * 2.6, f)); if (!flat) k.add(DM(x0, y0 + 4 + d + 18, x0 + b, y0 + 4 + d + 18, f * 1.4, f));
+      return [W, d + 22]; } },
+  alu: { name: 'Aluminium sliding window / door', fields: [len('W', 'Width', 72), len('H', 'Height', 48), len('D', 'Frame depth', 3, 1), int('tracks', 'Tracks', 2, 2, 3), int('panels', 'Sliding panels', 2, 2, 6), bool('mesh', 'Mosquito mesh shutter', false), bool('grill', 'Safety grill inside', false), sel('kind', 'Window or door', 'window', [['window', 'Window'], ['door', 'Door']]), col('color', 'Frame colour', '#b9bec4'), col('color2', 'Glass colour', '#cfe6f0')],
+    area: p => sqft(p.W, p.H),
+    draw(p, k) { const { W, H } = p, f = k.fs, t = 1.8, n = Math.max(2, p.panels), ov = 1.6, iw = W - 2 * t, pw = (iw + (n - 1) * ov) / n;
+      k.box(0, 0, W, H, p.D, 1); k.add(R(0, 0, W, H, { fill: p.color, sw: .6 }), R(t, t, iw, H - 2 * t, { fill: '#e7eaed', sw: .3 }));
+      if (p.grill) for (let x = t + 5; x < W - t - 1; x += 5) k.add(R(x - .3, t, .6, H - 2 * t, { fill: '#5d6166', stroke: 'none', sw: 0 }));
+      const order = [...Array(n).keys()].sort((a, b) => (a % 2) - (b % 2));
+      for (const i of order) { const x = t + i * (pw - ov), isMesh = p.mesh && i === n - 1;
+        k.add(R(x, t, pw, H - 2 * t, { fill: p.color, sw: i % 2 ? .55 : .4 }), R(x + 1.2, t + 1.2, pw - 2.4, H - 2 * t - 2.4, { fill: isMesh ? '#d9dde1' : p.color2, sw: .3, op: isMesh ? .9 : .85 }));
+        if (isMesh) for (let y = t + 2.4; y < H - t - 1.2; y += 1.4) k.add(L(x + 1.2, y, x + pw - 1.2, y, { stroke: '#9aa0a6', sw: .12 }));
+        else refl(k, x + 1.2, t + 1.2, pw - 2.4, H - 2 * t - 2.4);
+        k.add(R(x + (i % 2 ? .2 : pw - 1), t + (H - 2 * t) * .42, .8, Math.min(8, H * .14), { fill: '#6f757b', stroke: 'none', sw: 0, r: .3 })); }
+      if (p.kind === 'door') k.add(R(0, H - 1, W, 1, { fill: '#7d838a', sw: .3 }));
+      k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f), DM(t, H, t + pw, H, f * 2.6, f)); },
+    top(p, k, x0, y0) { const f = k.fs, d = Math.max(p.D, 2); k.add(R(x0, y0, p.W, d, { fill: p.color, sw: .5 })); for (let i = 1; i < p.tracks + 1; i++) k.add(L(x0 + 1, y0 + d * i / (p.tracks + 1), x0 + p.W - 1, y0 + d * i / (p.tracks + 1), { stroke: '#5d6166', sw: .3 }));
+      k.add(DM(x0, y0, x0 + p.W, y0, -f * 2.6, f), DM(x0 + p.W, y0, x0 + p.W, y0 + d, -f * 2.6, f)); return [p.W, d]; } },
+  partition: { name: 'Aluminium glass partition', defs: { top: false }, fields: [len('W', 'Width', 144), len('H', 'Height', 96), len('D', 'Frame depth', 2.5, 1), int('panels', 'Glass panels', 4, 1, 12), bool('door', 'Door in partition', true), len('doorW', 'Door width', 36), bool('band', 'Frosted band (privacy film)', true), col('color', 'Frame colour', '#3b3d3f'), col('color2', 'Glass colour', '#d8ecf3')],
+    area: p => sqft(p.W, p.H),
+    draw(p, k) { const { W, H } = p, f = k.fs, t = 1.6, dw = p.door ? Math.min(p.doorW, W / 2) : 0, gw = W - dw, n = Math.max(1, p.panels - (p.door ? 1 : 0)), pw = gw / n;
+      k.box(0, 0, W, H, p.D, 1); k.add(R(0, 0, W, H, { fill: p.color, sw: .6 }));
+      for (let i = 0; i < n; i++) { const x = i * pw; k.add(R(x + t / 2 + (i ? 0 : t / 2), t, pw - t - (i ? 0 : t / 2), H - 2 * t, { fill: p.color2, sw: .3 })); refl(k, x + t, t, pw - 2 * t, H - 2 * t); if (p.band) k.add(R(x + t, H - 66, pw - 2 * t, 24, { fill: '#f6f7f8', stroke: 'none', sw: 0, op: .85 })); }
+      if (dw) { const x = gw; k.add(R(x + t / 2, t, dw - 1.5 * t, H - t, { fill: p.color2, sw: .3 }), R(x + .4, t, 1, H - t, { fill: p.color, stroke: 'none', sw: 0 })); refl(k, x + t, t, dw - 2 * t, H - 2 * t); if (p.band) k.add(R(x + t, H - 66, dw - 2 * t, 24, { fill: '#f6f7f8', stroke: 'none', sw: 0, op: .85 })); hV(k, x + 4, H * .55, 14); }
+      k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f), DM(0, H, pw, H, f * 2.6, f)); if (dw) k.add(DM(gw, H, W, H, f * 2.6, f)); } },
+  grill: { name: 'Grill (window / balcony / door)', defs: { top: false }, fields: [len('W', 'Width', 48), len('H', 'Height', 48), len('D', 'Projection (box grill)', 6, 0), sel('kind', 'Design', 'box', [['bars', 'Straight bars'], ['box', 'Box (squares)'], ['design', 'Designer (rings)']]), len('gap', 'Bar spacing', 5, 3), sel('metal', 'Metal', 'ms', [['ms', 'MS (painted)'], ['ss', 'Stainless steel']]), col('color', 'Grill colour', '#2f3337')],
+    area: p => sqft(p.W, p.H), size: p => 'W ' + ftin(p.W) + ' × H ' + ftin(p.H) + (p.D > 0 ? ' · projection ' + ftin(p.D) : ''),
+    draw(p, k) { const { W, H } = p, f = k.fs, c = p.metal === 'ss' ? '#aeb4ba' : p.color, bt = .9, g = p.gap;
+      k.box(0, 0, W, H, p.D, 1); k.add(R(0, 0, W, H, { fill: '#eef3f6', stroke: 'none', sw: 0 }));
+      for (let x = g; x < W - .5; x += g) k.add(R(x - .35, 0, .7, H, { fill: c, stroke: 'none', sw: 0 }));
+      if (p.kind === 'box') for (let y = 12; y < H - .5; y += 12) k.add(R(0, y - .35, W, .7, { fill: c, stroke: 'none', sw: 0 }));
+      if (p.kind === 'design') { for (let y = 12; y < H - 4; y += 12) k.add(R(0, y - .35, W, .7, { fill: c, stroke: 'none', sw: 0 })); for (let y = 6; y < H - 2; y += 12) for (let x = g; x < W - .5; x += 2 * g) k.add(C(x + g / 2, y, Math.min(g, 12) * .42, { stroke: c, sw: .5 })); }
+      k.add(R(0, 0, W, bt, { fill: c, stroke: 'none', sw: 0 }), R(0, H - bt, W, bt, { fill: c, stroke: 'none', sw: 0 }), R(0, 0, bt, H, { fill: c, stroke: 'none', sw: 0 }), R(W - bt, 0, bt, H, { fill: c, stroke: 'none', sw: 0 }), R(0, 0, W, H, { fill: 'none', stroke: INK, sw: .4 }));
+      k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f), DM(g, H, 2 * g, H, f * 2.6, f, { text: ftin(g) + ' gap' })); } },
+  board: { name: 'Shop / building name board', defs: { top: false, side: false }, fields: [len('W', 'Width', 144), len('H', 'Height', 36), len('D', 'Depth (box / letters)', 2, .5), text('text', 'Name on the board', 'YOUR SHOP NAME'), text('sub', 'Second line (optional)', 'Interiors · Furniture · Repairs'), sel('kind', 'Board type', 'acp', [['acp', 'ACP board with 3D acrylic letters'], ['led', 'ACP board with LED lit letters'], ['flex', 'Glow sign box (flex / backlit)'], ['letters', 'Letters only on wall (SS / acrylic)']]), col('color', 'Board colour', '#123e7c'), col('color2', 'Letter colour', '#ffffff')],
+    area: p => sqft(p.W, p.H), size: p => 'W ' + ftin(p.W) + ' × H ' + ftin(p.H) + ' · letters about ' + ftin(Math.round(boardFont(p) * .72 * 2) / 2) + ' high',
+    draw(p, k) { const { W, H } = p, f = k.fs, txt = String(p.text || '').trim() || 'NAME', sub = String(p.sub || '').trim(), fsz = boardFont(p), ty = sub ? H * .56 : H / 2 + fsz * .36;
+      k.box(0, 0, W, H, p.kind === 'flex' ? Math.max(p.D, 6) : p.D, 1);
+      if (p.kind === 'letters') k.add(R(0, 0, W, H, { fill: '#e6dfd3', stroke: '#b9b2a6', sw: .3, dash: '2 1.5' }));
+      else { k.add(R(0, 0, W, H, { fill: p.color, sw: .6, r: p.kind === 'flex' ? 1 : 0 })); if (p.kind === 'flex') k.add(R(1.5, 1.5, W - 3, H - 3, { fill: 'none', stroke: 'rgba(255,255,255,.35)', sw: .4 })); if (p.kind !== 'flex') [[2, 2], [W - 2, 2], [2, H - 2], [W - 2, H - 2]].forEach(q => k.add(C(q[0], q[1], .7, { fill: '#c9ced3', stroke: '#6f757b', sw: .2 }))); }
+      const lc = p.kind === 'letters' ? (p.color2 === '#ffffff' ? '#8d939a' : p.color2) : p.color2;
+      if (p.kind === 'led') k.add(T(W / 2, ty, txt, fsz, { fill: lc, bold: 1, stroke: '#ffe39a', sw: fsz * .16, op: .9 }));
+      k.add(T(W / 2, ty, txt, fsz, { fill: lc, bold: 1, stroke: p.kind === 'letters' ? '#4a4f55' : (p.kind === 'acp' ? 'rgba(0,0,0,.35)' : ''), sw: p.kind === 'letters' || p.kind === 'acp' ? fsz * .03 : 0 }));
+      if (sub) k.add(T(W / 2, ty + fsz * .62, sub, fsz * .36, { fill: lc }));
+      k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f), DM(0, ty - fsz * .72, 0, ty, f * 2.6, f * .9, { text: ftin(Math.round(fsz * .72 * 2) / 2) + ' letters' })); } },
+  acp: { name: 'ACP / composite panel cladding', defs: { top: false, side: false }, fields: [len('W', 'Width', 240), len('H', 'Height', 144), len('D', 'Depth', 2, .5), len('modW', 'Panel width', 48), len('modH', 'Panel height', 48), bool('band', 'Sign band on top', true), bool('shutter', 'Shop shutter opening', true), col('color', 'Panel colour', '#8d9aa6'), col('color2', 'Sign band colour', '#123e7c')],
+    area: p => sqft(p.W, p.H),
+    draw(p, k) { const { W, H } = p, f = k.fs, bh = p.band ? Math.min(36, H * .3) : 0, sw2 = Math.max(36, Math.min(Math.round(W * .6 / 12) * 12, W - 24)), sh = Math.min(H - bh - 10, 108);
+      k.box(0, 0, W, H, p.D, 1); k.add(R(0, 0, W, H, { fill: p.color, sw: .6 }));
+      for (let x = p.modW; x < W - .5; x += p.modW) k.add(L(x, bh, x, H, { stroke: 'rgba(0,0,0,.45)', sw: .35 }));
+      for (let y = bh + p.modH; y < H - .5; y += p.modH) k.add(L(0, y, W, y, { stroke: 'rgba(0,0,0,.45)', sw: .35 }));
+      if (bh) { k.add(R(0, 0, W, bh, { fill: p.color2, sw: .5 }), T(W / 2, bh / 2 + bh * .14, 'SIGN BOARD', bh * .4, { fill: '#ffffff', bold: 1 })); }
+      if (p.shutter) { const sx = (W - sw2) / 2, sy = H - sh; k.add(R(sx, sy, sw2, sh, { fill: '#c9ced3', sw: .5 })); for (let y = sy + 2.5; y < H; y += 2.5) k.add(L(sx, y, sx + sw2, y, { stroke: '#8d939a', sw: .25 })); k.add(R(sx + sw2 / 2 - 4, H - 3, 8, 1.2, { fill: '#5d6166', stroke: 'none', sw: 0 })); k.add(DM(sx, H, sx + sw2, H, f * 2.6, f)); }
+      k.free(); k.add(DM(0, 0, W, 0, -f * 2.6, f), DM(W, 0, W, H, -f * 2.6, f), DM(0, bh, 0, bh + p.modH, f * 2.6, f)); if (bh) k.add(DM(0, 0, 0, bh, f * 2.6, f)); } },
   custom: { name: 'Custom (outline only)', fields: [len('W', 'Width', 48), len('H', 'Height', 48), len('D', 'Depth', 18), col('color', 'Front colour', WHITE), WOODF],
     area: p => sqft(p.W, p.H),
     draw(p, k) { const { W, H } = p, f = k.fs; k.box(0, 0, W, H, p.D, 1); k.add(R(0, 0, W, H, { fill: p.wood, sw: .6 }), R(.75, .75, W - 1.5, H - 1.5, { fill: p.color, sw: .35 }));
@@ -220,32 +295,34 @@ Object.values(TYPES).forEach(t => { t.fields = t.fields.concat(COMMON); });
 /* fill in defaults and keep numbers sane */
 function params(type, p) {
   const T0 = TYPES[type] || TYPES.custom, out = {};
-  T0.fields.forEach(fd => { let v = p && p[fd.key] !== undefined && p[fd.key] !== '' ? p[fd.key] : fd.def;
-    if (fd.kind === 'len') v = Math.max(fd.min, Math.min(600, +v || 0)); else if (fd.kind === 'int') v = Math.max(fd.min, Math.min(fd.max, Math.round(+v || 0))); else if (fd.kind === 'bool') v = v === true || v === 'true' || v === 1; else v = String(v || fd.def || '');
+  T0.fields.forEach(fd => { let v = p && p[fd.key] !== undefined && (p[fd.key] !== '' || fd.kind === 'text') ? p[fd.key] : (T0.defs && fd.key in T0.defs ? T0.defs[fd.key] : fd.def);
+    if (fd.kind === 'len') v = Math.max(fd.min, Math.min(1200, +v || 0)); else if (fd.kind === 'int') v = Math.max(fd.min, Math.min(fd.max, Math.round(+v || 0))); else if (fd.kind === 'bool') v = v === true || v === 'true' || v === 1; else if (fd.kind === 'text') v = String(v ?? '').slice(0, 60); else v = String(v || fd.def || '');
     out[fd.key] = v; });
-  if (!out.wood) out.wood = WOOD; if (!out.color) out.color = WHITE; if (out.color2 === '') out.color2 = out.color;
+  out._wood = !!out.wood; if (!out.wood) out.wood = WOOD; if (!out.color) out.color = WHITE; if (out.color2 === '') out.color2 = out.color;
   return out;
 }
 const sizeText = (type, p) => { const T0 = TYPES[type] || TYPES.custom; p = params(type, p); return T0.size ? T0.size(p) : 'W ' + ftin(p.W) + ' × H ' + ftin(p.H) + (p.D ? ' × D ' + ftin(p.D) : ''); };
 const area = (type, p) => { const T0 = TYPES[type] || TYPES.custom; return T0.area(params(type, p)); };
 
 /* oblique (3D-looking) faces for a box: depth goes up and to the right */
+const mix = (hex, t, k) => { const m = /^#([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex; const n = parseInt(m[1], 16), c = [n >> 16, n >> 8 & 255, n & 255].map(v => Math.round(v + (t - v) * k)); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
 const OB = d => [d * .5 * Math.cos(Math.PI / 6), -d * .5 * Math.sin(Math.PI / 6)];
-function faces(b, wood) {
+function faces(b, base) {
   if (!(b.d > 0)) return [];
-  const [ox, oy] = OB(b.d), { x, y, w, h } = b;
-  return [P([[x, y], [x + w, y], [x + w + ox, y + oy], [x + ox, y + oy]], { fill: TOPW, sw: .45 }), P([[x + w, y], [x + w + ox, y + oy], [x + w + ox, y + h + oy], [x + w, y + h]], { fill: SIDEW, sw: .45 })];
+  const [ox, oy] = OB(b.d), { x, y, w, h } = b, top = base ? mix(base, 255, .25) : TOPW, side = base ? mix(base, 0, .25) : SIDEW;
+  return [P([[x, y], [x + w, y], [x + w + ox, y + oy], [x + ox, y + oy]], { fill: top, sw: .45 }), P([[x + w, y], [x + w + ox, y + oy], [x + w + ox, y + h + oy], [x + w, y + h]], { fill: side, sw: .45 })];
 }
 function badge(k, cx, y, label) { const f = k.fs, w = label.length * f * .62 + f * 2.4; k.add(R(cx - w / 2, y, w, f * 2.1, { fill: NAVY, stroke: 'none', sw: 0, r: f * .35 }), T(cx, y + f * 1.45, label, f * .95, { fill: '#ffffff', bold: 1 })); }
 
 /* the full drawing for a catalogue item */
 function gen(type, raw, name, bare) {
   const T0 = TYPES[type] || TYPES.custom, p = params(type, raw);
-  const big = Math.max(p.W || 0, p.L || 0, p.H || 0, type === 'bed' ? p.L + p.W : 0, 36), fs = r1(Math.min(7, Math.max(2.6, big / 30)));
+  const big = Math.max(type === 'ceiling' ? 0 : p.W || 0, p.L || 0, p.H || 0, type === 'bed' ? p.L + p.W : 0, 36), fs = r1(Math.min(7, Math.max(2.6, big / 30)));
   const k = ctx(fs); T0.draw(p, k);
   /* order: each box's faces then its front; free elements (sizes) last */
   const out = [];
-  if (p.view === '3d') k.boxes.forEach(b => { out.push(...faces(b, p.wood)); out.push(...k.els.filter(e => e._g === b.i)); });
+  const base = p._wood ? null : (type === 'board' && p.kind === 'letters' ? (p.color2 === '#ffffff' ? '#8d939a' : p.color2) : p.color);
+  if (p.view === '3d') k.boxes.forEach(b => { out.push(...faces(b, base)); out.push(...k.els.filter(e => e._g === b.i)); });
   else k.boxes.forEach(b => out.push(...k.els.filter(e => e._g === b.i)));
   out.push(...k.els.filter(e => e._g === undefined || e._g < 0));
   const main = ctx(fs); main.els = out;
@@ -256,14 +333,14 @@ function gen(type, raw, name, bare) {
   out.forEach(e => delete e._g);
   let bb = bbox(main.els); const mainBox = bb;
   if (bare) return { fs, els: main.els };
-  badge(main, (bb.x1 + bb.x2) / 2, bb.y2 + fs * 1.2, p.view === '3d' ? '3D VIEW' : 'FRONT VIEW');
+  badge(main, (bb.x1 + bb.x2) / 2, bb.y2 + fs * 1.2, T0.label || (p.view === '3d' ? '3D VIEW' : 'FRONT VIEW'));
   /* top and side views on the right */
   let x0 = mainBox.x2 + fs * 9, y = mainBox.y1 + fs * 3.2;
   const D = p.D || 18;
-  if (p.top) { let wh; if (T0.top) wh = T0.top(p, main, x0, y); else { const W = p.W || 48; main.add(R(x0, y, W, D, { fill: p.wood, sw: .5 }), R(x0 + .75, y + .75, W - 1.5, D - 1.5, { fill: TOPW, sw: .3 })); const nd = p.doors || p.panels || 0; if (nd > 1 && nd < 13) for (let i = 1; i < nd; i++) main.add(L(x0 + i * W / nd, y + .75, x0 + i * W / nd, y + D - .75, { stroke: 'rgba(60,40,20,.4)', sw: .3 })); main.add(DM(x0, y, x0 + W, y, -fs * 2.6, fs), DM(x0 + W, y, x0 + W, y + D, -fs * 2.6, fs)); wh = [W, D]; }
+  if (p.top && !T0.noTop) { let wh; if (T0.top) wh = T0.top(p, main, x0, y); else { const W = p.W || 48; main.add(R(x0, y, W, D, { fill: base || p.wood, sw: .5 }), R(x0 + .75, y + .75, W - 1.5, D - 1.5, { fill: base ? mix(base, 255, .25) : TOPW, sw: .3 })); const nd = p.doors || p.panels || 0; if (nd > 1 && nd < 13) for (let i = 1; i < nd; i++) main.add(L(x0 + i * W / nd, y + .75, x0 + i * W / nd, y + D - .75, { stroke: 'rgba(60,40,20,.4)', sw: .3 })); main.add(DM(x0, y, x0 + W, y, -fs * 2.6, fs), DM(x0 + W, y, x0 + W, y + D, -fs * 2.6, fs)); wh = [W, D]; }
     badge(main, x0 + wh[0] / 2, y + wh[1] + fs * 4.6, 'TOP VIEW'); y += wh[1] + fs * 12; }
-  if (p.side) { let wh; if (T0.side) wh = T0.side(p, main, x0, y); else { const H = p.H || 48; main.add(R(x0, y, D, H, { fill: SIDEW, sw: .5 }), R(x0 + .75, y + .75, D - 1.5, H - 1.5, { fill: WOOD, sw: .3 })); main.add(DM(x0, y, x0 + D, y, -fs * 2.6, fs), DM(x0 + D, y, x0 + D, y + H, -fs * 2.6, fs)); wh = [D, H]; }
-    badge(main, x0 + wh[0] / 2, y + wh[1] + fs * 4.6, 'SIDE VIEW'); }
+  if (p.side) { let wh; if (T0.side) wh = T0.side(p, main, x0, y); else { const H = p.H || 48; main.add(R(x0, y, D, H, { fill: base ? mix(base, 0, .2) : SIDEW, sw: .5 }), R(x0 + .75, y + .75, D - 1.5, H - 1.5, { fill: base || WOOD, sw: .3 })); main.add(DM(x0, y, x0 + D, y, -fs * 2.6, fs), DM(x0 + D, y, x0 + D, y + H, -fs * 2.6, fs)); wh = [D, H]; }
+    badge(main, x0 + wh[0] / 2, y + wh[1] + fs * 4.6, T0.sideLabel || 'SIDE VIEW'); }
   if (bare) return { fs, els: main.els };
   /* title */
   bb = bbox(main.els); let ty = bb.y2 + fs * 3.4;
@@ -290,13 +367,13 @@ function bbox(els) { let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Inf
 
 /* ── SVG ── */
 const A = (n, v) => v === undefined || v === null || v === '' ? '' : ' ' + n + '="' + esc(typeof v === 'number' ? r1(v) : v) + '"';
-const paint = e => A('fill', e.fill || 'none') + A('stroke', e.stroke || 'none') + A('stroke-width', e.stroke && e.stroke !== 'none' ? (e.sw ?? .4) : '') + A('stroke-dasharray', e.dash);
+const paint = e => A('opacity', e.op) + A('fill', e.fill || 'none') + A('stroke', e.stroke || 'none') + A('stroke-width', e.stroke && e.stroke !== 'none' ? (e.sw ?? .4) : '') + A('stroke-dasharray', e.dash);
 function one(e, ed) {
   if (e.t === 'rect') return '<rect' + A('x', e.x) + A('y', e.y) + A('width', Math.max(0, e.w)) + A('height', Math.max(0, e.h)) + A('rx', e.r) + paint(e) + '/>';
   if (e.t === 'line') return '<line' + A('x1', e.x1) + A('y1', e.y1) + A('x2', e.x2) + A('y2', e.y2) + A('stroke', e.stroke || INK) + A('stroke-width', e.sw ?? .4) + A('stroke-dasharray', e.dash) + ' stroke-linecap="round"/>' + (ed ? '<line' + A('x1', e.x1) + A('y1', e.y1) + A('x2', e.x2) + A('y2', e.y2) + ' stroke="transparent" stroke-width="3"/>' : '');
   if (e.t === 'circle') return '<circle' + A('cx', e.x) + A('cy', e.y) + A('r', e.r) + paint(e) + '/>';
   if (e.t === 'poly') return '<' + (e.closed === false ? 'polyline' : 'polygon') + ' points="' + e.pts.map(p => r1(p[0]) + ',' + r1(p[1])).join(' ') + '"' + paint(e) + ' stroke-linejoin="round"/>';
-  if (e.t === 'text') return '<text' + A('x', e.x) + A('y', e.y) + A('font-size', e.size) + A('fill', e.fill || INK) + A('text-anchor', e.anchor || 'middle') + (e.bold ? ' font-weight="700"' : '') + (e.rot ? A('transform', 'rotate(' + r1(e.rot) + ' ' + r1(e.x) + ' ' + r1(e.y) + ')') : '') + '>' + esc(e.text) + '</text>';
+  if (e.t === 'text') return '<text' + A('x', e.x) + A('y', e.y) + A('font-size', e.size) + A('fill', e.fill || INK) + A('text-anchor', e.anchor || 'middle') + (e.bold ? ' font-weight="700"' : '') + A('opacity', e.op) + (e.stroke && e.stroke !== 'none' && +e.sw > 0 ? A('stroke', e.stroke) + A('stroke-width', e.sw) + ' paint-order="stroke" stroke-linejoin="round"' : '') + (e.rot ? A('transform', 'rotate(' + r1(e.rot) + ' ' + r1(e.x) + ' ' + r1(e.y) + ')') : '') + '>' + esc(e.text) + '</text>';
   if (e.t === 'dim') {
     const g = dimGeo(e), s = e.size || 3, c = e.stroke || NAVY, sg = Math.sign(+e.off || 1), ah = s * .75, aw = s * .3, gap = s * .35;
     const ext = (px, py, q) => '<line' + A('x1', px + g.nx * gap * sg) + A('y1', py + g.ny * gap * sg) + A('x2', q[0] + g.nx * gap * sg) + A('y2', q[1] + g.ny * gap * sg) + A('stroke', c) + ' stroke-width="' + r1(s * .06) + '"/>';

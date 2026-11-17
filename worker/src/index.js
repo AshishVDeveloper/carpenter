@@ -45,6 +45,29 @@ async function route(req, env, url) {
   if (p === '/' && m === 'GET') return json({ ok: true, ready: !!(await KV.get('acct')), roles: true });
 
   // ── website enquiry → email to the business inbox via own SMTP (public, rate-limited) ──
+  // ── product review from the website: kept as "waiting for approval" and emailed to the business (public, rate-limited) ──
+  if (p === '/review' && m === 'POST') {
+    const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
+    if (b._honey) return json({ ok: true });
+    const clip = (v, n) => String(v == null ? '' : v).replace(/[\r\u0000-\u0008]/g, '').trim().slice(0, n);
+    const r = { id: hex(rand(8)), pid: String(b.pid || '').slice(0, 20), product: clip(b.product, 120), url: clip(b.url, 200), name: clip(b.name, 60), place: clip(b.place, 60), phone: clip(b.phone, 20), rating: Math.min(5, Math.max(1, Math.round(+b.rating || 5))), text: clip(b.text, 1500), date: new Date().toISOString().slice(0, 10), at: Date.now() };
+    if (!r.pid || !r.name || r.text.length < 10) throw err(400, 'bad', 'Add your name and a few words about the product.');
+    const day = r.date, ipk = 'rev:' + ip + ':' + day, ipn = +(await KV.get(ipk)) || 0;
+    if (ipn >= 5) throw err(429, 'limit', 'Too many reviews from this connection today.');
+    const list = JSON.parse(await KV.get('reviews:pending') || '[]'); if (list.length >= 200) list.shift(); list.push(r);
+    await KV.put('reviews:pending', JSON.stringify(list)); await KV.put(ipk, String(ipn + 1), { expirationTtl: 90000 });
+    if (env.SMTP_PASS) {
+      const rows = [['Product', r.product], ['Rating', r.rating + ' out of 5'], ['Name', r.name], ['Area', r.place || '-'], ['Phone', r.phone || '-'], ['Review', r.text]];
+      const admin = (env.SITE_URL || 'https://www.mumbai-interior.in') + '/admin/#testimonials';
+      try {
+        await smtpSend(env, { to: env.ENQUIRY_TO || 'info@mumbai-interior.in', subject: 'New review waiting for approval — ' + r.product + ' — ' + r.rating + '★',
+          text: rows.map(x => x[0] + ': ' + x[1]).join('\n') + '\n\nApprove or reject it in the admin: ' + admin,
+          html: brandMail(env, { preheader: r.name + ' rated ' + r.product + ' ' + r.rating + '/5', title: 'New review waiting for approval', intro: 'Check it against your order records, then approve it to show it on the website (or reject it).', rows, cta: false, note: '<a href="' + admin + '" style="display:inline-block;background:#2F4A3A;color:#fff;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:9px">Approve in admin</a>' }) });
+      } catch (e) { /* still saved for approval */ }
+    }
+    return json({ ok: true });
+  }
+
   if (p === '/enquiry' && m === 'POST') {
     const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
     if (b._honey) return json({ ok: true });
@@ -189,6 +212,17 @@ async function route(req, env, url) {
     if (!['documents', 'rates', 'letterhead'].some(x => can(x, 'view'))) throw err(403, 'perm', 'No access to documents.');
     let k = await KV.get('vaultkey'); if (!k) { k = btoa(String.fromCharCode(...rand(32))); await KV.put('vaultkey', k); }
     return json({ key: k });
+  }
+
+  // ── reviews waiting for approval ──
+  if (p === '/reviews/pending' && m === 'GET') {
+    if (!can('products', 'edit') && !can('testimonials', 'edit')) throw err(403, 'perm', 'No access to reviews.');
+    return json({ reviews: JSON.parse(await KV.get('reviews:pending') || '[]') });
+  }
+  if (p === '/reviews/done' && m === 'POST') {
+    if (!can('products', 'edit') && !can('testimonials', 'edit')) throw err(403, 'perm', 'No access to reviews.');
+    const b = await body(req), list = JSON.parse(await KV.get('reviews:pending') || '[]');
+    await KV.put('reviews:pending', JSON.stringify(list.filter(x => x.id !== b.id))); return json({ ok: true });
   }
 
   // ── team members ──

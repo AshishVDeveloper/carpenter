@@ -82,8 +82,11 @@ function bindProduct() {
   const rf = $('rvf'); if (rf) rf.onsubmit = e => {
     e.preventDefault(); const d = Object.fromEntries(new FormData(rf)); if (d._honey) return;
     if (!d.name.trim() || d.text.trim().length < 10) { toast(tt('Add your name and a few words about the product.'), true); return; }
-    emailCopy('Product review — ' + rf.dataset.product + ' — ' + d.rating + '★', { Product: rf.dataset.product, Rating: d.rating + ' out of 5', Name: d.name, Area: d.place || '-', Phone: d.phone || '-', Review: d.text, Page: location.href });
-    rf.reset(); rf.closest('details').open = false; toast(tt('Thank you! Your review will appear after we check it.'));
+    const btn = rf.querySelector('button'); btn.disabled = true;
+    const done = ok => { btn.disabled = false; if (ok) { rf.reset(); rf.closest('details').open = false; toast(tt('Thank you! Your review will appear after we check it.')); } else toast(tt('Could not send your review. Please try again or send it on WhatsApp.'), true); };
+    get('api.json').then(a => fetch(a.url + '/review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid: rf.dataset.pid, product: rf.dataset.product, url: location.href, name: d.name, place: d.place, phone: d.phone, rating: d.rating, text: d.text, _honey: d._honey }) }))
+      .then(r => done(r.ok)).catch(() => done(false));
+    return;
   };
   const t = $('thumbs'); if (t) t.onclick = e => { const b = e.target.closest('button'); if (!b) return; $('mainImg').src = b.dataset.src; [...t.children].forEach(x => x.setAttribute('aria-pressed', x === b)); };
 }

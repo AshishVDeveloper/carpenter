@@ -7,10 +7,10 @@ const slugify = s => String(s || '').toLowerCase().replace(/&/g, ' ').replace(/\
 const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 const src = s => !s ? '/assets/logo.svg' : /^(https?:|data:|\/)/.test(s) ? s : '/' + s;
 /* responsive photos: 400 px and 600 px versions; if a fresh upload has no small copy yet, fall back to the original */
-const RS = u => /^\/images\/(products|site)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
+const RS = u => /^\/images\/(products|site|blog)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
 /* readable quote links: /get-quote/#contract-basis instead of ?mode=Contract%20basis */
 const qslug = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const small = s => { const u = src(s); return /^\/images\/(products|site)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
+const small = s => { const u = src(s); return /^\/images\/(products|site|blog)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
 
 const I = {
   wa: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>',
@@ -48,7 +48,8 @@ function prep(raw) {
   const areaNames = [];
   (S.locations || []).concat(WORK.map(w => w.area)).forEach(a => { a = String(a || '').trim(); if (a && !/&/.test(a) && !areaNames.some(x => slugify(x) === slugify(a))) areaNames.push(a); });
   const AREAS = areaNames.map(n => ({ name: n, short: n.split(',')[0].replace(/\s*\(.*\)/, '').trim(), slug: slugify(n) }));
-  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [] };
+  const BLOG = (raw.BLOG || []).filter(b => b && !b.draft && b.slug && b.title).map((b, i) => Object.assign({}, b, { _i: i, cat: b.category || 'Tips', catSlug: slugify(b.category || 'Tips') })).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || a._i - b._i);
+  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG };
 }
 const catName = (D, slug) => (D.CATS.find(c => c.slug === slug) || {}).name || slug;
 const waNum = S => String(S.whatsapp || S.phone || '').replace(/\D/g, '');
@@ -140,7 +141,8 @@ V.home = D => {
 
     (D.QUOTES.length ? '<section class="sec"><div class="wrap"><h2>What customers say</h2><div class="quotes">' + D.QUOTES.map(q => '<figure class="quote"><div class="stars" aria-label="' + (q.rating || 5) + ' out of 5">' + '★'.repeat(q.rating || 5) + '</div><p>' + esc(q.text) + '</p><figcaption><b>' + esc(q.name) + '</b><small>' + esc(q.place || '') + '</small></figcaption></figure>').join('') + '</div></div></section>' : '') +
 
-    (D.GUIDES.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>Guides and price advice</h2><p class="lede">Free, honest guides to help you plan your budget.</p></div><a class="link" href="/guides/">All guides</a></div><div class="svcs">' + D.GUIDES.slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
+    (D.BLOG.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>From our blog</h2><p class="lede">Ideas, costs and care tips from our carpenters and designers.</p></div><a class="link" href="/blog/">All articles</a></div><div class="svcs">' + D.BLOG.slice(0, 3).map(blogCard).join('') + '</div></div></section>' :
+    D.GUIDES.length ? '<section class="sec alt"><div class="wrap"><div class="sec-head"><div><h2>Guides and price advice</h2><p class="lede">Free, honest guides to help you plan your budget.</p></div><a class="link" href="/guides/">All guides</a></div><div class="svcs">' + D.GUIDES.slice(0, 3).map(guideCard).join('') + '</div></div></section>' : '') +
     ((S.faqs || []).length ? '<section class="sec"><div class="wrap split"><div><h2>Questions people ask</h2><p class="lede">Still unsure? Call <a class="link" href="' + tel(S) + '">' + esc(S.phone) + '</a> — we are happy to explain.</p></div>' + faqHTML(D) + '</div></section>' : '') +
     ctaBand(D, 'Planning an interior or furniture project?', 'Tell us what you need. We will visit, measure and give you a clear estimate on contract or labour basis.');
   return { title: S.name + ' — Custom Furniture & Interiors in Mumbai', desc: 'Home interiors, modular kitchens, wardrobes, office, shop and mall fit-outs and made-to-measure furniture by ' + S.name + '. Contract or labour basis. Free site visit. Call ' + S.phone + '.', body, ld, image: '/images/site/og.jpg' };
@@ -317,6 +319,89 @@ V.guide = (D, slug) => {
   return { title: g.title + ' | ' + S.name, desc: g.desc, body, ld, image: src(g.image) };
 };
 
+/* ── blog: articles written in the admin panel (data/blog.json) ── */
+/* safe inline formatting inside article text: **bold** and [link text](/page/ or https://…) */
+function inl(t) {
+  return esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\(((?:\/|https:\/\/)[^\s)]*)\)/g, (m, a, u) => '<a class="link" href="' + u + '"' + (u[0] === '/' ? '' : ' target="_blank" rel="noopener"') + '>' + a + '</a>');
+}
+/* article text format used by the admin editor: "## heading", "### small heading", "- bullet", "1. step", "> tip", "| table | row |", blank line = new paragraph */
+function parseBody(text) {
+  const out = [], lines = String(text || '').replace(/\r/g, '').split('\n'); let i = 0;
+  const take = re => { const a = []; while (i < lines.length && re.test(lines[i])) a.push(lines[i++]); return a; };
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim()) { i++; continue; }
+    if (/^###\s+/.test(l)) { out.push(['h3', l.replace(/^###\s+/, '').trim()]); i++; continue; }
+    if (/^##\s+/.test(l)) { out.push(['h2', l.replace(/^##\s+/, '').trim()]); i++; continue; }
+    if (/^\s*[-*]\s+/.test(l)) { out.push(['ul', take(/^\s*[-*]\s+/).map(x => x.replace(/^\s*[-*]\s+/, '').trim())]); continue; }
+    if (/^\s*\d+[.)]\s+/.test(l)) { out.push(['ol', take(/^\s*\d+[.)]\s+/).map(x => x.replace(/^\s*\d+[.)]\s+/, '').trim())]); continue; }
+    if (/^>\s?/.test(l)) { out.push(['tip', take(/^>\s?/).map(x => x.replace(/^>\s?/, '')).join(' ').trim()]); continue; }
+    if (/^\s*\|/.test(l)) { const rows = take(/^\s*\|/).filter(x => !/^\s*\|[\s:|-]+\|\s*$/.test(x)).map(x => x.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim())); if (rows.length) out.push(['table', rows]); continue; }
+    const para = []; while (i < lines.length && lines[i].trim() && !/^(#{2,3}\s|\s*[-*]\s|\s*\d+[.)]\s|>|\s*\|)/.test(lines[i])) para.push(lines[i++].trim());
+    out.push(['p', para.join(' ')]);
+  }
+  return out;
+}
+function bodyText(blocks) {
+  return (blocks || []).map(([t, v]) => t === 'h2' ? '## ' + v : t === 'h3' ? '### ' + v : t === 'ul' ? v.map(x => '- ' + x).join('\n') : t === 'ol' ? v.map((x, i) => (i + 1) + '. ' + x).join('\n') : t === 'tip' ? '> ' + v : t === 'table' ? v.map(r => '| ' + r.join(' | ') + ' |').join('\n') : v).join('\n\n');
+}
+const hid = t => slugify(t).slice(0, 60) || 'section';
+function blogBlock(b) {
+  const [t, v] = b;
+  if (t === 'h2') return '<h2 id="' + hid(v) + '">' + inl(v) + '</h2>';
+  if (t === 'h3') return '<h3>' + inl(v) + '</h3>';
+  if (t === 'p') return '<p>' + inl(v) + '</p>';
+  if (t === 'ul') return '<ul>' + v.map(x => '<li>' + inl(x) + '</li>').join('') + '</ul>';
+  if (t === 'ol') return '<ol>' + v.map(x => '<li>' + inl(x) + '</li>').join('') + '</ol>';
+  if (t === 'tip') return '<aside class="tipbox">' + I.check + '<p>' + inl(v) + '</p></aside>';
+  if (t === 'table') return '<div class="esttable"><table><thead><tr>' + v[0].map(h => '<th scope="col">' + inl(h) + '</th>').join('') + '</tr></thead><tbody>' + v.slice(1).map(r => '<tr>' + r.map(c => '<td>' + inl(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+  return '';
+}
+const words = b => (b.body || []).map(x => [].concat(x[1]).flat().join(' ')).join(' ').split(/\s+/).filter(Boolean).length;
+const readMin = b => Math.max(2, Math.round(words(b) / 200));
+const fdate = d => { const x = new Date(String(d || '') + 'T00:00:00'); return isNaN(x) ? '' : x.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); };
+function blogCard(b) {
+  return '<a class="svc bcard" href="/blog/' + b.slug + '/"><span class="svc-ph"><img src="' + esc(small(b.image)) + '"' + RS(small(b.image)) + ' alt="' + esc(b.title) + '" loading="lazy" width="600" height="450"/></span><span class="svc-body"><span class="bmeta">' + esc(b.cat) + ' · ' + readMin(b) + ' min read</span><h3>' + esc(b.title) + '</h3><p>' + esc(b.desc) + '</p><span class="svc-go">Read article ' + I.arrow + '</span></span></a>';
+}
+const blogCats = D => { const m = {}; D.BLOG.forEach(b => { m[b.catSlug] = m[b.catSlug] || { name: b.cat, slug: b.catSlug, n: 0 }; m[b.catSlug].n++; }); return Object.values(m).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)); };
+const BLOG_PER = 12;
+function blogList(D, list, page, base, title, lede, crumbList, cur) {
+  const pages = Math.max(1, Math.ceil(list.length / BLOG_PER)), p = Math.min(Math.max(1, +page || 1), pages), rows = list.slice((p - 1) * BLOG_PER, p * BLOG_PER);
+  const link = n => n === 1 ? base : base + 'page/' + n + '/';
+  const chips = '<nav class="bchips" aria-label="Blog categories"><a href="/blog/"' + (!cur ? ' aria-current="page"' : '') + '>All <span>' + D.BLOG.length + '</span></a>' + blogCats(D).map(c => '<a href="/blog/category/' + c.slug + '/"' + (cur === c.slug ? ' aria-current="page"' : '') + '>' + esc(c.name) + ' <span>' + c.n + '</span></a>').join('') + '<a href="/guides/">Price guides</a></nav>';
+  const pager = pages > 1 ? '<nav class="bpager" aria-label="Pages">' + (p > 1 ? '<a href="' + link(p - 1) + '" rel="prev">← Newer</a>' : '<span></span>') + '<span>Page ' + p + ' of ' + pages + '</span>' + (p < pages ? '<a href="' + link(p + 1) + '" rel="next">Older →</a>' : '<span></span>') + '</nav>' : '';
+  return pageHead(title, lede, crumbs(crumbList)) + '<section class="sec tight"><div class="wrap">' + chips + (rows.length ? '<div class="svcs mt14">' + rows.map(blogCard).join('') + '</div>' : '<div class="empty">No articles here yet.</div>') + pager + '</div></section>' +
+    ctaBand(D, 'Planning an interior or furniture project?', 'Ask us on WhatsApp — we reply with honest advice and an estimate.');
+}
+V.blog = (D, page) => {
+  const p = +page || 1, body = blogList(D, D.BLOG, p, '/blog/', 'Blog: interior and furniture ideas', 'Practical ideas, costs and care tips for homes, offices and shops in Mumbai, Thane and Navi Mumbai — from the people who build them.', [['Blog']], '');
+  return { title: (p > 1 ? 'Interior & Furniture Blog, Page ' + p : 'Interior & Furniture Blog — Ideas and Tips for Mumbai Homes') + ' | ' + D.S.name, desc: 'Interior design ideas, furniture buying tips, material guides and maintenance advice for Mumbai, Thane and Navi Mumbai homes, offices and shops.' + (p > 1 ? ' Page ' + p + '.' : ''), body, ld: [crumbLD(D, [['Blog', '/blog/']])] };
+};
+V.blogcat = (D, slug, page) => {
+  const c = blogCats(D).find(x => x.slug === slug); if (!c) return null;
+  const list = D.BLOG.filter(b => b.catSlug === slug), p = +page || 1;
+  const body = blogList(D, list, p, '/blog/category/' + slug + '/', c.name, c.n + ' article' + (c.n === 1 ? '' : 's') + ' on ' + c.name.toLowerCase() + ' for homes, offices and shops in Mumbai, Thane and Navi Mumbai.', [['Blog', '/blog/'], [c.name]], slug);
+  return { title: c.name + (p > 1 ? ', Page ' + p : '') + ' — Interior & Furniture Blog | ' + D.S.name, desc: 'Articles about ' + c.name.toLowerCase() + ': practical interior and furniture advice for Mumbai, Thane and Navi Mumbai from ' + D.S.name + '.', body, ld: [crumbLD(D, [['Blog', '/blog/'], [c.name, '/blog/category/' + slug + '/']])] };
+};
+V.post = (D, slug) => {
+  const S = D.S, b = D.BLOG.find(x => x.slug === slug); if (!b) return null;
+  const h2s = (b.body || []).filter(x => x[0] === 'h2').map(x => x[1]), url = S.site_url + '/blog/' + slug + '/';
+  const rel = D.BLOG.filter(x => x.slug !== slug && x.catSlug === b.catSlug).concat(D.BLOG.filter(x => x.slug !== slug && x.catSlug !== b.catSlug)).slice(0, 3);
+  const meta = '<p class="pmeta"><a href="/blog/category/' + b.catSlug + '/">' + esc(b.cat) + '</a><span>' + I.clock + readMin(b) + ' min read</span>' + (b.date ? '<time datetime="' + esc(b.date) + '">' + fdate(b.date) + '</time>' : '') + '<span>By ' + esc(b.author || S.name) + '</span></p>';
+  const share = '<div class="share"><b>Share</b><a class="btn btn-wa btn-sm" href="https://wa.me/?text=' + encodeURIComponent(b.title + ' ' + url) + '" target="_blank" rel="noopener">' + I.wa + 'WhatsApp</a><a class="btn btn-ghost btn-sm" href="https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '" target="_blank" rel="noopener">Facebook</a><a class="btn btn-ghost btn-sm" href="https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url) + '" target="_blank" rel="noopener">LinkedIn</a></div>';
+  const body = photoHead(b.image, b.title, b.desc, crumbs([['Blog', '/blog/'], [b.cat, '/blog/category/' + b.catSlug + '/'], [b.title]]), meta) +
+    '<section class="sec tight"><div class="wrap legal-wrap"><article class="legal guide post">' + (CUR.lang !== 'en' ? '<p class="note">This article is in English.</p>' : '') +
+    (h2s.length >= 3 ? '<nav class="toc" aria-label="In this article"><b>In this article</b><ol>' + h2s.map(h => '<li><a href="#' + hid(h) + '">' + esc(h) + '</a></li>').join('') + '</ol></nav>' : '') +
+    (b.body || []).map(blogBlock).join('') +
+    ((b.tags || []).length ? '<p class="tags">' + b.tags.map(t => '<span>#' + esc(t) + '</span>').join('') + '</p>' : '') + share +
+    '<div class="ctas mt14"><a class="btn btn-tape" href="/get-quote/">Get a free estimate</a><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I read your article "' + b.title + '" and have a question.')) + '" target="_blank" rel="noopener">' + I.wa + 'Ask us on WhatsApp</a></div></article>' +
+    '<nav class="legal-nav" aria-label="Blog"><h2>Categories</h2>' + blogCats(D).map(c => '<a href="/blog/category/' + c.slug + '/"' + (c.slug === b.catSlug ? ' aria-current="page"' : '') + '>' + esc(c.name) + ' (' + c.n + ')</a>').join('') + '<h2 class="mt14">Latest articles</h2>' + D.BLOG.filter(x => x.slug !== slug).slice(0, 5).map(x => '<a href="/blog/' + x.slug + '/">' + esc(x.title) + '</a>').join('') + '</nav></div></section>' +
+    (rel.length ? '<section class="sec alt"><div class="wrap"><h2>Read next</h2><div class="svcs mt12">' + rel.map(blogCard).join('') + '</div></div></section>' : '');
+  const ld = [crumbLD(D, [['Blog', '/blog/'], [b.cat, '/blog/category/' + b.catSlug + '/'], [b.title, '/blog/' + slug + '/']]), { '@context': 'https://schema.org', '@type': 'BlogPosting', headline: b.title, description: b.desc, image: S.site_url + src(b.image), datePublished: b.date, dateModified: b.updated || b.date, wordCount: words(b), articleSection: b.cat, keywords: (b.tags || []).join(', '), author: b.author ? { '@type': 'Person', name: b.author } : { '@type': 'Organization', name: S.name, url: S.site_url + '/' }, publisher: { '@type': 'Organization', name: S.name, logo: { '@type': 'ImageObject', url: S.site_url + '/assets/logo.png' } }, mainEntityOfPage: url }];
+  return { title: b.title + ' | ' + S.name, desc: b.desc, body, ld, image: src(b.image) };
+};
+
 /* ── legal & citizen pages ── */
 const P = s => '<p>' + s + '</p>', UL = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
 function legalInfo(D) {
@@ -408,6 +493,7 @@ V.sitemap = D => {
     g('Services', D.S.services.map(s => ['/services/' + s.slug + '/', s.title])) +
     g('Furniture', D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).map(c => ['/furniture/' + c.slug + '/', c.name]).concat(D.PRODUCTS.map(p => [p.url, p.name]))) +
     g('Areas', D.AREAS.map(a => ['/areas/' + a.slug + '/', a.name])) +
+    (D.BLOG.length ? g('Blog', [['/blog/', 'All articles']].concat(blogCats(D).map(c => ['/blog/category/' + c.slug + '/', c.name])).concat(D.BLOG.map(x => ['/blog/' + x.slug + '/', x.title]))) : '') +
     (D.GUIDES.length ? g('Guides', [['/guides/', 'All guides']].concat(D.GUIDES.map(x => ['/guides/' + x.slug + '/', x.title]))) : '') +
     g('Policies & help', Object.keys(POLICIES).map(k => ['/' + POLICIES[k].path + '/', POLICIES[k].title])) + '</div>' + legalNav('sitemap') + '</div></section>';
   return { title: 'Site Map | ' + D.S.name, desc: 'All pages on the ' + D.S.name + ' website: services, furniture, areas, policies and help.', body, ld: [crumbLD(D, [['Site map', '/sitemap/']])] };
@@ -484,6 +570,12 @@ function routes(D) {
   D.AREAS.forEach(a => R.push(['/areas/' + a.slug + '/', 'area', a.slug]));
   Object.keys(POLICIES).forEach(k => R.push(['/' + POLICIES[k].path + '/', 'legal_' + k]));
   if (D.GUIDES.length) { R.push(['/guides/', 'guides']); D.GUIDES.forEach(g => R.push(['/guides/' + g.slug + '/', 'guide', g.slug])); }
+  if (D.BLOG.length) {
+    const pg = n => Math.ceil(n / BLOG_PER);
+    R.push(['/blog/', 'blog']); for (let i = 2; i <= pg(D.BLOG.length); i++) R.push(['/blog/page/' + i + '/', 'blog', String(i)]);
+    blogCats(D).forEach(c => { R.push(['/blog/category/' + c.slug + '/', 'blogcat', c.slug]); for (let i = 2; i <= pg(c.n); i++) R.push(['/blog/category/' + c.slug + '/page/' + i + '/', 'blogcat', c.slug, String(i)]); });
+    D.BLOG.forEach(b => R.push(['/blog/' + b.slug + '/', 'post', b.slug]));
+  }
   R.push(['/sitemap/', 'sitemap']);
   return R;
 }
@@ -503,7 +595,7 @@ function render(D, view, args) {
 const headerL = (D, path) => localize(header(D, path)), footerL = D => localize(footer(D));
 
 /* ── header & footer ── */
-const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/about/', 'About'], ['/contact/', 'Contact']];
+const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/blog/', 'Blog'], ['/about/', 'About'], ['/contact/', 'Contact']];
 const LANGS = [['en', 'EN', 'English'], ['hi', 'हिंदी', 'Hindi'], ['mr', 'मराठी', 'Marathi']];
 function langLinks(path) {
   return '<span class="langs" role="group" aria-label="Language">' + LANGS.map(l => '<a data-nolocal href="' + (l[0] === 'en' ? '' : '/' + l[0]) + (path || '/') + '" hreflang="' + l[0] + '" lang="' + l[0] + '"' + (l[0] === CUR.lang ? ' aria-current="true"' : '') + ' title="' + l[2] + '">' + l[1] + '</a>').join('') + '</span>';
@@ -527,7 +619,7 @@ function footer(D) {
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +
-    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/our-work/">Our work</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
+    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/our-work/">Our work</a><a href="/blog/">Blog</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
     '<div class="fcol"><h3>Reach us</h3><ul class="flist">' + (S.phone ? '<li><a href="' + tel(S) + '">' + I.phone + '<span>+91 ' + esc(S.phone) + '</span></a></li>' : '') +
     (waNum(S) ? '<li><a href="' + esc(waLink(S, 'Hi, I want a quote for interior / furniture work.')) + '" target="_blank" rel="noopener">' + I.wa + '<span>WhatsApp us</span></a></li>' : '') +
     (S.email ? '<li><a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>' + esc(S.email) + '</span></a></li>' : '') +
@@ -550,5 +642,5 @@ function orgLD(D) {
 
 function sig(str) { let h = 5381; str = String(str); for (let i = 0; i < str.length; i++) h = (h * 33 ^ str.charCodeAt(i)) >>> 0; return h.toString(36); }
 
-return { CUR, LANGS, setLang, langOf, localize, tr, header: headerL, footer: footerL, sig, esc, slugify, inr, src, small, I, prep, routes, resolve, render, orgLD, card, catName, waLink, tel, range, V };
+return { parseBody, bodyText, blogBlock, readMin, CUR, LANGS, setLang, langOf, localize, tr, header: headerL, footer: footerL, sig, esc, slugify, inr, src, small, I, prep, routes, resolve, render, orgLD, card, catName, waLink, tel, range, V };
 });

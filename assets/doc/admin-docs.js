@@ -53,6 +53,7 @@ function localBlob(){ try { return JSON.parse(localStorage.getItem(VKEY) || 'nul
 function newest(a, b){ return !a ? b : !b ? a : (a.updated || 0) >= (b.updated || 0) ? a : b; }
 window.vaultOpen = async function(pass){
   const blob = newest(localBlob(), await remoteBlob());
+  if (blob && blob.kind === 'srv') { V = null; KEY = null; return; } /* team-key documents open only through the sign-in server */
   if (blob) {
     SALT = fromB64(blob.salt); KEY = await derive(pass, SALT);
     try { V = await unseal(blob, KEY); }

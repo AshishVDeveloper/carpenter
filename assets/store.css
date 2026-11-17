@@ -519,3 +519,28 @@ html.dark .nf .nf-mark b{color:var(--tape)}
 .logo-i{display:inline-block;background:url(/assets/logo-88.webp) center/cover no-repeat}
 /* English pages: show the हिंदी / मराठी switch in the phone's own font so the large Hindi web font only loads on Hindi and Marathi pages */
 html[lang^=en] [lang=hi],html[lang^=en] [lang=mr]{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+/* blog */
+.bchips{display:flex;gap:.5rem;flex-wrap:wrap}
+.bchips a{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .95rem;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);text-decoration:none;font-weight:600;font-size:.92rem;color:var(--ink)}
+.bchips a span{font-size:.78rem;color:var(--muted);font-weight:700}
+.bchips a:hover{border-color:var(--forest)}
+.bchips a[aria-current]{background:var(--forest);border-color:var(--forest);color:#fff}.bchips a[aria-current] span{color:var(--tape)}
+.bmeta{font-size:.78rem;font-weight:700;letter-spacing:.02em;color:var(--brass)}
+.bpager{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:2rem;color:var(--muted);font-size:.92rem}
+.bpager a{font-weight:700;color:var(--link);text-decoration:none;border-bottom:2px solid var(--tape)}
+.pmeta{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;margin-top:1rem;font-size:.9rem;color:rgba(255,255,255,.88)}
+.pmeta a{color:var(--tape);font-weight:700;text-decoration:none}
+.pmeta span{display:inline-flex;align-items:center;gap:.35rem}.pmeta svg{width:15px;height:15px}
+.post h2{scroll-margin-top:110px}
+.toc{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem;margin:0 0 1.6rem}
+.toc b{display:block;margin-bottom:.4rem}
+.toc ol{margin:0 0 0 1.2rem;padding:0;display:grid;gap:.25rem}
+.toc a{color:var(--link);text-decoration:none}.toc a:hover{text-decoration:underline}
+.tipbox{display:flex;gap:.7rem;align-items:flex-start;background:var(--note);border:1px solid var(--note-line);border-left:4px solid var(--brass);border-radius:12px;padding:.9rem 1.1rem;margin:1.2rem 0;color:var(--note-ink)}
+.tipbox svg{flex:none;width:20px;height:20px;margin-top:.15rem;color:var(--brass)}
+.tipbox p{margin:0}
+.post ol{margin:0 0 1rem 1.3rem}.post ol li{margin:.3rem 0}
+.tags{display:flex;flex-wrap:wrap;gap:.4rem;margin:1.6rem 0 0}
+.tags span{font-size:.82rem;background:var(--alt);color:var(--muted);padding:.25rem .6rem;border-radius:6px}
+.share{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+.share b{margin-right:.3rem}

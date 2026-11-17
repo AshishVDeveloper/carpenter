@@ -237,7 +237,7 @@ async function route(req, env, url) {
     const b = await body(req), inp = b.roles && typeof b.roles === 'object' ? b.roles : {}, out = {};
     for (const [k, v] of Object.entries(inp)) {
       if (!/^[a-z][a-z0-9_]{1,24}$/.test(k) || k === 'super_admin') continue;
-      out[k] = { name: String(v.name || k).trim().slice(0, 30) || k, perms: (v.perms || []).filter(x => ALL.includes(x)) };
+      out[k] = { name: String(v.name || k).trim().slice(0, 30) || k, perms: (v.perms || []).filter(x => ALL.includes(x)), mods: Object.keys(MODS) };
     }
     const used = new Set(['super_admin']); for (const e of await userList(KV)) { const u = await getUser(KV, e); if (u) used.add(u.role); }
     for (const k of Object.keys(R)) if (k !== 'super_admin' && !out[k] && used.has(k)) throw err(400, 'bad', 'The role "' + R[k].name + '" is still given to someone. Change their role first.');
@@ -454,19 +454,22 @@ async function ghOwner(env, token) {
    owner lives in 'acct' (always super admin); others in 'user:<email>', listed in 'users' */
 const MODS = { dashboard: ['view'], documents: ['view', 'add', 'edit', 'delete'], rates: ['view', 'edit'], letterhead: ['view', 'edit'], settings: ['view', 'edit'],
   projects: ['view', 'add', 'edit', 'delete'], testimonials: ['view', 'add', 'edit', 'delete'], products: ['view', 'add', 'edit', 'delete'], categories: ['view', 'add', 'edit', 'delete'],
-  orders: ['view', 'delete'], mail: ['view', 'send', 'manage'], publishing: ['view', 'edit'], users: ['view', 'add', 'edit', 'delete'] };
+  blog: ['view', 'add', 'edit', 'delete'], orders: ['view', 'delete'], mail: ['view', 'send', 'manage'], publishing: ['view', 'edit'], users: ['view', 'add', 'edit', 'delete'] };
 const ALL = Object.entries(MODS).flatMap(([k, a]) => a.map(x => k + '.' + x));
 const pick = (spec) => ALL.filter(x => { const [mo, ac] = x.split('.'); return spec[mo] === '*' || (spec[mo] || []).includes(ac); });
 const ROLE_DEF = {
   super_admin: { name: 'Super admin', perms: ALL, system: true },
   admin: { name: 'Admin', perms: ALL.filter(x => !['users.delete', 'publishing.edit', 'mail.manage'].includes(x)) },
-  employee: { name: 'Employee', perms: pick({ dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], projects: ['view', 'add', 'edit'], products: ['view'], categories: ['view'], orders: ['view'], mail: ['view'] }) },
-  sale: { name: 'Sale', perms: pick({ dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], products: ['view'], categories: ['view'], testimonials: ['view'], orders: ['view'], mail: ['view', 'send'] }) }
+  employee: { name: 'Employee', perms: pick({ blog: ['view', 'add', 'edit'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], projects: ['view', 'add', 'edit'], products: ['view'], categories: ['view'], orders: ['view'], mail: ['view'] }) },
+  sale: { name: 'Sale', perms: pick({ blog: ['view'], dashboard: '*', documents: ['view', 'add', 'edit'], rates: ['view'], letterhead: ['view'], products: ['view'], categories: ['view'], testimonials: ['view'], orders: ['view'], mail: ['view', 'send'] }) }
 };
 async function rolesLoad(KV) {
   const saved = JSON.parse(await KV.get('roles') || 'null');
   const r = saved ? { super_admin: ROLE_DEF.super_admin, ...saved } : { ...ROLE_DEF };
-  r.super_admin = ROLE_DEF.super_admin; return r;
+  r.super_admin = ROLE_DEF.super_admin;
+  /* new modules added after roles were saved: give saved built-in roles their default permissions for them */
+  for (const [k, def] of Object.entries(ROLE_DEF)) if (saved && saved[k] && !(saved[k].mods || []).includes('blog')) r[k] = { ...saved[k], perms: [...new Set((saved[k].perms || []).concat(def.perms.filter(x => x.startsWith('blog.'))))] };
+  return r;
 }
 const userList = async KV => JSON.parse(await KV.get('users') || '[]');
 async function getUser(KV, email) {
@@ -482,7 +485,8 @@ const pubUser = (u, R) => ({ email: u.email, name: u.name || '', phone: u.phone 
 function ghMods(f) {
   if (f === 'data/vault.json') return ['documents', 'rates', 'letterhead'];
   if (f === 'data/settings.json') return ['settings', 'letterhead'];
-  const m = f.match(/^data\/(products|categories|projects|testimonials)\.json$/); if (m) return [m[1]];
+  const m = f.match(/^data\/(products|categories|projects|testimonials|blog)\.json$/); if (m) return [m[1]];
+  if (/^images\/blog\/[\w.-]+$/.test(f)) return ['blog'];
   if (/^images\/products\/[\w.-]+$/.test(f)) return ['products'];
   if (/^images\/work\/[\w.-]+$/.test(f)) return ['projects'];
   return ['publishing'];

@@ -248,3 +248,20 @@ h3.uh{font-size:1rem;margin:1.2rem 0 .6rem}
 @media (max-width:900px){.rgrid{grid-template-columns:1fr}}
 .tw+.pgwrap,.tw+.bar{margin-top:1.3rem}
 .tw:has(+.pgwrap),.tw:has(+.bar){margin-bottom:0}
+/* blog editor */
+.bcover{display:grid;grid-template-columns:220px 1fr;gap:1rem;align-items:start}
+.bcover img{width:220px;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#ECEDE6}
+.btool{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem;position:sticky;top:64px;z-index:3;background:var(--surface);padding:.3rem 0}
+.btool .sp{flex:1}
+.bbody{min-height:460px;font:15px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}
+.bprev{border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.4rem;min-height:460px;background:#fff}
+.post-pv{max-width:720px;line-height:1.65}.post-pv h1{font-size:1.6rem;margin-bottom:.4rem}.post-pv .lede{color:var(--muted);margin-bottom:1rem}
+.post-pv h2{font-size:1.25rem;margin:1.4rem 0 .5rem}.post-pv h3{font-size:1.05rem;margin:1.1rem 0 .4rem}.post-pv p{margin:.6rem 0}
+.post-pv ul,.post-pv ol{margin:.5rem 0 .8rem 1.3rem}.post-pv li{margin:.25rem 0}.post-pv a{color:var(--forest)}
+.post-pv .tipbox{display:flex;gap:.6rem;background:#FBF6E8;border:1px solid #EEDFB6;border-left:4px solid #C8922A;border-radius:10px;padding:.8rem 1rem;margin:1rem 0}.post-pv .tipbox svg{width:18px;height:18px;flex:none}
+.post-pv table{border-collapse:collapse;width:100%;margin:.8rem 0}.post-pv th,.post-pv td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left;font-size:.92rem}
+.bhelp{margin:.8rem 0}.bhelp summary{cursor:pointer;font-weight:600;color:var(--forest)}.bhelp table{margin-top:.5rem}.bhelp td{padding:.3rem .6rem;border-bottom:1px solid var(--line);font-size:.88rem}
+.bseo{margin-top:1rem;background:#F7F8F4;border:1px solid var(--line);border-radius:12px;padding:.8rem 1rem;font-size:.9rem}
+.bseo ul{list-style:none;margin:.4rem 0 0;padding:0;display:grid;gap:.2rem}.bseo li.ok{color:var(--ok)}.bseo li.warn{color:var(--amber)}
+@media (max-width:700px){.bcover{grid-template-columns:1fr}.bcover img{width:100%}.btool{top:56px}}
+.mt14{margin-top:1.4rem}

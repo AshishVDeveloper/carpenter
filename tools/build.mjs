@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const VI = require(path.join(ROOT, 'assets/render.js'));
 const read = f => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
-const D = VI.prep({ S: read('settings.json'), CATS: read('categories.json'), PRODUCTS: read('products.json'), WORK: read('projects.json'), QUOTES: fs.existsSync(path.join(ROOT, 'data/testimonials.json')) ? read('testimonials.json') : [], GUIDES: fs.existsSync(path.join(ROOT, 'data/guides.json')) ? read('guides.json') : [] });
+const D = VI.prep({ S: read('settings.json'), CATS: read('categories.json'), PRODUCTS: read('products.json'), WORK: read('projects.json'), QUOTES: fs.existsSync(path.join(ROOT, 'data/testimonials.json')) ? read('testimonials.json') : [], BLOG: fs.existsSync(path.join(ROOT, 'data/blog.json')) ? read('blog.json') : [], GUIDES: fs.existsSync(path.join(ROOT, 'data/guides.json')) ? read('guides.json') : [] });
 const S = D.S, esc = VI.esc;
 const I18N = fs.existsSync(path.join(ROOT, 'data/i18n.json')) ? read('i18n.json') : {};
 const V = Date.now().toString(36);
@@ -16,7 +16,7 @@ const V = Date.now().toString(36);
 {
   let sharp = null; try { sharp = (await import('sharp')).default; } catch (e) { }
   const want = [];
-  for (const dir of ['images/products', 'images/site', 'images/team']) {
+  for (const dir of ['images/products', 'images/site', 'images/team', 'images/blog']) {
     const abs = path.join(ROOT, dir); if (!fs.existsSync(abs)) continue;
     for (const f of fs.readdirSync(abs)) {
       if (!/\.webp$/.test(f) || /-xs\.webp$/.test(f)) continue;

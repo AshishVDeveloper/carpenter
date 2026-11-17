@@ -6,8 +6,9 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const VI = require(path.join(ROOT, 'assets/render.js'));
+const VS = require(path.join(ROOT, 'assets/structure.js'));
 const read = f => JSON.parse(fs.readFileSync(path.join(ROOT, 'data', f), 'utf8'));
-const D = VI.prep({ S: read('settings.json'), CATS: read('categories.json'), PRODUCTS: read('products.json'), WORK: read('projects.json'), QUOTES: fs.existsSync(path.join(ROOT, 'data/testimonials.json')) ? read('testimonials.json') : [], BLOG: fs.existsSync(path.join(ROOT, 'data/blog.json')) ? read('blog.json') : [], GUIDES: fs.existsSync(path.join(ROOT, 'data/guides.json')) ? read('guides.json') : [] });
+const D = VI.prep({ S: read('settings.json'), CATS: read('categories.json'), PRODUCTS: read('products.json'), WORK: read('projects.json'), QUOTES: fs.existsSync(path.join(ROOT, 'data/testimonials.json')) ? read('testimonials.json') : [], BLOG: fs.existsSync(path.join(ROOT, 'data/blog.json')) ? read('blog.json') : [], GUIDES: fs.existsSync(path.join(ROOT, 'data/guides.json')) ? read('guides.json') : [], CATALOGUE: fs.existsSync(path.join(ROOT, 'data/catalogue.json')) ? read('catalogue.json') : [] });
 const S = D.S, esc = VI.esc;
 const I18N = fs.existsSync(path.join(ROOT, 'data/i18n.json')) ? read('i18n.json') : {};
 const V = Date.now().toString(36);
@@ -16,7 +17,7 @@ const V = Date.now().toString(36);
 {
   let sharp = null; try { sharp = (await import('sharp')).default; } catch (e) { }
   const want = [];
-  for (const dir of ['images/products', 'images/site', 'images/team', 'images/blog']) {
+  for (const dir of ['images/products', 'images/site', 'images/team', 'images/blog', 'images/catalogue']) {
     const abs = path.join(ROOT, dir); if (!fs.existsSync(abs)) continue;
     for (const f of fs.readdirSync(abs)) {
       if (!/\.webp$/.test(f) || /-xs\.webp$/.test(f)) continue;
@@ -38,7 +39,7 @@ const V = Date.now().toString(36);
 /* one script file for the whole site: render.js + store.js joined (minified with terser when it is installed) */
 const JSFILE = 'site.min.js';
 {
-  const src = ['render.js', 'store.js'].map(f => fs.readFileSync(path.join(ROOT, 'assets', f), 'utf8')).join(';\n');
+  const src = ['structure.js', 'render.js', 'store.js'].map(f => fs.readFileSync(path.join(ROOT, 'assets', f), 'utf8')).join(';\n');
   let terser = null; try { terser = await import('terser'); } catch (e) { }
   const out = terser ? (await terser.minify(src, { compress: true, mangle: true, format: { comments: false } })).code : src;
   fs.writeFileSync(path.join(ROOT, 'assets', JSFILE), out + '\n');
@@ -144,7 +145,7 @@ ${p.body}
 
 // remove old generated folders (keep source folders)
 const KEEP = new Set(['admin', 'assets', 'data', 'images', 'tools', '.github', '.git', 'node_modules']);
-for (const f of ['hi', 'mr', 'services', 'furniture', 'our-work', 'about', 'contact', 'get-quote', 'quote-list', 'thanks', 'areas', 'terms-of-use', 'privacy-policy', 'copyright-policy', 'hyperlinking-policy', 'disclaimer', 'refund-and-cancellation', 'accessibility-statement', 'grievance', 'help', 'sitemap', 'guides']) fs.rmSync(path.join(ROOT, f), { recursive: true, force: true });
+for (const f of ['hi', 'mr', 'services', 'furniture', 'our-work', 'about', 'contact', 'get-quote', 'quote-list', 'thanks', 'areas', 'terms-of-use', 'privacy-policy', 'copyright-policy', 'hyperlinking-policy', 'disclaimer', 'refund-and-cancellation', 'accessibility-statement', 'grievance', 'help', 'sitemap', 'guides', 'catalogue', 'blog', 'wishlist']) fs.rmSync(path.join(ROOT, f), { recursive: true, force: true });
 
 const routes = VI.routes(D);
 for (const r of routes) {
@@ -157,6 +158,8 @@ for (const r of routes) {
     fs.writeFileSync(path.join(d, 'index.html'), hideMail(tidy(page(route, view, args, lang))));
   }
 }
+/* structure sketches: one SVG picture per catalogue design (shown as the 2nd image after the photo) */
+for (const c of D.CATALOGUE) fs.writeFileSync(path.join(ROOT, 'catalogue', c.slug, 'structure.svg'), '<?xml version="1.0" encoding="UTF-8"?>\n' + VS.svg(VS.docOf(c), { label: 'Structure sketch of ' + c.name + ' with sizes' }).replace(/font-family="[^"]*"/, 'font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif"') + '\n');
 fs.writeFileSync(path.join(ROOT, '404.html'), hideMail(tidy(page('/404/', 'notfound', [], 'en'))));
 
 // offline page (served by /sw.js when there is no internet) — standalone, works without other files
@@ -215,7 +218,7 @@ self.addEventListener('fetch', e => {
 
 const today = new Date().toISOString().slice(0, 10);
 const index = routes.filter(r => !['list', 'thanks', 'wish'].includes(r[1]));
-const pri = v => ({ guides: '0.7', guide: '0.7', home: '1.0', services: '0.9', service: '0.9', furniture: '0.8', category: '0.7', area: '0.8', product: '0.6' }[v] || '0.5');
+const pri = v => ({ guides: '0.7', guide: '0.7', home: '1.0', services: '0.9', service: '0.9', furniture: '0.8', category: '0.7', catalogue: '0.8', catitem: '0.6', area: '0.8', product: '0.6' }[v] || '0.5');
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${index.flatMap(r => ['', '/hi', '/mr'].map(pre => `  <url><loc>${S.site_url}${pre}${r[0]}</loc><lastmod>${today}</lastmod><priority>${pre ? (pri(r[1]) - 0.1).toFixed(1) : pri(r[1])}</priority></url>`)).join('\n')}

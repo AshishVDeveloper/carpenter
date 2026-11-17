@@ -79,6 +79,14 @@ const okPhone = p => /^\+?\d[\d\s-]{8,}$/.test(String(p || '').trim());
 document.addEventListener('click', e => {
   const w = e.target.closest('[data-wish]');
   if (w) { e.preventDefault(); const on = wish.toggle(+w.dataset.wish); toast(on ? tt('Saved to your wishlist.') + ' <a href="' + home('/wishlist/') + '">' + tt('View wishlist') + '</a>' : tt('Removed from your wishlist.')); if ($('wishApp')) bindWish(); }
+  /* catalogue drawing: full screen, download, print, type filter */
+  const sv = () => { const g = document.querySelector('#csheet svg'); return g ? '<?xml version="1.0" encoding="UTF-8"?>\n' + g.outerHTML : ''; };
+  if (e.target.closest('[data-sfull]')) { const x = sv(); if (x) lightbox(['data:image/svg+xml;charset=utf-8,' + encodeURIComponent(x)], 0, e.target.closest('[data-sfull]').dataset.title); }
+  const dl = e.target.closest('[data-sdl]');
+  if (dl) { const a = document.createElement('a'); a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sv()); a.download = dl.dataset.sdl + '-structure.svg'; document.body.appendChild(a); a.click(); a.remove(); }
+  if (e.target.closest('[data-sprint]')) window.print();
+  const ct = e.target.closest('#ctypes [data-ct]');
+  if (ct) { e.preventDefault(); const t = ct.dataset.ct; document.querySelectorAll('#ctypes [data-ct]').forEach(a => a.toggleAttribute('aria-current', a === ct)); document.querySelectorAll('.cgrid .ccard').forEach(c => { c.hidden = !!t && c.dataset.ctype !== t; }); history.replaceState(null, '', t ? '#' + t : location.pathname); }
   const sh = e.target.closest('[data-share]');
   if (sh) { e.preventDefault(); shareLink(sh.dataset.share, sh.dataset.title || document.title); }
   const b = e.target.closest('[data-add]');
@@ -250,7 +258,8 @@ function hdrFx() {
   addEventListener('resize', tick); tick();
 }
 hdrFx();
-function bind() { bindWish(); bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
+function bindCat() { const t = location.hash.slice(1), a = t && document.querySelector('#ctypes [data-ct="' + CSS.escape(t) + '"]'); if (a) a.click(); }
+function bind() { bindCat(); bindWish(); bindGrievance(); bindShop(); bindProduct(); bindList(); bindQuote(); bindContact(); badge(); }
 
 /* bind immediately with built-in data, then refresh from JSON */
 function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(html)) { el.innerHTML = html; el.dataset.sig = VI.sig(html); return true; } return false; }
@@ -260,7 +269,7 @@ function swap(id, html) { const el = $(id); if (el && el.dataset.sig !== VI.sig(
   await new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }));
   let raw;
   try { const [S, CATS, PRODUCTS] = await Promise.all(['settings.json', 'categories.json', 'products.json'].map(get));
-    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []), BLOG: await get('blog.json').catch(() => []) };
+    raw = { S, CATS, PRODUCTS, WORK: await get('projects.json').catch(() => []), QUOTES: await get('testimonials.json').catch(() => []), GUIDES: await get('guides.json').catch(() => []), BLOG: await get('blog.json').catch(() => []), CATALOGUE: await get('catalogue.json').catch(() => []) };
     if (LANG !== 'en') VI.setLang(LANG, await get('i18n.json'));
   } catch (e) { return; }
   D = VI.prep(raw);

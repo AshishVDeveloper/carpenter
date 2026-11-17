@@ -1,16 +1,16 @@
 /* Mumbai Interior — page renderer shared by the static build (tools/build.mjs) and the browser (assets/store.js).
    Every page is pre-rendered into its own folder for search engines, then refreshed in the browser from /data/*.json. */
-(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(); else root.VI = factory(); })(this, function () {
+(function (root, factory) { if (typeof module === 'object' && module.exports) module.exports = factory(require('./structure.js')); else root.VI = factory(root.VS); })(this, function (VS) {
 'use strict';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const slugify = s => String(s || '').toLowerCase().replace(/&/g, ' ').replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 const src = s => !s ? '/assets/logo.svg' : /^(https?:|data:|\/)/.test(s) ? s : '/' + s;
 /* responsive photos: 400 px and 600 px versions; if a fresh upload has no small copy yet, fall back to the original */
-const RS = u => /^\/images\/(products|site|blog)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
+const RS = u => /^\/images\/(products|site|blog|catalogue)\/[a-z0-9-]+-sm\.webp$/.test(u) ? ' srcset="' + u.replace(/-sm\.webp$/, '-xs.webp') + ' 400w, ' + u + ' 600w" sizes="(max-width:700px) 92vw, 320px" onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=this.src.replace(/-(sm|xs)\\.webp$/,\'.webp\')"' : '';
 /* readable quote links: /get-quote/#contract-basis instead of ?mode=Contract%20basis */
 const qslug = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const small = s => { const u = src(s); return /^\/images\/(products|site|blog)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
+const small = s => { const u = src(s); return /^\/images\/(products|site|blog|catalogue)\/[a-z0-9-]+\.webp$/.test(u) && !/-sm\.webp$/.test(u) ? u.replace(/\.webp$/, '-sm.webp') : u; };
 
 const I = {
   wa: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>',
@@ -51,7 +51,13 @@ function prep(raw) {
   (S.locations || []).concat(WORK.map(w => w.area)).forEach(a => { a = String(a || '').trim(); if (a && !/&/.test(a) && !areaNames.some(x => slugify(x) === slugify(a))) areaNames.push(a); });
   const AREAS = areaNames.map(n => ({ name: n, short: n.split(',')[0].replace(/\s*\(.*\)/, '').trim(), slug: slugify(n) }));
   const BLOG = (raw.BLOG || []).filter(b => b && !b.draft && b.slug && b.title).map((b, i) => Object.assign({}, b, { _i: i, cat: b.category || 'Tips', catSlug: slugify(b.category || 'Tips') })).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || a._i - b._i);
-  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG };
+  const cseen = {};
+  const CATALOGUE = (raw.CATALOGUE || []).filter(c => c && c.name && c.visible !== false).sort((a, b) => (a.order || 99) - (b.order || 99)).map(c => {
+    let s = c.slug || slugify(c.name) || 'item-' + c.id; if (cseen[s]) s += '-' + c.id; cseen[s] = 1;
+    const area = VS ? VS.area(c.type, c.p || {}) : 0, est = +c.rate > 0 ? Math.round(area * c.rate / 100) * 100 : 0;
+    return Object.assign({}, c, { slug: s, url: '/catalogue/' + s + '/', area, est, images: c.images || [] });
+  });
+  return { S, CATS, PRODUCTS, WORK, AREAS, QUOTES: raw.QUOTES || [], GUIDES: raw.GUIDES || [], BLOG, CATALOGUE };
 }
 const catName = (D, slug) => (D.CATS.find(c => c.slug === slug) || {}).name || slug;
 const waNum = S => String(S.whatsapp || S.phone || '').replace(/\D/g, '');
@@ -202,13 +208,14 @@ V.category = (D, cat) => {
 };
 V.product = (D, cat, slug) => {
   const S = D.S, p = D.PRODUCTS.find(x => x.category === cat && x.slug === slug); if (!p) return null;
-  const imgs = p.images && p.images.length ? p.images : ['assets/logo.svg'];
+  const sk = (D.CATALOGUE || []).find(x => String(x.product_id) === String(p.id));
+  const imgs = (p.images && p.images.length ? p.images.slice(0, 1).concat(sk ? [sketchUrl(sk)] : [], p.images.slice(1)) : sk ? [sketchUrl(sk)] : ['assets/logo.svg']);
   const RV = (p.reviews || []).filter(r => r && r.name && r.text && +r.rating >= 1 && +r.rating <= 5);
   const rel = D.PRODUCTS.filter(x => x.category === p.category && x.id !== p.id).concat(D.PRODUCTS.filter(x => x.category !== p.category && x.featured)).slice(0, 4);
   const body = '<section class="sec tight"><div class="wrap">' + crumbs([['Furniture', '/furniture/'], [catName(D, p.category), '/furniture/' + p.category + '/'], [p.name]]) + '<div class="pd">' +
     '<div class="gallery" data-gal="' + esc(imgs.map(src).join('|')) + '" data-title="' + esc(p.name) + '"><div class="main"><button type="button" class="gopen" data-lb="0" aria-label="View ' + esc(p.name) + ' photos full screen"><img id="mainImg" src="' + esc(src(imgs[0])) + '" alt="' + esc(p.name) + '" width="1200" height="900"/><span class="gzoom" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>' + (imgs.length > 1 ? '1 / ' + imgs.length : 'View') + '</span></button></div>' + (imgs.length > 1 ? '<div class="thumbs" id="thumbs">' + imgs.map((s, i) => '<button type="button" data-src="' + esc(src(s)) + '" aria-pressed="' + (i === 0) + '" aria-label="Photo ' + (i + 1) + '"><img src="' + esc(small(s)) + '" alt="' + esc(p.name) + ' photo ' + (i + 1) + '"/></button>').join('') + '</div>' : '') + '<p class="hint">Photo is a design reference. We make it to your size and finish.</p></div>' +
     '<div class="pd-info"><span class="kicker">' + esc(catName(D, p.category)) + '</span><h1>' + esc(p.name) + '</h1>' + priceHTML(p, true) +
-    '<p class="pd-desc">' + esc(p.description) + '</p>' +
+    '<p class="pd-desc">' + esc(p.description) + '</p>' + (sk ? '<p class="hint">The second picture is the structure sketch with sizes. <a class="link" href="' + sk.url + '">See all sizes</a></p>' : '') +
     '<dl class="specs">' + [['Material', p.material], ['Size', p.size], ['Finish', p.finish], ['Made to size', p.customizable ? 'Yes — any size, wood or finish' : 'Standard size only']].filter(r => r[1]).map(r => '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' +
     '<div class="buy"><button class="btn btn-primary" type="button" data-add="' + p.id + '">' + I.plus + 'Add to quote list</button><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I am interested in: ' + p.name + ' (estimate ' + range(p) + ').\n' + S.site_url + p.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a><button class="btn btn-ghost wishb" type="button" data-wish="' + p.id + '" aria-pressed="false">' + I.heart + '<span>Save</span></button><button class="btn btn-ghost" type="button" data-share="' + esc(p.url) + '" data-title="' + esc(p.name) + '">' + I.share + 'Share</button></div>' +
     '<div class="note">' + I.ruler + '<span>The final price depends on the size, wood or board and finish you choose. <a class="link" href="/get-quote/#' + qslug(p.name) + '">Get an exact quote</a></span></div>' +
@@ -513,10 +520,11 @@ function legalNav(cur) {
 V.sitemap = D => {
   const g = (t, items) => '<div class="smap-col"><h2>' + t + '</h2><ul>' + items.map(i => '<li><a href="' + i[0] + '">' + esc(i[1]) + '</a></li>').join('') + '</ul></div>';
   const body = pageHead('Site map', 'Every page on this website.', crumbs([['Site map']])) + '<section class="sec tight"><div class="wrap legal-wrap"><div class="smap">' +
-    g('Main pages', [['/', 'Home'], ['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/about/', 'About us'], ['/contact/', 'Contact'], ['/get-quote/', 'Get a quote'], ['/quote-list/', 'Quote list']]) +
+    g('Main pages', [['/', 'Home'], ['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/catalogue/', 'Catalogue'], ['/our-work/', 'Our work'], ['/about/', 'About us'], ['/contact/', 'Contact'], ['/get-quote/', 'Get a quote'], ['/quote-list/', 'Quote list']]) +
     g('Services', D.S.services.map(s => ['/services/' + s.slug + '/', s.title])) +
     g('Furniture', D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).map(c => ['/furniture/' + c.slug + '/', c.name]).concat(D.PRODUCTS.map(p => [p.url, p.name]))) +
     g('Areas', D.AREAS.map(a => ['/areas/' + a.slug + '/', a.name])) +
+    (D.CATALOGUE.length ? g('Catalogue', [['/catalogue/', 'All designs']].concat(D.CATALOGUE.map(c => [c.url, c.name]))) : '') +
     (D.BLOG.length ? g('Blog', [['/blog/', 'All articles']].concat(blogCats(D).map(c => ['/blog/category/' + c.slug + '/', c.name])).concat(D.BLOG.map(x => ['/blog/' + x.slug + '/', x.title]))) : '') +
     (D.GUIDES.length ? g('Guides', [['/guides/', 'All guides']].concat(D.GUIDES.map(x => ['/guides/' + x.slug + '/', x.title]))) : '') +
     g('Policies & help', Object.keys(POLICIES).map(k => ['/' + POLICIES[k].path + '/', POLICIES[k].title])) + '</div>' + legalNav('sitemap') + '</div></section>';
@@ -585,6 +593,46 @@ function fitDesc(d, S) {
 }
 function clip(s, n) { s = String(s || ''); if (s.length <= n) return s; const c = s.slice(0, n - 1); return c.slice(0, Math.max(c.lastIndexOf(' '), n - 20)).replace(/[\s,.;:—–-]+$/, '') + '…'; }
 
+
+/* ── catalogue: photo + structure drawing with sizes (drawings from /assets/structure.js) ── */
+const catType = c => ((VS && VS.TYPES[c.type]) || {}).name || 'Furniture';
+const sketchUrl = c => c.url + 'structure.svg';
+const drawSVG = (c, cls, thumb) => VS ? VS.svg(VS.docOf(c, thumb), { cls: cls || 'sdraw', label: 'Structure drawing of ' + c.name + ' with sizes' }) : '';
+function catImgs(D, c) { if ((c.images || []).length) return c.images; const p = c.product_id && D.PRODUCTS.find(x => String(x.id) === String(c.product_id)); return p ? p.images || [] : []; }
+function catCard(D, c) {
+  const img = catImgs(D, c)[0];
+  return '<article class="card ccard" data-ctype="' + esc(c.type) + '"><a class="ph' + (img ? '' : ' sk') + '" href="' + c.url + '"><img src="' + esc(img ? small(img) : sketchUrl(c)) + '"' + (img ? RS(small(img)) : '') + ' alt="' + esc(c.name) + (img ? '' : ' — structure sketch with sizes') + '" loading="lazy" width="600" height="450"/>' + (img ? '<span class="badge">Photo + sketch</span>' : '<span class="badge">Sketch</span>') + '</a>' +
+    '<div class="body"><span class="kicker">' + esc(catType(c)) + '</span><h3><a href="' + c.url + '">' + esc(c.name) + '</a></h3>' +
+    '<p class="cc-size">' + esc(VS ? VS.sizeText(c.type, c.p || {}) : '') + '</p>' +
+    (c.est ? '<p class="price"><span class="from">Estimate</span> ' + inr(c.est) + '</p>' : '') +
+    '<div class="acts"><a class="btn btn-primary btn-sm" href="' + c.url + '">See structure & sizes</a></div></div></article>';
+}
+V.catalogue = D => {
+  const types = [...new Set(D.CATALOGUE.map(c => c.type))];
+  const body = pageHead('Catalogue: designs with structure and sizes', 'Every design with a photo and a measured drawing — width, height, depth and area in square feet. We make each piece to your size.', crumbs([['Catalogue']])) +
+    '<section class="sec tight"><div class="wrap">' + (types.length > 1 ? '<nav class="chips" id="ctypes" aria-label="Catalogue types"><a href="/catalogue/" aria-current="page" data-ct="">All <small>' + D.CATALOGUE.length + '</small></a>' + types.map(t => '<a href="/catalogue/#' + esc(t) + '" data-ct="' + esc(t) + '">' + esc(((VS && VS.TYPES[t]) || {}).name || t) + ' <small>' + D.CATALOGUE.filter(c => c.type === t).length + '</small></a>').join('') + '</nav>' : '') +
+    '<h2 class="sr">All designs with sizes</h2>' + (D.CATALOGUE.length ? '<div class="grid cgrid">' + D.CATALOGUE.map(c => catCard(D, c)).join('') + '</div>' : '<div class="empty">The catalogue is being prepared. <a class="link" href="/get-quote/">Ask us for a design</a>.</div>') +
+    '<div class="note mt2">' + I.ruler + '<span>Drawings show standard sizes. Your piece is made to fit your room — <a class="link" href="/get-quote/">get a free site visit and exact quote</a>.</span></div></div></section>';
+  const ld = [crumbLD(D, [['Catalogue', '/catalogue/']]), { '@context': 'https://schema.org', '@type': 'ItemList', name: 'Furniture catalogue', itemListElement: D.CATALOGUE.map((c, i) => ({ '@type': 'ListItem', position: i + 1, url: D.S.site_url + c.url, name: c.name })) }];
+  return { title: 'Furniture Catalogue with Sizes & Structure Drawings | ' + D.S.name, desc: 'Wardrobes, beds, TV units, kitchens and mandirs with photos, structure drawings and sizes in feet and inches. Made to measure in Mumbai, Thane and Navi Mumbai.', body, ld };
+};
+V.catitem = (D, slug) => {
+  const S = D.S, c = D.CATALOGUE.find(x => x.slug === slug); if (!c || !VS) return null;
+  const p = VS.params(c.type, c.p || {}), photos = catImgs(D, c), imgs = photos.slice(0, 1).concat([sketchUrl(c)], photos.slice(1)), prod = c.product_id && D.PRODUCTS.find(x => String(x.id) === String(c.product_id));
+  const rows = [['Type', catType(c)], ['Size', VS.sizeText(c.type, p)], ['Area', c.area + ' sq ft']].concat(
+    VS.TYPES[c.type] ? VS.TYPES[c.type].fields.filter(f => !['W', 'H', 'D', 'L', 'view', 'top', 'side', 'wood', 'color', 'color2'].includes(f.key) && f.kind !== 'color').map(f => [f.label.replace(/ \(.*\)$/, ''), f.kind === 'len' ? (p[f.key] ? VS.ftin(p[f.key]) : 'None') : f.kind === 'bool' ? (p[f.key] ? 'Yes' : 'No') : f.kind === 'sel' ? ((f.opts.find(o => o[0] === p[f.key]) || [])[1] || p[f.key]) : String(p[f.key])]) : [])
+    .concat([['Material', c.material], ['Finish', c.finish], ['Rate', +c.rate > 0 ? inr(c.rate) + ' per sq ft with material' : ''], ['Estimate', c.est ? inr(c.est) : '']]).filter(r => r[1] !== undefined && r[1] !== '' && r[1] !== null);
+  const gal = '<div class="gallery" data-gal="' + esc(imgs.map(src).join('|')) + '" data-title="' + esc(c.name) + '"><div class="main"><button type="button" class="gopen" data-lb="0" aria-label="View ' + esc(c.name) + ' photos full screen"><img id="mainImg" src="' + esc(src(imgs[0])) + '" alt="' + esc(c.name) + '" width="1200" height="900"/><span class="gzoom" aria-hidden="true">' + (imgs.length > 1 ? '1 / ' + imgs.length : 'View') + '</span></button></div>' + (imgs.length > 1 ? '<div class="thumbs" id="thumbs">' + imgs.map((s, i) => '<button type="button" data-src="' + esc(src(s)) + '" data-i="' + i + '" aria-pressed="' + !i + '"' + ' aria-label="' + (s === sketchUrl(c) ? 'Structure sketch' : 'Photo ' + (i + 1)) + '"><img src="' + esc(small(s)) + '" alt="" loading="lazy" width="120" height="90"/></button>').join('') + '</div>' : '') + '<p class="hint mt08">' + (photos.length ? 'Photo ' + (photos.length > 1 ? 'first' : '1') + ', structure sketch with sizes next. ' : '') + '<a class="link" href="' + sketchUrl(c) + '" download="' + esc(c.slug) + '-structure.svg">Download the sketch</a></p></div>';
+  const body = '<section class="sec tight"><div class="wrap">' + crumbs([['Catalogue', '/catalogue/'], [c.name]]) +
+    '<div class="chead"><span class="kicker">' + esc(catType(c)) + '</span><h1>' + esc(c.name) + '</h1><p class="lede">' + esc(VS.sizeText(c.type, p)) + ' · ' + c.area + ' sq ft' + (c.est ? ' · estimate ' + inr(c.est) : '') + '</p></div>' +
+    '<div class="pd cpd">' + gal + '<div class="cinfo"><div><h2>Sizes and details</h2><dl class="specs">' + rows.map(r => '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>').join('') + '</dl>' + (c.notes ? '<p class="pd-desc">' + esc(c.notes) + '</p>' : '') + '</div>' +
+    '<div class="cact"><div class="buy"><a class="btn btn-primary" href="/get-quote/#' + qslug(c.name) + '">Get an exact quote</a><a class="btn btn-wa" href="' + esc(waLink(S, 'Hi, I want this design: ' + c.name + ' (' + VS.sizeText(c.type, p) + ').\n' + S.site_url + c.url)) + '" target="_blank" rel="noopener">' + I.wa + 'Ask on WhatsApp</a>' + (prod ? '<a class="btn btn-ghost" href="' + prod.url + '">See it in Furniture</a>' : '') + '</div>' +
+    '<div class="note">' + I.ruler + '<span>We change any size to fit your wall or room. The sketch is updated for you before work starts.</span></div></div></div></div>' +
+    (D.CATALOGUE.length > 1 ? '<h2 class="mh35">More from the catalogue</h2><div class="grid cgrid">' + D.CATALOGUE.filter(x => x.slug !== slug).sort((a, b) => (b.type === c.type) - (a.type === c.type)).slice(0, 3).map(x => catCard(D, x)).join('') + '</div>' : '') + '</div></section>';
+  const ld = [crumbLD(D, [['Catalogue', '/catalogue/'], [c.name, c.url]]), Object.assign({ '@context': 'https://schema.org', '@type': 'Product', name: c.name, description: c.notes || (catType(c) + ', ' + VS.sizeText(c.type, p) + ', made to order.'), brand: { '@type': 'Brand', name: S.name }, image: S.site_url + src(imgs[0]), material: c.material || undefined, width: VS.ftin(p.W || p.L || 0), height: VS.ftin(p.H || p.headH || p.counterH || 0) }, c.est ? { offers: { '@type': 'Offer', priceCurrency: 'INR', price: c.est, availability: 'https://schema.org/MadeToOrder', url: S.site_url + c.url } } : {})];
+  return { title: 'Sketch & Sizes: ' + c.name + ' — ' + VS.sizeText(c.type, p) + ' | ' + S.name, desc: c.name + ': ' + VS.sizeText(c.type, p) + ', ' + c.area + ' sq ft' + (c.est ? ', estimate ' + inr(c.est) : '') + '. Structure drawing with sizes. Made to measure in Mumbai, Thane and Navi Mumbai.', body, ld, image: photos[0] ? src(photos[0]) : undefined };
+};
+
 /* ── routing ── */
 function routes(D) {
   const R = [['/', 'home'], ['/services/', 'services'], ['/furniture/', 'furniture'], ['/our-work/', 'work'], ['/about/', 'about'], ['/contact/', 'contact'], ['/get-quote/', 'quote'], ['/quote-list/', 'list'], ['/wishlist/', 'wish'], ['/thanks/', 'thanks']];
@@ -600,6 +648,7 @@ function routes(D) {
     blogCats(D).forEach(c => { R.push(['/blog/category/' + c.slug + '/', 'blogcat', c.slug]); for (let i = 2; i <= pg(c.n); i++) R.push(['/blog/category/' + c.slug + '/page/' + i + '/', 'blogcat', c.slug, String(i)]); });
     D.BLOG.forEach(b => R.push(['/blog/' + b.slug + '/', 'post', b.slug]));
   }
+  if (D.CATALOGUE.length) { R.push(['/catalogue/', 'catalogue']); D.CATALOGUE.forEach(c => R.push([c.url, 'catitem', c.slug])); }
   R.push(['/sitemap/', 'sitemap']);
   return R;
 }
@@ -619,7 +668,7 @@ function render(D, view, args) {
 const headerL = (D, path) => localize(header(D, path)), footerL = D => localize(footer(D));
 
 /* ── header & footer ── */
-const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/our-work/', 'Our work'], ['/blog/', 'Blog'], ['/about/', 'About'], ['/contact/', 'Contact']];
+const NAV = [['/services/', 'Services'], ['/furniture/', 'Furniture'], ['/catalogue/', 'Catalogue'], ['/our-work/', 'Our work'], ['/blog/', 'Blog'], ['/about/', 'About'], ['/contact/', 'Contact']];
 const LANGS = [['en', 'EN', 'English'], ['hi', 'हिंदी', 'Hindi'], ['mr', 'मराठी', 'Marathi']];
 function langLinks(path) {
   return '<span class="langs" role="group" aria-label="Language">' + LANGS.map(l => '<a data-nolocal href="' + (l[0] === 'en' ? '' : '/' + l[0]) + (path || '/') + '" hreflang="' + l[0] + '" lang="' + l[0] + '"' + (l[0] === CUR.lang ? ' aria-current="true"' : '') + ' title="' + l[2] + '">' + l[1] + '</a>').join('') + '</span>';
@@ -645,7 +694,7 @@ function footer(D) {
     ((S.team || []).length ? '<ul class="fteam">' + S.team.map(t => '<li><b>' + esc(t.name) + '</b><span>' + esc(t.role) + '</span></li>').join('') + '</ul>' : '') +
     '<ul class="fmodes">' + (S.work_modes || []).map(m => '<li>' + I.shield + esc(m.title) + '</li>').join('') + '</ul></div>' +
     '<nav class="fcol" aria-label="Services"><h3>Services</h3>' + S.services.map(s => '<a href="/services/' + s.slug + '/">' + esc(s.title) + '</a>').join('') + '</nav>' +
-    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/our-work/">Our work</a><a href="/blog/">Blog</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
+    '<nav class="fcol" aria-label="Furniture and pages"><h3>Explore</h3><a href="/furniture/">Furniture</a>' + D.CATS.filter(c => D.PRODUCTS.some(p => p.category === c.slug)).slice(0, 5).map(c => '<a href="/furniture/' + esc(c.slug) + '/">' + esc(c.name) + '</a>').join('') + '<a href="/catalogue/">Catalogue</a><a href="/our-work/">Our work</a><a href="/blog/">Blog</a><a href="/guides/">Guides</a><a href="/about/">About us</a><a href="/get-quote/">Get a quote</a></nav>' +
     '<div class="fcol"><h3>Reach us</h3><ul class="flist">' + (S.phone ? '<li><a href="' + tel(S) + '">' + I.phone + '<span>+91 ' + esc(S.phone) + '</span></a></li>' : '') +
     (waNum(S) ? '<li><a href="' + esc(waLink(S, 'Hi, I want a quote for interior / furniture work.')) + '" target="_blank" rel="noopener">' + I.wa + '<span>WhatsApp us</span></a></li>' : '') +
     (S.email ? '<li><a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>' + esc(S.email) + '</span></a></li>' : '') +

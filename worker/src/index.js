@@ -68,6 +68,35 @@ async function route(req, env, url) {
     return json({ ok: true });
   }
 
+  // ── payment screenshots from the website's /pay/ page (public, rate-limited). Key = hash of "request no.|amount". ──
+  if ((p === '/pay/proof' && m === 'POST') || (p === '/pay/status' && m === 'GET')) {
+    const src = m === 'GET' ? Object.fromEntries(url.searchParams) : await body(req);
+    const n = String(src.n || '').trim().toUpperCase(), am = Math.round(parseFloat(src.am) * 100) / 100;
+    if (!/^[A-Z]{1,4}-\d{4}-\d{1,5}$/.test(n) || !(am > 0 && am <= 1000000)) throw err(400, 'bad', 'This payment link is not complete.');
+    const k = (await sha(n + '|' + am.toFixed(2))).slice(0, 24), cur = JSON.parse(await KV.get('proof:' + k) || 'null');
+    if (m === 'GET') return json(cur ? { s: cur.s, t: cur.t, d: cur.d || '', reason: cur.reason || '', utr: cur.utr || '' } : { s: 'none' });
+    if (src._honey) return json({ ok: true });
+    if (cur && cur.s === 'paid') throw err(409, 'paid', 'This payment is already confirmed. Thank you!');
+    const ip = req.headers.get('CF-Connecting-IP') || 'local', day = new Date().toISOString().slice(0, 10), ipk = 'pp:' + ip + ':' + day, ipn = +(await KV.get(ipk)) || 0;
+    if (ipn >= 8) throw err(429, 'limit', 'Too many uploads from this connection today. Please WhatsApp us the screenshot.');
+    const img = String(src.img || '').replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+    if (!/^(\/9j\/|iVBOR)/.test(img) || img.length > 1400000) throw err(400, 'bad', 'Please choose a photo or screenshot of the payment (JPG or PNG).');
+    const clip = (v, l) => String(v == null ? '' : v).replace(/[\r\n\u0000-\u001f<>]/g, ' ').trim().slice(0, l);
+    const rec = { k, n, am, s: 'review', t: Date.now(), utr: clip(src.utr, 30).replace(/[^\w\-]/g, ''), name: clip(src.name, 60), phone: clip(src.phone, 20), ip: ip.slice(0, 45), tries: ((cur && cur.tries) || 0) + 1 };
+    if (rec.tries > 10) throw err(429, 'limit', 'Too many uploads for this payment. Please WhatsApp us the screenshot.');
+    const TTL = { expirationTtl: 60 * 60 * 24 * 120 };
+    await KV.put('proofimg:' + k, img, TTL); await KV.put('proof:' + k, JSON.stringify(rec), TTL); await KV.put(ipk, String(ipn + 1), { expirationTtl: 90000 });
+    const idx = JSON.parse(await KV.get('proofs') || '[]').filter(x => x !== k); idx.push(k); await KV.put('proofs', JSON.stringify(idx.slice(-300)));
+    if (env.SMTP_PASS) {
+      const rows = [['Request', n], ['Amount', '₹' + am.toLocaleString('en-IN')], ['UTR / ref.', rec.utr || '—'], ['Name', rec.name || '—'], ['Phone', rec.phone || '—']];
+      try { await smtpSend(env, { to: env.ENQUIRY_TO || 'info@mumbai-interior.in', subject: 'Payment screenshot to check — ' + n + ' — ₹' + am.toLocaleString('en-IN'),
+        text: rows.map(x => x[0] + ': ' + x[1]).join('\n') + '\n\nCheck your bank, then approve or reject it in the admin: ' + (env.SITE_URL || 'https://www.mumbai-interior.in') + '/admin/#payments',
+        html: brandMail(env, { preheader: 'A customer says they paid ₹' + am.toLocaleString('en-IN') + ' for ' + n, title: 'Payment screenshot to check', intro: 'Check that the money is in your bank account, then approve or reject it in the admin (Payment requests). The customer sees "under review" until you decide.', rows, note: 'The screenshot is attached.' }),
+        attachments: [{ name: n + '-payment.' + (img.startsWith('iVBOR') ? 'png' : 'jpg'), b64: img }] }); } catch (e) { /* still saved for the admin */ }
+    }
+    return json({ ok: true, s: 'review', t: rec.t });
+  }
+
   if (p === '/enquiry' && m === 'POST') {
     const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local';
     if (b._honey) return json({ ok: true });
@@ -277,6 +306,32 @@ async function route(req, env, url) {
     for (const k of Object.keys(R)) if (k !== 'super_admin' && !out[k] && used.has(k)) throw err(400, 'bad', 'The role "' + R[k].name + '" is still given to someone. Change their role first.');
     await KV.put('roles', JSON.stringify(out));
     return json({ roles: await rolesLoad(KV) });
+  }
+
+  // ── payment screenshots: list, view, approve / reject (signed in) ──
+  if (p === '/pay/proofs' && m === 'GET') {
+    need('payments', 'view');
+    const idx = JSON.parse(await KV.get('proofs') || '[]'), out = [];
+    for (const k of idx.slice().reverse()) { const r = JSON.parse(await KV.get('proof:' + k) || 'null'); if (r) { delete r.ip; out.push(r); } }
+    return json({ proofs: out });
+  }
+  if (p === '/pay/proof' && m === 'GET') {
+    need('payments', 'view');
+    const k = String(url.searchParams.get('k') || ''); if (!/^[0-9a-f]{24}$/.test(k)) throw err(400, 'bad', 'Bad request.');
+    const r = JSON.parse(await KV.get('proof:' + k) || 'null'); if (!r) throw err(404, 'notfound', 'This screenshot is no longer stored.');
+    delete r.ip; const img = await KV.get('proofimg:' + k) || '';
+    return json({ ...r, img: img ? (img.startsWith('iVBOR') ? 'data:image/png;base64,' : 'data:image/jpeg;base64,') + img : '' });
+  }
+  if (p === '/pay/decide' && m === 'POST') {
+    need('payments', 'edit');
+    const b = await body(req), k = String(b.k || ''); if (!/^[0-9a-f]{24}$/.test(k)) throw err(400, 'bad', 'Bad request.');
+    const r = JSON.parse(await KV.get('proof:' + k) || 'null'); if (!r) throw err(404, 'notfound', 'This screenshot is no longer stored.');
+    if (b.action === 'approve') { r.s = 'paid'; r.d = /^\d{4}-\d{2}-\d{2}$/.test(b.paid_on || '') ? b.paid_on : new Date().toISOString().slice(0, 10); delete r.reason; }
+    else if (b.action === 'reject') { r.s = 'rejected'; r.reason = String(b.reason || 'We could not find this payment in our account.').replace(/[\r\n<>]/g, ' ').slice(0, 200); }
+    else throw err(400, 'bad', 'Choose approve or reject.');
+    r.by = U.email; r.at = Date.now();
+    await KV.put('proof:' + k, JSON.stringify(r), { expirationTtl: 60 * 60 * 24 * 120 });
+    return json({ ok: true, s: r.s });
   }
 
   // ── payment request: branded email with the PDF (and visiting card) attached; from the first business mailbox, else from noreply@ ──

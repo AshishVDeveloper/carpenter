@@ -365,3 +365,10 @@ html.dark .edsvg{box-shadow:0 2px 12px rgba(0,0,0,.5)}
 .vcard.back .vqr img{width:132px;height:132px;background:#fff;border-radius:10px;padding:7px;image-rendering:pixelated}
 .vcard.back .vqr span{font-size:10px;font-weight:700;text-align:center;line-height:1.25}
 .vcard.light .vlogo{box-shadow:0 0 0 1px #E3E6DD}.vcard.light .vqr img{border:1px solid #E3E6DD}
+/* payment screenshot viewer */
+.modal .box.prproof{max-width:760px;width:calc(100vw - 2rem)}
+.ppgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:1rem;align-items:start;margin:.6rem 0}
+.ppimg{display:block;background:#F2F3EE;border:1px solid var(--line,#ddd);border-radius:10px;overflow:hidden;max-height:60vh;text-align:center}
+.ppimg img{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain}
+.ppkv{display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;margin:0;font-size:.92rem}.ppkv dt{color:var(--muted)}.ppkv dd{margin:0;font-weight:600;word-break:break-word}
+@media (max-width:640px){.ppgrid{grid-template-columns:1fr}}

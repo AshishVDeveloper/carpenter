@@ -243,9 +243,21 @@ main{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);bor
 .apps{color:var(--muted);font-size:.85rem;margin:.6rem 0 0}
 .after{border-top:1px solid var(--line);margin-top:1.2rem;padding-top:1rem;font-size:.9rem;color:var(--muted)}
 .wa{background:#fff;color:var(--green);border:1.5px solid #BFDCC9;margin-top:.6rem}
-.set{display:grid;gap:.5rem;text-align:left;margin:0 0 1rem}.set[hidden]{display:none}.set label{font-weight:700;font-size:.9rem}.set input{font:700 1.4rem 'Figtree',sans-serif;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:12px;width:100%}
+.set{display:grid;gap:.5rem;text-align:left;margin:0 0 1rem}[hidden]{display:none!important}.set label{font-weight:700;font-size:.9rem}.set input{font:700 1.4rem 'Figtree',sans-serif;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:12px;width:100%}
 .note{font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;max-width:440px}
-.desk .pay{display:none}.desk .or{display:none}
+.desk #payBox>.pay{display:none}.desk .or{display:none}
+.rej{background:#FBE3E0;border-bottom:1px solid #F1C4BE;color:#8A2A1E;padding:.9rem 1.4rem;display:grid;gap:.15rem}.rej b{font-size:1rem}.rej small{color:#8A2A1E;opacity:.85}
+.after{text-align:center}.ah{display:block;color:var(--ink);font-size:1rem;margin-bottom:.2rem}
+.up{background:var(--forest);color:#fff;margin-top:.7rem}
+.pf{text-align:left;display:grid;gap:.4rem;margin-top:.9rem}.pf label{font-weight:700;font-size:.9rem}.pf label small{font-weight:400;color:var(--muted)}
+.pf input:not([type=file]){font:500 1rem 'Figtree',sans-serif;padding:.65rem .8rem;border:1.5px solid var(--line);border-radius:12px;width:100%}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;border:2px dashed #C9CFC3;border-radius:14px;padding:1rem;cursor:pointer;background:#FAFBF8;min-height:90px;font-weight:700!important;color:var(--forest)}
+.drop img{max-width:100%;max-height:240px;border-radius:8px}
+.pfErr{color:#A33A2B;font-size:.9rem;margin:.2rem 0 0;min-height:0}.pfErr:empty{display:none}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.timer{font:800 2.4rem/1 'Bricolage Grotesque',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.04em;color:var(--forest);margin:.2rem 0 1rem}
+.clock{background:#FBF1DC;color:#7A5410}.small{font-size:.85rem;color:var(--muted);margin:0 0 1rem}
+#rev .btn+.btn{margin-top:.6rem}
 .done{padding:1.6rem 1.4rem}.done h1{font:800 1.5rem 'Bricolage Grotesque',sans-serif;margin:.4rem 0 .4rem}.done p{color:var(--muted);margin:0 0 1.2rem}.tick{width:64px;height:64px;border-radius:50%;background:#E8F3EC;color:var(--green);font:800 2rem/64px sans-serif;margin:0 auto}
 @media (prefers-color-scheme:dark){:root{--bg:#0F1511}.top{color:#E6ECE6}.top small,.note{color:#A5B3A8}}
 </style>
@@ -254,7 +266,8 @@ main{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);bor
 <a class="top" href="/"><img src="/assets/logo-96.png" alt=""/><span><b>${esc(S.name)}</b><small>Interiors &amp; custom furniture</small></span></a>
 <main id="m">${upi ? `
 <div class="head"><div class="k">Payment request <span id="no"></span></div><div class="amt" id="amt">Enter amount</div><div class="to">to <b>${esc(payee)}</b></div><div class="for" id="for" hidden></div></div>
-<div class="body">
+<div class="rej" id="rej" hidden><b>Payment not confirmed</b><span id="rejWhy"></span><small>Please check and pay again, or upload the correct screenshot below.</small></div>
+<div class="body" id="payBox">
 <div class="set" id="set" hidden><label for="am">Amount to pay (₹)</label><input id="am" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 10000"/></div>
 <a class="btn pay" id="pay" href="#">Pay with a UPI app</a>
 <div class="or">or scan with any UPI app</div>
@@ -262,27 +275,59 @@ main{width:100%;max-width:440px;background:#fff;border:1px solid var(--line);bor
 <p class="upi">UPI ID: <b id="vpa">${esc(upi)}</b></p>
 <button class="btn alt" id="copy" type="button">Copy UPI ID</button>
 <p class="apps">Google Pay · PhonePe · Paytm · BHIM · any bank UPI app</p>
-<div class="after">After paying, send us the screenshot so we can confirm it.<a class="btn wa" id="wa" href="https://wa.me/${wa}" target="_blank" rel="noopener">Send screenshot on WhatsApp</a></div>
-</div>` : `<div class="body"><h1 style="font:800 1.4rem 'Bricolage Grotesque',sans-serif">Online payment is not set up yet</h1><p>Please call or WhatsApp us on <a href="tel:+91${phone}">+91 ${esc(S.phone)}</a> for payment details.</p></div>`}
+<div class="after" id="after"><b class="ah">Already paid?</b> Upload the payment screenshot so we can confirm it.
+<form id="pf" class="pf" hidden novalidate>
+<label class="drop" for="pfImg" id="pfDrop"><span id="pfTxt">📷 Choose the payment screenshot</span><img id="pfPrev" alt="" hidden/></label><input id="pfImg" type="file" accept="image/*" hidden/>
+<label for="pfUtr">UTR / UPI reference number <small>(optional, 12 digits in your UPI app)</small></label><input id="pfUtr" inputmode="numeric" maxlength="30" autocomplete="off" placeholder="e.g. 431245678901"/>
+<label for="pfName">Your name <small>(optional)</small></label><input id="pfName" maxlength="60" autocomplete="name"/>
+<input class="hp" name="_honey" id="pfHoney" tabindex="-1" autocomplete="off" aria-hidden="true"/>
+<p class="pfErr" id="pfErr" role="alert"></p>
+<button class="btn pay" id="pfBtn" type="submit">Send screenshot</button></form>
+<button class="btn up" id="pfOpen" type="button">Upload payment screenshot</button>
+<a class="btn wa" id="wa" href="https://wa.me/${wa}" target="_blank" rel="noopener">Or send it on WhatsApp</a></div>
+</div>
+<div class="body done" id="rev" hidden><div class="tick clock">⏱</div><h1>Payment under review</h1><p id="revTxt">We are checking your payment. You will get a confirmation within</p><div class="timer" id="timer" aria-live="off">24:00:00</div><p class="small" id="revMeta"></p><button class="btn alt" id="again" type="button">Upload a different screenshot</button><a class="btn wa" href="https://wa.me/${wa}" target="_blank" rel="noopener">WhatsApp us</a></div>` : `<div class="body"><h1 style="font:800 1.4rem 'Bricolage Grotesque',sans-serif">Online payment is not set up yet</h1><p>Please call or WhatsApp us on <a href="tel:+91${phone}">+91 ${esc(S.phone)}</a> for payment details.</p></div>`}
 </main>
 <p class="note">This page always pays <b>${esc(payee || S.name)}</b>${upi ? ` (UPI ID ${esc(upi)})` : ''}. Check the name in your UPI app before you pay.</p>
 ${upi ? `<script src="/assets/vendor/qrcode.js"></script>
 <script>
-(function(){var Q=new URLSearchParams(location.search),VPA=${JSON.stringify(upi)},PN=${JSON.stringify(payee.slice(0, 40))},no=(Q.get('n')||'').replace(/[^\\w\\-\\/]/g,'').slice(0,30),fr=(Q.get('f')||'').replace(/[^\\w .,\\-\\/&()]/g,'').slice(0,60),am=parseFloat(Q.get('am')),$=function(i){return document.getElementById(i)};
+(function(){var Q=new URLSearchParams(location.search),VPA=${JSON.stringify(upi)},PN=${JSON.stringify(payee.slice(0, 40))},no=(Q.get('n')||'').replace(/[^\\w\\-\\/]/g,'').slice(0,30),fr=(Q.get('f')||'').replace(/[^\\w .,\\-\\/&()]/g,'').slice(0,60),am=parseFloat(Q.get('am')),$=function(i){return document.getElementById(i)},API=null,TICK=0;
 var mob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(!mob)document.body.classList.add('desk');
 if(no)$('no').textContent='· '+no;if(fr||no){$('for').hidden=false;$('for').textContent=(fr?'For: '+fr:'')+(no?(fr?' · ':'')+'Ref. '+no:'')}
 function fmt(n){return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2})}
-function draw(a){var ok=a>0&&a<=1000000,u='upi://pay?pa='+VPA+'&pn='+encodeURIComponent(PN)+(ok?'&am='+a.toFixed(2):'')+'&cu=INR'+(no?'&tn='+encodeURIComponent((no+' '+fr).trim().slice(0,50))+'&tr='+encodeURIComponent(no):'');
- $('amt').textContent=ok?fmt(a):'Enter amount';$('pay').href=u;$('pay').textContent=ok?'Pay '+fmt(a)+' with a UPI app':'Pay with a UPI app';
+var ok=am>0&&am<=1000000;am=ok?Math.round(am*100)/100:0;
+function draw(a){var g=a>0&&a<=1000000,u='upi://pay?pa='+VPA+'&pn='+encodeURIComponent(PN)+(g?'&am='+a.toFixed(2):'')+'&cu=INR'+(no?'&tn='+encodeURIComponent((no+' '+fr).trim().slice(0,50))+'&tr='+encodeURIComponent(no):'');
+ $('amt').textContent=g?fmt(a):'Enter amount';$('pay').href=u;$('pay').textContent=g?'Pay '+fmt(a)+' with a UPI app':'Pay with a UPI app';
  var q=qrcode(0,'M');q.addData(u);q.make();$('qr').src=q.createDataURL(8,2);
- $('wa').href='https://wa.me/${wa}?text='+encodeURIComponent('Hi, I have paid '+(ok?fmt(a):'')+(no?' for '+no:'')+' to '+VPA+'. Screenshot attached.')}
-if(!(am>0&&am<=1000000)){$('set').hidden=false;$('am').oninput=function(){draw(parseFloat(this.value))}}
-draw(am>0&&am<=1000000?Math.round(am*100)/100:0);
-if(no&&am>0&&window.crypto&&crypto.subtle){fetch('/data/payreq.json?t='+Date.now()).then(function(r){return r.ok?r.json():{}}).then(function(S){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(no+'|'+am.toFixed(2))).then(function(b){var k=Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('').slice(0,24),st=S[k];if(!st)return;
- var m=$('m');if(st.s==='paid'){var d=st.d?new Date(st.d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';m.innerHTML='<div class="head"><div class="k">Payment request · '+no+'</div><div class="amt">'+fmt(am)+'</div><div class="to">Paid to <b>'+PN.replace(/[<>&]/g,'')+'</b></div></div><div class="body done"><div class="tick">✓</div><h1>Payment received</h1><p>Received with thanks'+(d?' on <b>'+d+'</b>':'')+'. No need to pay again.</p><a class="btn alt" href="/">Visit our website</a></div>';}
- else if(st.s==='cancelled'){m.innerHTML='<div class="body done"><h1>This payment request was cancelled</h1><p>Please do not pay using this link. Call or WhatsApp us if you have a question.</p><a class="btn wa" href="https://wa.me/${wa}">WhatsApp us</a></div>';}
- document.querySelector('.note').hidden=true;})}).catch(function(){})}
+ $('wa').href='https://wa.me/${wa}?text='+encodeURIComponent('Hi, I have paid '+(g?fmt(a):'')+(no?' for '+no:'')+' to '+VPA+'. Screenshot attached.')}
+if(!ok){$('set').hidden=false;$('am').oninput=function(){draw(parseFloat(this.value))}}
+draw(am);
 $('copy').onclick=function(){var b=this;(navigator.clipboard?navigator.clipboard.writeText(VPA):Promise.reject()).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy UPI ID'},1800)},function(){prompt('UPI ID',VPA)})};
+/* screens */
+function done(html){clearInterval(TICK);$('m').innerHTML=html;document.querySelector('.note').hidden=true}
+function paid(d){var dd=d?new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';done('<div class="head"><div class="k">Payment request · '+no+'</div><div class="amt">'+fmt(am)+'</div><div class="to">Paid to <b>'+PN.replace(/[<>&]/g,'')+'</b></div></div><div class="body done"><div class="tick">✓</div><h1>Payment received</h1><p>Received with thanks'+(dd?' on <b>'+dd+'</b>':'')+'. No need to pay again.</p><a class="btn alt" href="/">Visit our website</a></div>')}
+function cancelled(){done('<div class="body done"><h1>This payment request was cancelled</h1><p>Please do not pay using this link. Call or WhatsApp us if you have a question.</p><a class="btn wa" href="https://wa.me/${wa}">WhatsApp us</a></div>')}
+function review(st){$('payBox').hidden=true;$('rej').hidden=true;$('rev').hidden=false;
+ $('revMeta').textContent='Screenshot sent '+new Date(st.t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})+(st.utr?' · UTR '+st.utr:'');
+ var end=st.t+864e5;clearInterval(TICK);(function tick(){var r=end-Date.now();if(r<=0){clearInterval(TICK);$('revTxt').textContent='Sorry, this is taking longer than usual. We will confirm it soon — or WhatsApp us and we will check right away.';$('timer').hidden=true;return}
+  var h=Math.floor(r/36e5),m=Math.floor(r%36e5/6e4),s=Math.floor(r%6e4/1e3),z=function(x){return(x<10?'0':'')+x};$('timer').textContent=z(h)+':'+z(m)+':'+z(s)})();TICK=setInterval(function(){var r=end-Date.now();if(r<=0){$('timer').hidden=true;$('revTxt').textContent='Sorry, this is taking longer than usual. We will confirm it soon — or WhatsApp us and we will check right away.';clearInterval(TICK);return}var h=Math.floor(r/36e5),m=Math.floor(r%36e5/6e4),s=Math.floor(r%6e4/1e3),z=function(x){return(x<10?'0':'')+x};$('timer').textContent=z(h)+':'+z(m)+':'+z(s)},1000)}
+function rejected(st){$('rej').hidden=false;$('rejWhy').textContent=st.reason||'We could not find this payment in our account.';showForm()}
+function showForm(){$('pf').hidden=false;$('pfOpen').hidden=true}
+$('pfOpen').onclick=showForm;$('again').onclick=function(){clearInterval(TICK);$('rev').hidden=true;$('payBox').hidden=false;showForm();$('pfImg').click()};
+/* screenshot: shrink to a JPEG of at most 1400 px before sending */
+var IMG='';$('pfImg').onchange=function(){var f=this.files[0];$('pfErr').textContent='';if(!f)return;if(!/^image\\//.test(f.type)){$('pfErr').textContent='Please choose a photo or screenshot.';return}
+ var u=URL.createObjectURL(f),im=new Image();im.onload=function(){var s=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);IMG=c.toDataURL('image/jpeg',.82);$('pfPrev').src=IMG;$('pfPrev').hidden=false;$('pfTxt').textContent='Change screenshot';URL.revokeObjectURL(u)};im.onerror=function(){$('pfErr').textContent='This picture could not be opened. Try a screenshot (PNG or JPG).'};im.src=u};
+$('pf').onsubmit=function(e){e.preventDefault();var err=$('pfErr');err.textContent='';
+ if(!no||!(am>0)){err.textContent='This payment link is not complete. Please WhatsApp us the screenshot.';return}
+ if(!IMG){err.textContent='Please choose the payment screenshot first.';return}
+ var b=$('pfBtn');b.disabled=true;b.textContent='Sending…';
+ api().then(function(a){return fetch(a+'/pay/proof',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({n:no,am:am,img:IMG,utr:$('pfUtr').value,name:$('pfName').value,_honey:$('pfHoney').value})})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.message||'Could not send');return j})})
+ .then(function(j){review({t:j.t||Date.now(),utr:$('pfUtr').value.replace(/[^\\w\\-]/g,'')});window.scrollTo(0,0)}).catch(function(x){err.textContent=x.message+'. You can also send the screenshot on WhatsApp.'}).then(function(){b.disabled=false;b.textContent='Send screenshot'})};
+function api(){return API?Promise.resolve(API):fetch('/data/api.json').then(function(r){return r.json()}).then(function(j){API=j.url;return API})}
+/* current status: paid / cancelled (published by the admin) or the screenshot review */
+function hk(){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(no+'|'+am.toFixed(2))).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('').slice(0,24)})}
+if(no&&am>0&&window.crypto&&crypto.subtle){Promise.all([fetch('/data/payreq.json?t='+Date.now()).then(function(r){return r.ok?r.json():{}}).catch(function(){return{}}),hk()]).then(function(x){var st=x[0][x[1]];if(st&&st.s==='paid')return paid(st.d);if(st&&st.s==='cancelled')return cancelled();
+ return api().then(function(a){return fetch(a+'/pay/status?n='+encodeURIComponent(no)+'&am='+am)}).then(function(r){return r.json()}).then(function(s){if(s.s==='paid')paid(s.d);else if(s.s==='review')review(s);else if(s.s==='rejected')rejected(s)})}).catch(function(){})}
 })();
 </script>` : ''}
 </body>

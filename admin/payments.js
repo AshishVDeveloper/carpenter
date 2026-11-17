@@ -66,6 +66,55 @@ async function prPublishStatus(r) {
   } catch (e) { toast('Saved, but the website\'s payment page could not be updated: ' + (e.message || e), true); }
 }
 
+
+/* ── payment screenshots sent from the website's /pay/ page ── */
+let PROOFS = [], PRKEYS = {};
+const prProofOf = r => PROOFS.find(x => x.k === PRKEYS[r.id]);
+const prAgo = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+const prLeft = t => { const r = t + 864e5 - Date.now(); if (r <= 0) return '<b style="color:#A33A2B">over 24 h — customer is waiting</b>'; return Math.floor(r / 36e5) + ' h ' + Math.floor(r % 36e5 / 6e4) + ' min left'; };
+async function prLoadProofs() {
+  if (typeof SERVER !== 'function' || !SERVER()) return;
+  try { PROOFS = (await api('/pay/proofs')).proofs || []; } catch (e) { PROOFS = []; }
+  for (const r of prList()) if (r.no && !PRKEYS[r.id]) PRKEYS[r.id] = await prKey(r);
+  const n = PROOFS.filter(x => x.s === 'review').length; window.PR_REVIEW = n; if (typeof chrome === 'function') chrome();
+}
+const prByKey = k => prList().find(r => PRKEYS[r.id] === k);
+function drawProofs() {
+  const box = $('prProofs'), card = $('prProofCard'); if (!box) return;
+  const L = PROOFS.filter(x => x.s === 'review' || (x.s === 'rejected' && Date.now() - (x.at || x.t) < 7 * 864e5));
+  card.hidden = !L.length; if (!L.length) return;
+  box.innerHTML = '<div class="tw"><table><thead><tr><th>Request</th><th>Amount</th><th class="hide-m">UTR / name</th><th>Sent</th><th><span hidden>Actions</span></th></tr></thead><tbody>' + L.map(x => { const r = prByKey(x.k);
+    return '<tr><td><b>' + esc(x.n) + '</b><div class="s">' + (r ? esc(r.client || '') : '<span style="color:#A33A2B">No matching request</span>') + '</div></td><td><b>' + prMoney(x.am) + '</b></td><td class="hide-m">' + esc(x.utr || '—') + '<div class="s">' + esc([x.name, x.phone].filter(Boolean).join(' · ')) + '</div></td>' +
+      '<td>' + prAgo(x.t) + '<div class="s">' + (x.s === 'rejected' ? '<span class="pill bad">Rejected</span>' : prLeft(x.t)) + '</div></td><td><div class="acts-cell"><button class="btn sm pri" onclick="prProofView(\'' + x.k + '\')">' + (x.s === 'review' ? 'Check' : 'View') + '</button></div></td></tr>'; }).join('') + '</tbody></table></div>';
+}
+async function prProofView(k) {
+  let x; try { x = await api('/pay/proof?k=' + k); } catch (e) { toast(e.message, true); return; }
+  const r = prByKey(k), box = document.createElement('div'); box.className = 'modal';
+  box.innerHTML = '<div class="box prproof" role="dialog" aria-modal="true" aria-labelledby="ppT"><h2 id="ppT">Payment screenshot · ' + esc(x.n) + '</h2>' +
+    '<div class="ppgrid"><a href="' + esc(x.img) + '" target="_blank" rel="noopener" class="ppimg">' + (x.img ? '<img src="' + esc(x.img) + '" alt="Payment screenshot"/>' : 'No picture') + '</a><dl class="ppkv">' +
+    [['Amount', prMoney(x.am)], ['Request', x.n + (r ? ' · ' + (r.client || '') : ' (not found in your requests)')], ['UTR / ref.', x.utr || '—'], ['Name', x.name || '—'], ['Phone', x.phone || '—'], ['Sent', new Date(x.t).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })], ['Status', x.s === 'review' ? 'Waiting for you · ' + prLeft(x.t).replace(/<[^>]+>/g, '') : x.s === 'rejected' ? 'Rejected: ' + (x.reason || '') : 'Approved']].map(a => '<dt>' + a[0] + '</dt><dd>' + esc(a[1]) + '</dd>').join('') +
+    '</dl></div><p class="hint">Check that ' + prMoney(x.am) + ' has reached your bank account (look for the UTR number in your bank or UPI app) before you approve.</p>' +
+    '<div class="bar"><button class="btn" id="pp_close">Close</button>' + (x.s !== 'paid' ? '<button class="btn danger" data-perm="payments.edit" id="pp_rej">Reject</button><button class="btn pri" data-perm="payments.edit" id="pp_ok">Approve — money received</button>' : '') + '</div></div>';
+  document.body.appendChild(box); if (!can('payments', 'edit')) box.querySelectorAll('[data-perm]').forEach(el => el.remove());
+  const close = () => box.remove(); $('pp_close').onclick = close; box.onclick = e => { if (e.target === box) close(); };
+  if ($('pp_ok')) $('pp_ok').onclick = async () => { close(); if (r) { await prMarkPaid(r.id, location.hash.startsWith('#payments/'), { ref: x.utr, k }); } else { await prDecide(k, 'approve', '', VLT.today()); toast('Approved. (No request with this number was found, so nothing else changed.)'); } await prLoadProofs(); prRefreshView(); };
+  if ($('pp_rej')) $('pp_rej').onclick = async () => { close(); await prReject(k, r); };
+}
+const PR_REASONS = ['We could not find this payment in our bank account.', 'The amount paid is different from the amount requested.', 'The screenshot is not clear — please upload a clearer one.', 'The UTR / reference number does not match any payment.', 'This screenshot is for a different payment.'];
+async function prReject(k, r) {
+  const box = document.createElement('div'); box.className = 'modal';
+  box.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="rjT"><h2 id="rjT">Reject this screenshot</h2><p>The customer will see this reason on the payment page and can pay again or upload a new screenshot.</p><div class="field"><label for="rj_s">Reason</label><select id="rj_s">' + PR_REASONS.map(x => '<option>' + esc(x) + '</option>').join('') + '<option value="">Other (type below)</option></select></div><div class="field"><label for="rj_t">Message to the customer</label><textarea id="rj_t" style="min-height:70px">' + esc(PR_REASONS[0]) + '</textarea></div><div class="bar"><button class="btn" id="rj_no">Cancel</button><button class="btn danger" id="rj_ok">Reject</button></div></div>';
+  document.body.appendChild(box); $('rj_s').onchange = e => { $('rj_t').value = e.target.value; $('rj_t').focus(); };
+  await new Promise(res => { $('rj_no').onclick = () => { box.remove(); res(); }; $('rj_ok').onclick = async () => { const why = $('rj_t').value.trim() || PR_REASONS[0]; box.remove(); if (await prDecide(k, 'reject', why)) { if (r) { const real = prList().find(x => x.id === r.id); const e = { t: Date.now(), what: 'Screenshot rejected: ' + why }; real.log = (real.log || []).concat(e); if (PRE && PRE.id === r.id) PRE.log = real.log; await VLT.save(true); } toast('Rejected. The customer sees your reason on the payment page.'); await prLoadProofs(); prRefreshView(); } res(); }; });
+}
+async function prDecide(k, action, reason, paid_on) { try { await api('/pay/decide', { k, action, reason, paid_on }); return true; } catch (e) { toast(e.message || 'Could not update the payment page.', true); return false; } }
+function prRefreshView() { if (location.hash === '#payments') { drawProofs(); drawPayments(); } else if (location.hash.startsWith('#payments/') && PRE) pgPayReq(PRE.id); }
+async function prProofPanel() {
+  const el = $('prProofPanel'); if (!el || !PRE || !PRE.no || PRE.isNew) return;
+  if (!PROOFS.length) await prLoadProofs(); PRKEYS[PRE.id] = await prKey(PRE); const x = PROOFS.find(p => p.k === PRKEYS[PRE.id]); if (!x) return;
+  el.innerHTML = '<div class="card"><h2>Payment screenshot from the customer</h2><p>' + (x.s === 'review' ? '<span class="pill star">Waiting for you</span> ' + prLeft(x.t) : x.s === 'rejected' ? '<span class="pill bad">Rejected</span> ' + esc(x.reason || '') : '<span class="pill ok">Approved</span>') + '</p><p class="hint">Sent ' + prAgo(x.t) + (x.utr ? ' · UTR ' + esc(x.utr) : '') + (x.name ? ' · ' + esc(x.name) : '') + '</p><div class="bar" style="justify-content:flex-start"><button class="btn pri" onclick="prProofView(\'' + x.k + '\')">' + (x.s === 'review' ? 'Check screenshot' : 'View screenshot') + '</button></div></div>';
+}
+
 /* ── list ── */
 function pgPayments() {
   if (!prV()) { C('<div class="card"><h2>Documents are locked</h2><p>Sign out and sign in again to open payment requests.</p></div>'); return; }
@@ -74,6 +123,7 @@ function pgPayments() {
   C('<div class="stats prstats"><div class="stat"><b>' + prMoney(wait.reduce((s, r) => s + prSum(r), 0)) + '</b><span>Waiting · ' + wait.length + ' request' + (wait.length === 1 ? '' : 's') + '</span></div><div class="stat"><b>' + prMoney(got.reduce((s, r) => s + prSum(r), 0)) + '</b><span>Received this month</span></div>' +
     '<div class="stat"><b>' + (u.upi ? esc(u.upi) : 'Not set') + '</b><span>UPI ID for payments</span></div></div>' +
     (u.upi ? '' : '<div class="msg warn">Add your UPI ID below so payment requests can show a QR code and a Pay button.</div>') +
+    '<div class="card" id="prProofCard" hidden><h2>Screenshots to check <span class="hint" style="font-weight:500">Customers who say they have paid</span></h2><div id="prProofs"></div></div>' +
     '<div class="card"><h2>Payment requests <span><span class="hint" id="syncState" style="font-weight:500"></span> <a class="btn sm pri" data-perm="payments.add" href="#payments/new">New payment request</a></span></h2>' +
     '<div class="tools"><input type="search" placeholder="Search customer or number" aria-label="Search payment requests" value="' + esc(PRQ) + '" oninput="PRQ=this.value;drawPayments()"/><select class="keep" aria-label="Status" onchange="PRF=this.value;drawPayments()"><option value="">All</option>' + Object.entries(PR_ST).map(([k, v]) => '<option value="' + k + '"' + (PRF === k ? ' selected' : '') + '>' + v[0] + '</option>').join('') + '</select></div>' +
     '<div class="tw"><table><thead><tr><th class="sr">Sr.</th><th>No.</th><th>Customer</th><th class="hide-m">Date</th><th>Amount</th><th class="hide-m">Status</th><th><span hidden>Actions</span></th></tr></thead><tbody id="prRows"></tbody></table></div></div>' +
@@ -81,14 +131,14 @@ function pgPayments() {
     '<div class="field"><label for="ps_upi">UPI ID</label><input id="ps_upi" value="' + esc((DB.settings.payment || {}).upi || u.upi) + '" placeholder="e.g. mumbaiinterior@okhdfcbank" autocomplete="off"/></div>' +
     '<div class="field"><label for="ps_name">Name shown to the payer</label><input id="ps_name" value="' + esc((DB.settings.payment || {}).name || u.name) + '" placeholder="Name on the bank account"/><div class="hint">Use the name on the bank account linked to this UPI ID.</div></div></div>' +
     '<div class="bar"><button class="btn pri" data-perm="letterhead.edit|card.edit" onclick="prSaveSettings(this)">Save and publish</button></div></div>');
-  drawPayments(); applyPerms();
+  drawPayments(); applyPerms(); prLoadProofs().then(() => { drawProofs(); drawPayments(); });
 }
 function drawPayments() {
   const q = PRQ.toLowerCase(), L = prList().map((r, i) => [r, i]).filter(([r]) => (!PRF || r.status === PRF) && (!q || (r.no + ' ' + r.client + ' ' + (r.client_phone || '') + ' ' + (r.title || '')).toLowerCase().includes(q))).sort((a, b) => String(b[0].date).localeCompare(String(a[0].date)) || (b[0].created || 0) - (a[0].created || 0));
   const pg = pageOf('payments', L, q + '|' + PRF), today = VLT.today();
   $('prRows').innerHTML = L.length ? pg.rows.map(([r, i], j) => { const st = PR_ST[r.status] || PR_ST.pending, late = r.status === 'pending' && r.due && r.due < today;
     return '<tr>' + sr(pg, j) + '<td><b>' + esc(r.no) + '</b></td><td><div class="t">' + esc(r.client || '—') + '</div><div class="s">' + esc(r.title || '') + (r.sent ? ' · sent ' + esc(prDate(r.sent.slice(0, 10))) : '') + '</div></td><td class="hide-m">' + esc(prDate(r.date)) + '</td><td><b>' + prMoney(prSum(r)) + '</b></td>' +
-      '<td class="hide-m"><span class="pill ' + (late ? 'bad' : st[1]) + '">' + (late ? 'Overdue' : st[0]) + '</span></td><td><div class="acts-cell"><a class="btn sm" href="#payments/' + r.id + '">Open</a>' + (r.status === 'pending' ? '<button class="btn sm" data-perm="payments.edit" onclick="prMarkPaid(\'' + r.id + '\')">Mark paid</button>' : '') + '<button class="btn sm danger" data-perm="payments.delete" onclick="prDel(\'' + r.id + '\')">Delete</button></div></td></tr>'; }).join('')
+      '<td class="hide-m">' + (prProofOf(r) && prProofOf(r).s === 'review' && r.status === 'pending' ? '<span class="pill star">Screenshot to check</span>' : prProofOf(r) && prProofOf(r).s === 'rejected' && r.status === 'pending' ? '<span class="pill bad">Screenshot rejected</span>' : '<span class="pill ' + (late ? 'bad' : st[1]) + '">' + (late ? 'Overdue' : st[0]) + '</span>') + '</td><td><div class="acts-cell"><a class="btn sm" href="#payments/' + r.id + '">Open</a>' + (r.status === 'pending' ? '<button class="btn sm" data-perm="payments.edit" onclick="prMarkPaid(\'' + r.id + '\')">Mark paid</button>' : '') + '<button class="btn sm danger" data-perm="payments.delete" onclick="prDel(\'' + r.id + '\')">Delete</button></div></td></tr>'; }).join('')
     : '<tr><td colspan="7" class="empty">No payment requests yet. Press <b>New payment request</b>, or open a quotation or bill and press <b>Request payment</b>.</td></tr>';
   pgMount($('prRows'), pg, 'drawPayments'); applyPerms();
 }
@@ -98,11 +148,11 @@ async function prSaveSettings(btn) {
   DB.settings.payment = { upi, name }; markDirty('settings'); await publish('settings', btn); pgPayments();
 }
 async function prDel(id) { const L = prList(), r = L.find(x => x.id === id); if (!await confirmBox('Delete payment request?', 'Delete ' + r.no + ' for ' + (r.client || 'this customer') + '? This can\'t be undone.')) return; L.splice(L.indexOf(r), 1); await VLT.save(true); if (r.status !== 'pending') await prPublishStatus({ ...r, status: 'pending' }); drawPayments(); toast('Deleted.'); }
-async function prMarkPaid(id, fromEditor) {
-  const r = prList().find(x => x.id === id) || PRE; if (!r) return;
-  const box = document.createElement('div'); box.className = 'modal'; box.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="mpT"><h2 id="mpT">Mark ' + esc(r.no) + ' as paid</h2><p>' + prMoney(prSum(r)) + ' from ' + esc(r.client || 'customer') + '</p><div class="g2"><div class="field"><label for="mp_d">Received on</label><input id="mp_d" type="date" value="' + VLT.today() + '"/></div><div class="field"><label for="mp_m">Paid by</label><select id="mp_m">' + PR_MODES.map(m => '<option>' + m + '</option>').join('') + '</select></div></div><div class="field"><label for="mp_r">Transaction / UTR number (optional)</label><input id="mp_r" placeholder="e.g. 431245678901"/></div><div class="bar"><button class="btn" id="mp_no">Cancel</button><button class="btn pri" id="mp_ok">Mark as paid</button></div></div>';
+async function prMarkPaid(id, fromEditor, pre) {
+  pre = pre || {}; const r = prList().find(x => x.id === id) || PRE; if (!r) return;
+  const box = document.createElement('div'); box.className = 'modal'; box.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="mpT"><h2 id="mpT">Mark ' + esc(r.no) + ' as paid</h2><p>' + prMoney(prSum(r)) + ' from ' + esc(r.client || 'customer') + '</p><div class="g2"><div class="field"><label for="mp_d">Received on</label><input id="mp_d" type="date" value="' + VLT.today() + '"/></div><div class="field"><label for="mp_m">Paid by</label><select id="mp_m">' + PR_MODES.map(m => '<option>' + m + '</option>').join('') + '</select></div></div><div class="field"><label for="mp_r">Transaction / UTR number (optional)</label><input id="mp_r" placeholder="e.g. 431245678901" value="' + esc(pre.ref || '') + '"/></div><div class="bar"><button class="btn" id="mp_no">Cancel</button><button class="btn pri" id="mp_ok">Mark as paid</button></div></div>';
   document.body.appendChild(box); $('mp_d').focus();
-  await new Promise(res => { $('mp_no').onclick = () => { box.remove(); res(); }; $('mp_ok').onclick = async () => { Object.assign(r, { status: 'paid', paid_on: $('mp_d').value || VLT.today(), paid_mode: $('mp_m').value, paid_ref: $('mp_r').value.trim(), updated: Date.now() }); const real = prList().find(x => x.id === r.id); if (real && real !== r) Object.assign(real, r); box.remove(); await VLT.save(true); await prPublishStatus(r); toast('Marked as paid. The payment page now shows it as paid.'); res(); }; });
+  await new Promise(res => { $('mp_no').onclick = () => { box.remove(); res(); }; $('mp_ok').onclick = async () => { Object.assign(r, { status: 'paid', paid_on: $('mp_d').value || VLT.today(), paid_mode: $('mp_m').value, paid_ref: $('mp_r').value.trim(), updated: Date.now() }); const real = prList().find(x => x.id === r.id); if (real && real !== r) Object.assign(real, r); box.remove(); await VLT.save(true); await prPublishStatus(r); const pk = pre.k || (PROOFS.find(x => x.k === PRKEYS[r.id] && x.s === 'review') || {}).k; if (pk) await prDecide(pk, 'approve', '', r.paid_on); toast('Marked as paid. The payment page now shows it as paid.'); res(); }; });
   if (fromEditor) pgPayReq(r.id); else drawPayments();
 }
 
@@ -126,13 +176,14 @@ function pgPayReq(arg) {
     '<div class="card"><h2>Message</h2><div class="field"><label for="pr_intro">Message to the customer (optional)</label><textarea id="pr_intro" data-p="intro" style="min-height:70px" placeholder="Leave empty for the standard message">' + esc(PRE.intro || '') + '</textarea></div><div class="field"><label for="pr_notes">Notes on the PDF (optional)</label><textarea id="pr_notes" data-p="notes" style="min-height:60px">' + esc(PRE.notes || '') + '</textarea></div>' +
       '<div class="check"><input type="checkbox" id="pr_card"' + (PRE.attach_card !== false ? ' checked' : '') + '/><label for="pr_card">Attach my visiting card to the email</label></div></div>' +
     (PRE.status === 'paid' ? '<div class="msg ok">Paid on ' + esc(prDate(PRE.paid_on)) + (PRE.paid_mode ? ' by ' + esc(PRE.paid_mode) : '') + (PRE.paid_ref ? ' · ref. ' + esc(PRE.paid_ref) : '') + '.</div>' : '') +
+    '<div id="prProofPanel"></div>' +
     (PRE.log && PRE.log.length ? '<div class="card"><h2>History</h2><ul class="prlog">' + PRE.log.slice().reverse().map(l => '<li><b>' + esc(new Date(l.t).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })) + '</b> ' + esc(l.what) + '</li>').join('') + '</ul></div>' : '') +
     '<div class="docbar"><a class="btn" href="#payments">Back</a><button class="btn pri" data-perm="payments.add|payments.edit" onclick="prSave(this)">Save</button><button class="btn pri" data-perm="payments.send" onclick="prSend(this)">Send email</button><button class="btn" onclick="prWhatsApp()">WhatsApp</button><button class="btn" onclick="prCopyLink()">Copy pay link</button><button class="btn" onclick="prDownload(this)">Download PDF</button>' +
       (PRE.status === 'pending' && !PRE.isNew ? '<button class="btn" data-perm="payments.edit" onclick="prMarkPaid(\'' + PRE.id + '\',1)">Mark paid</button>' : '') + (PRE.status === 'pending' && !PRE.isNew ? '<button class="btn" data-perm="payments.edit" onclick="prCancel()">Cancel request</button>' : '') + '</div>' +
     '</div><div class="docprev' + (innerWidth <= 1150 ? ' shut' : '') + '" id="docprev"><div class="prevhead"><b>Preview</b><span class="hint" style="margin:0">A4 · updates as you type</span><button type="button" class="btn sm prevtoggle" aria-expanded="' + (innerWidth > 1150) + '" aria-controls="prevbox" onclick="togglePrev(this)">' + (innerWidth <= 1150 ? 'Show preview' : 'Hide preview') + '</button></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
   document.querySelectorAll('[data-p]').forEach(el => el.oninput = el.onchange = () => { PRE[el.dataset.p] = el.value; prDirty(); });
   $('pr_card').onchange = e => { PRE.attach_card = e.target.checked; prDirty(); };
-  prDrawLines(); prPrev(); VLT.sync(PRE.isNew ? 'Not saved yet' : ''); window.onresize = VLT.fit;
+  prDrawLines(); prPrev(); VLT.sync(PRE.isNew ? 'Not saved yet' : ''); window.onresize = VLT.fit; prProofPanel();
 }
 function prFromDoc(d) { const t = VLT.docTotal(d); Object.assign(PRE, { client: d.client || '', client_phone: d.client_phone || '', client_address: d.client_address || '', ref: (DOCS.TYPES[d.type] || {}).label + ' ' + d.no, work_total: t.grand || '', received: t.paid || '' });
   const bal = Math.max(0, (t.grand || 0) - (t.paid || 0)); PRE.title = t.paid ? 'Balance payment' : 'Advance payment'; PRE.lines = [{ desc: (t.paid ? 'Balance payment' : 'Advance payment') + ' for ' + ((DOCS.TYPES[d.type] || {}).label || 'work').toLowerCase() + ' ' + d.no, amount: d.type === 'quotation' && !t.paid ? Math.round((t.grand || 0) * .4) : bal }]; }
@@ -160,7 +211,7 @@ async function prSave(btn, quiet) {
   const i = L.findIndex(x => x.id === d.id); if (i < 0) L.push(d); else L[i] = d;
   PRE = JSON.parse(JSON.stringify(d)); if (btn) btn.disabled = true; await VLT.save(true); if (btn) btn.disabled = false;
   $('pTitle').textContent = 'Payment request ' + PRE.no; if (location.hash !== '#payments/' + PRE.id) history.replaceState(null, '', '#payments/' + PRE.id);
-  if (!quiet) toast('Saved.'); prPrev(); return true;
+  PRKEYS[PRE.id] = await prKey(PRE); if (!quiet) toast('Saved.'); prPrev(); return true;
 }
 function prLog(what) { const r = prList().find(x => x.id === PRE.id); const e = { t: Date.now(), what }; PRE.log = (PRE.log || []).concat(e); if (r) r.log = PRE.log; }
 async function prDownload(btn) { if (!prCheck()) return; if (PRE.isNew && !await prSave(null, 1)) return; const l = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Making PDF…'; try { await prPDF(PRE, 'save'); toast('PDF downloaded.'); } catch (e) { toast('Couldn\'t make the PDF.', true); } finally { btn.disabled = false; btn.innerHTML = l; } }

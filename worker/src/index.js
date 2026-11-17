@@ -74,7 +74,7 @@ async function route(req, env, url) {
     const n = String(src.n || '').trim().toUpperCase(), am = Math.round(parseFloat(src.am) * 100) / 100;
     if (!/^[A-Z]{1,4}-\d{4}-\d{1,5}$/.test(n) || !(am > 0 && am <= 1000000)) throw err(400, 'bad', 'This payment link is not complete.');
     const k = (await sha(n + '|' + am.toFixed(2))).slice(0, 24), cur = JSON.parse(await KV.get('proof:' + k) || 'null');
-    if (m === 'GET') return json(cur ? { s: cur.s, t: cur.t, d: cur.d || '', reason: cur.reason || '', utr: cur.utr || '' } : { s: 'none' });
+    if (m === 'GET') { const rc = !!(await KV.get('rcptm:' + k)); return json(cur ? { s: cur.s, t: cur.t, d: cur.d || '', reason: cur.reason || '', utr: cur.utr || '', rc } : { s: 'none', rc }); }
     if (src._honey) return json({ ok: true });
     if (cur && cur.s === 'paid') throw err(409, 'paid', 'This payment is already confirmed. Thank you!');
     const ip = req.headers.get('CF-Connecting-IP') || 'local', day = new Date().toISOString().slice(0, 10), ipk = 'pp:' + ip + ':' + day, ipn = +(await KV.get(ipk)) || 0;
@@ -95,6 +95,19 @@ async function route(req, env, url) {
         attachments: [{ name: n + '-payment.' + (img.startsWith('iVBOR') ? 'png' : 'jpg'), b64: img }] }); } catch (e) { /* still saved for the admin */ }
     }
     return json({ ok: true, s: 'review', t: rec.t });
+  }
+
+  // ── payment receipt PDF for the customer (public, rate-limited; put online by the admin when a request is marked paid) ──
+  if (p === '/pay/receipt' && m === 'GET') {
+    const n = String(url.searchParams.get('n') || '').trim().toUpperCase(), am = Math.round(parseFloat(url.searchParams.get('am')) * 100) / 100;
+    const page = (t, st) => new Response('<!doctype html><meta name="viewport" content="width=device-width"><title>Receipt</title><body style="font:16px system-ui,sans-serif;padding:2rem;max-width:30rem;margin:auto"><h1 style="font-size:1.3rem">' + t + '</h1><p>Please call or WhatsApp us on +91 9004200401.</p></body>', { status: st, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    if (!/^[A-Z]{1,4}-\d{4}-\d{1,5}$/.test(n) || !(am > 0 && am <= 1000000)) return page('This receipt link is not complete.', 400);
+    const ip = req.headers.get('CF-Connecting-IP') || 'local', ipk = 'rcd:' + ip + ':' + new Date().toISOString().slice(0, 10), ipn = +(await KV.get(ipk)) || 0;
+    if (ipn >= 40) return page('Too many downloads from this connection today.', 429);
+    await KV.put(ipk, String(ipn + 1), { expirationTtl: 90000 });
+    const k = (await sha(n + '|' + am.toFixed(2))).slice(0, 24), pdf = await KV.get('rcpt:' + k);
+    if (!pdf) return page('The receipt is not ready yet.', 404);
+    return new Response(Uint8Array.from(atob(pdf), c => c.charCodeAt(0)), { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="Payment-Receipt-' + n.replace(/^PR-/, 'RC-') + '.pdf"' } });
   }
 
   if (p === '/enquiry' && m === 'POST') {
@@ -332,6 +345,19 @@ async function route(req, env, url) {
     r.by = U.email; r.at = Date.now();
     await KV.put('proof:' + k, JSON.stringify(r), { expirationTtl: 60 * 60 * 24 * 120 });
     return json({ ok: true, s: r.s });
+  }
+
+  // ── payment receipt: put online / take down (signed in) ──
+  if (p === '/pay/receipt' && m === 'POST') {
+    need('payments', 'edit');
+    const b = await body(req), n = String(b.n || '').trim().toUpperCase(), am = Math.round(parseFloat(b.am) * 100) / 100;
+    if (!/^[A-Z]{1,4}-\d{4}-\d{1,5}$/.test(n) || !(am > 0 && am <= 1000000)) throw err(400, 'bad', 'Bad request.');
+    const k = (await sha(n + '|' + am.toFixed(2))).slice(0, 24);
+    if (b.remove) { await KV.delete('rcpt:' + k); await KV.delete('rcptm:' + k); return json({ ok: true }); }
+    const pdf = String(b.pdf || '').replace(/\s/g, '');
+    if (!pdf.startsWith('JVBER') || pdf.length > 5e6 || !/^[A-Za-z0-9+/=]+$/.test(pdf)) throw err(400, 'bad', 'The receipt PDF is not valid.');
+    await KV.put('rcpt:' + k, pdf); await KV.put('rcptm:' + k, JSON.stringify({ n, am, at: Date.now(), by: U.email }));
+    return json({ ok: true });
   }
 
   // ── payment request: branded email with the PDF (and visiting card) attached; from the first business mailbox, else from noreply@ ──

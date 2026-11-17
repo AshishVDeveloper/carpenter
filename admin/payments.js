@@ -43,20 +43,53 @@ function prDoc(r, opt) {
 }
 const prFile = r => ('Payment-Request-' + (r.no || 'draft') + '-' + (r.client || '')).replace(/[^\w\-]+/g, '-').replace(/-+/g, '-').replace(/-$/, '');
 /* render HTML off-screen and get a PDF (base64 or download) via html2pdf */
-async function prPDF(r, mode) {
-  const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:0;top:0;width:794px;z-index:-1;pointer-events:none'; host.innerHTML = prDoc(r); document.body.appendChild(host);
+async function prPDF(r, mode, kind) {
+  const host = document.createElement('div'); host.style.cssText = 'position:absolute;left:0;top:0;width:794px;z-index:-1;pointer-events:none'; host.innerHTML = kind ? prReceiptDoc(r, { public: kind === 'public' }) : prDoc(r); document.body.appendChild(host);
   try { await document.fonts.ready; await Promise.all([...host.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(res => { i.onload = i.onerror = res; })));
-    const w = html2pdf().set({ margin: [28, 0, 26, 0], filename: prFile(r) + '.pdf', image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 794, x: 0, y: 0 }, jsPDF: { unit: 'px', format: [794, 1123], hotfixes: ['px_scaling'] }, pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.signs', '.foot', '.sum', '.meta', '.pay', 'h3.sec'] } }).from(host.firstElementChild);
+    const w = html2pdf().set({ margin: [28, 0, 26, 0], filename: (kind ? prRcFile(r) : prFile(r)) + '.pdf', image: { type: 'jpeg', quality: .95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 794, x: 0, y: 0 }, jsPDF: { unit: 'px', format: [794, 1123], hotfixes: ['px_scaling'] }, pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.signs', '.foot', '.sum', '.meta', '.pay', 'h3.sec'] } }).from(host.firstElementChild);
     if (mode === 'save') return await w.save();
     return (await w.outputPdf('datauristring')).split(',')[1];
   } finally { host.remove(); document.querySelectorAll('.html2pdf__overlay').forEach(o => o.remove()); }
 }
 
 
+/* ── payment receipt (once paid). Same letterhead. The copy put online for the customer's /pay/ page leaves out phone, email and address. ── */
+const prRcNo = r => String(r.no || '').replace(/^PR-/, 'RC-');
+const prRcFile = r => ('Payment-Receipt-' + prRcNo(r) + '-' + (r.client || '')).replace(/[^\w\-]+/g, '-').replace(/-+/g, '-').replace(/-$/, '');
+function prReceiptDoc(r, opt) {
+  opt = opt || {}; const L = VLT.lh(), t = prSum(r), esc2 = DOCS.esc, pub = opt.public;
+  const meta = '<div class="meta"><div class="box"><b class="k">Received from</b><div class="nm">' + esc2(r.client || '—') + '</div>' + (!pub && r.client_phone ? '<div>Mob: ' + esc2(r.client_phone) + '</div>' : '') + (!pub && r.client_email ? '<div>' + esc2(r.client_email) + '</div>' : '') + (!pub && r.client_address ? '<div>' + esc2(r.client_address) + '</div>' : '') + '</div>' +
+    '<div class="box"><dl class="kv">' + [['Receipt No.', prRcNo(r)], ['Date received', prDate(r.paid_on || r.updated && new Date(r.updated).toISOString().slice(0, 10))], ['Against request', r.no], ['Reference', r.ref], ['Paid by', r.paid_mode], ['UTR / Txn. no.', r.paid_ref]].filter(x => x[1]).map(x => '<dt>' + x[0] + '</dt><dd>' + esc2(x[1]) + '</dd>').join('') + '</dl></div></div>';
+  const para = 'Received with thanks from <b>' + esc2(r.client || 'the customer') + '</b> the sum of <b>' + prMoney(t) + '</b> (' + esc2(DOCS.words(t)) + ')' + (r.paid_mode ? ' by ' + esc2(r.paid_mode) : '') + (r.paid_on ? ' on ' + esc2(prDate(r.paid_on)) : '') + (r.title ? ' towards ' + esc2(r.title.toLowerCase()) : '') + (r.ref ? ' against ' + esc2(r.ref) : '') + '.';
+  const rows = (r.lines || []).filter(l => l.desc || +l.amount).map((l, i) => '<tr><td class="n">' + (i + 1) + '</td><td>' + esc2(l.desc) + '</td><td class="n">' + DOCS.inr(+l.amount || 0) + '</td></tr>').join('');
+  const got = (+r.received || 0) + t, ctx = +r.work_total ? '<div class="ctx"><div><b>Total work value</b><span>' + prMoney(r.work_total) + '</span></div><div><b>Received till now</b><span>' + prMoney(got) + '</span></div><div><b>Balance</b><span>' + prMoney(Math.max(0, (+r.work_total) - got)) + '</span></div></div>' : '';
+  return '<div class="docpage"><div class="stamp paid">PAID</div>' + DOCS.letterhead(L) + '<div class="dtitle"><span>Payment Receipt</span></div>' + meta + '<p class="para">' + para + '</p>' +
+    '<table class="items"><thead><tr><th class="n" style="width:36px">#</th><th>Description</th><th class="n" style="width:140px">Amount (₹)</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="sum"><div class="words"><b>Amount in words</b>' + DOCS.words(t) + '</div><div class="tot"><div class="grand"><span>Amount received</span><span>' + prMoney(t) + '</span></div></div></div>' + ctx +
+    '<p class="para" style="color:#5d5d5d;font-size:11px">This is a computer-generated receipt for the payment above' + (r.paid_ref ? ' (UTR ' + esc2(r.paid_ref) + ')' : '') + '.</p>' +
+    '<div class="grow"></div><div class="signs"><div class="sign"></div><div class="sign" style="text-align:right"><div class="line">For ' + esc2(L.title) + '<small>Authorised signatory</small></div></div></div>' + DOCS.footer(L, { footer_note: 'Thank you for your payment!' }) + '</div>';
+}
+/* put the receipt online (or take it down) so the customer can download it from the pay page */
+async function prPublishReceipt(r, quiet) {
+  if (typeof SERVER !== 'function' || !SERVER() || !r.no) return false;
+  try { const k = await prKey(r), base = { k, n: r.no, am: prSum(r) };
+    if (r.status === 'paid') await api('/pay/receipt', { ...base, pdf: await prPDF(r, 'b64', 'public') }); else await api('/pay/receipt', { ...base, remove: 1 });
+    return true;
+  } catch (e) { if (!quiet) toast('The receipt could not be put on the payment page: ' + (e.message || e), true); return false; }
+}
+async function prReceipt(btn, id) {
+  const r = id ? prList().find(x => x.id === id) : PRE; if (!r || r.status !== 'paid') return;
+  const t = btn && btn.textContent; if (btn) { btn.disabled = true; btn.textContent = 'Making PDF…'; }
+  try { await prPDF(r, 'save', 'full'); if (await prPublishReceipt(r, 1)) toast('Receipt downloaded. The customer can also download it from the pay page.'); }
+  catch (e) { toast('Could not make the receipt: ' + (e.message || e), true); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = t; } }
+}
+
 /* public payment status for the website's /pay/ page: only a hash of "request no.|amount" → paid / cancelled.
    No names, phone numbers or other customer details are published. */
 async function prKey(r) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(r.no) + '|' + prSum(r).toFixed(2))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('').slice(0, 24); }
 async function prPublishStatus(r) {
+  await prPublishReceipt(r);
   const cfg = gh(); if (!cfg || !cfg.token || !r.no) return;
   try {
     let cur = {}, sha; try { const j = await ghApi(cfg, '/contents/data/payreq.json?ref=' + encodeURIComponent(cfg.branch)); sha = j.sha; cur = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\s/g, '')), c => c.charCodeAt(0)))) || {}; } catch (e) { if (e.status !== 404) throw e; }
@@ -138,7 +171,7 @@ function drawPayments() {
   const pg = pageOf('payments', L, q + '|' + PRF), today = VLT.today();
   $('prRows').innerHTML = L.length ? pg.rows.map(([r, i], j) => { const st = PR_ST[r.status] || PR_ST.pending, late = r.status === 'pending' && r.due && r.due < today;
     return '<tr>' + sr(pg, j) + '<td><b>' + esc(r.no) + '</b></td><td><div class="t">' + esc(r.client || '—') + '</div><div class="s">' + esc(r.title || '') + (r.sent ? ' · sent ' + esc(prDate(r.sent.slice(0, 10))) : '') + '</div></td><td class="hide-m">' + esc(prDate(r.date)) + '</td><td><b>' + prMoney(prSum(r)) + '</b></td>' +
-      '<td class="hide-m">' + (prProofOf(r) && prProofOf(r).s === 'review' && r.status === 'pending' ? '<span class="pill star">Screenshot to check</span>' : prProofOf(r) && prProofOf(r).s === 'rejected' && r.status === 'pending' ? '<span class="pill bad">Screenshot rejected</span>' : '<span class="pill ' + (late ? 'bad' : st[1]) + '">' + (late ? 'Overdue' : st[0]) + '</span>') + '</td><td><div class="acts-cell"><a class="btn sm" href="#payments/' + r.id + '">Open</a>' + (r.status === 'pending' ? '<button class="btn sm" data-perm="payments.edit" onclick="prMarkPaid(\'' + r.id + '\')">Mark paid</button>' : '') + '<button class="btn sm danger" data-perm="payments.delete" onclick="prDel(\'' + r.id + '\')">Delete</button></div></td></tr>'; }).join('')
+      '<td class="hide-m">' + (prProofOf(r) && prProofOf(r).s === 'review' && r.status === 'pending' ? '<span class="pill star">Screenshot to check</span>' : prProofOf(r) && prProofOf(r).s === 'rejected' && r.status === 'pending' ? '<span class="pill bad">Screenshot rejected</span>' : '<span class="pill ' + (late ? 'bad' : st[1]) + '">' + (late ? 'Overdue' : st[0]) + '</span>') + '</td><td><div class="acts-cell"><a class="btn sm" href="#payments/' + r.id + '">Open</a>' + (r.status === 'pending' ? '<button class="btn sm" data-perm="payments.edit" onclick="prMarkPaid(\'' + r.id + '\')">Mark paid</button>' : '') + (r.status === 'paid' ? '<button class="btn sm" onclick="prReceipt(this,\'' + r.id + '\')">Receipt</button>' : '') + '<button class="btn sm danger" data-perm="payments.delete" onclick="prDel(\'' + r.id + '\')">Delete</button></div></td></tr>'; }).join('')
     : '<tr><td colspan="7" class="empty">No payment requests yet. Press <b>New payment request</b>, or open a quotation or bill and press <b>Request payment</b>.</td></tr>';
   pgMount($('prRows'), pg, 'drawPayments'); applyPerms();
 }
@@ -178,7 +211,7 @@ function pgPayReq(arg) {
     (PRE.status === 'paid' ? '<div class="msg ok">Paid on ' + esc(prDate(PRE.paid_on)) + (PRE.paid_mode ? ' by ' + esc(PRE.paid_mode) : '') + (PRE.paid_ref ? ' · ref. ' + esc(PRE.paid_ref) : '') + '.</div>' : '') +
     '<div id="prProofPanel"></div>' +
     (PRE.log && PRE.log.length ? '<div class="card"><h2>History</h2><ul class="prlog">' + PRE.log.slice().reverse().map(l => '<li><b>' + esc(new Date(l.t).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })) + '</b> ' + esc(l.what) + '</li>').join('') + '</ul></div>' : '') +
-    '<div class="docbar"><a class="btn" href="#payments">Back</a><button class="btn pri" data-perm="payments.add|payments.edit" onclick="prSave(this)">Save</button><button class="btn pri" data-perm="payments.send" onclick="prSend(this)">Send email</button><button class="btn" onclick="prWhatsApp()">WhatsApp</button><button class="btn" onclick="prCopyLink()">Copy pay link</button><button class="btn" onclick="prDownload(this)">Download PDF</button>' +
+    '<div class="docbar"><a class="btn" href="#payments">Back</a><button class="btn pri" data-perm="payments.add|payments.edit" onclick="prSave(this)">Save</button><button class="btn pri" data-perm="payments.send" onclick="prSend(this)">Send email</button><button class="btn" onclick="prWhatsApp()">WhatsApp</button><button class="btn" onclick="prCopyLink()">Copy pay link</button><button class="btn" onclick="prDownload(this)">Download PDF</button>' + (PRE.status === 'paid' ? '<button class="btn pri" onclick="prReceipt(this)">Receipt PDF</button>' : '') +
       (PRE.status === 'pending' && !PRE.isNew ? '<button class="btn" data-perm="payments.edit" onclick="prMarkPaid(\'' + PRE.id + '\',1)">Mark paid</button>' : '') + (PRE.status === 'pending' && !PRE.isNew ? '<button class="btn" data-perm="payments.edit" onclick="prCancel()">Cancel request</button>' : '') + '</div>' +
     '</div><div class="docprev' + (innerWidth <= 1150 ? ' shut' : '') + '" id="docprev"><div class="prevhead"><b>Preview</b><span class="hint" style="margin:0">A4 · updates as you type</span><button type="button" class="btn sm prevtoggle" aria-expanded="' + (innerWidth > 1150) + '" aria-controls="prevbox" onclick="togglePrev(this)">' + (innerWidth <= 1150 ? 'Show preview' : 'Hide preview') + '</button></div><div class="prevbox" id="prevbox"><div id="prev"></div></div></div></div>');
   document.querySelectorAll('[data-p]').forEach(el => el.oninput = el.onchange = () => { PRE[el.dataset.p] = el.value; prDirty(); });

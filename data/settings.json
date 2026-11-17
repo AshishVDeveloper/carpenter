@@ -648,5 +648,21 @@
   "payment": {
     "upi": "9004200401@upi",
     "name": "Ramkumar Vishwakarma"
+  },
+  "card": {
+    "name": "Ramkumar Vishwakarma",
+    "role": "Founder",
+    "company": "Mumbai Interior",
+    "tagline": "Sliding Aluminium Window, Teakwood Furniture, Sofa, Kapat",
+    "phones": [
+      "+91 9004200401",
+      "+91 9833583310"
+    ],
+    "email": "info@mumbai-interior.in",
+    "website": "www.mumbai-interior.in",
+    "address": "RM36, Yadav Nagar, MIDC Road, Airoli, Navi Mumbai 400708",
+    "qr": "contact",
+    "theme": "forest",
+    "services": "Interiors · Modular kitchens · Wardrobes · False ceiling · Aluminium · Repairs"
   }
 }

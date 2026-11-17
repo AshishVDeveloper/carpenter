@@ -625,3 +625,11 @@ nav.main a:not(.btn){white-space:nowrap}.brand{white-space:nowrap}
 .svc-mini img{width:96px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0}
 .svc-mini b{display:block;font-size:.98rem;line-height:1.25}.svc-mini small{display:block;color:var(--muted);font-size:.82rem;margin-top:.2rem}
 @media (max-width:900px){.svc-mini{grid-template-columns:1fr 1fr}}@media (max-width:560px){.svc-mini{grid-template-columns:1fr}}
+/* articles and policy pages never wider than the screen */
+.legal-wrap{grid-template-columns:minmax(0,1fr) 280px}.legal-wrap>*{min-width:0}
+.legal{min-width:0;overflow-wrap:break-word}.legal img,.legal video,.legal iframe{max-width:100%;height:auto}
+.legal table{display:block;max-width:100%;overflow-x:auto}.legal pre{max-width:100%;overflow-x:auto;white-space:pre-wrap}
+@media (max-width:1080px){.legal-wrap{grid-template-columns:minmax(0,1fr)}}
+.split>*,.svc-row>*{min-width:0}
+@media (max-width:380px){.esttable td,.esttable th{padding-left:.5rem;padding-right:.5rem}.esttable td:last-child{white-space:normal}}
+.btn{max-width:100%}.svc-row .btn{white-space:normal;text-align:center;height:auto}

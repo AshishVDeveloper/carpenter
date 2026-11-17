@@ -57,7 +57,16 @@
     "customizable": true,
     "in_stock": true,
     "price_min": 109200,
-    "price_max": 132600
+    "price_max": 132600,
+    "reviews": [
+      {
+        "name": "Dhiraj",
+        "place": "Airoli",
+        "rating": 5,
+        "date": "2026-11-17",
+        "text": "Excellent Quality and on Time delivery thank you for Mumbai Interior 🙏."
+      }
+    ]
   },
   {
     "id": 25,

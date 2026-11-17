@@ -2,7 +2,7 @@
   "fx": "pan",
   "auto": true,
   "interval": 6,
-  "random": false,
+  "random": true,
   "items": [
     {
       "id": 1,

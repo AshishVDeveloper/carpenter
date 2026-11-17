@@ -220,16 +220,22 @@
       "H": 84,
       "D": 15,
       "mirrorW": 18,
-      "drawers": 3
+      "drawers": 3,
+      "color": "#f8f6f1",
+      "wood": "#c9abab",
+      "view": "3d",
+      "top": false,
+      "side": true
     },
     "images": [],
     "product_id": 16,
-    "rate": 1600,
+    "rate": 2200,
     "material": "Plywood with laminate",
     "finish": "Laminate with mirror",
     "notes": "",
     "visible": true,
-    "drawing": null
+    "drawing": null,
+    "slug": "dressing-unit-with-full-length-mirror"
   },
   {
     "id": 11,

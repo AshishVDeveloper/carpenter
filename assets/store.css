@@ -566,3 +566,24 @@ html.dark .cbtn{background:rgba(20,28,22,.9);color:#E6ECE6}html.dark .cbtn.on{co
 .wishbtn b{background:#D2384C;color:#fff}
 .wishbar{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin-bottom:1.2rem}.wishbar b{margin-right:auto}
 @media (max-width:1100px){.wishbtn{display:grid!important;width:42px;height:42px}}
+/* product photo viewer */
+.gopen{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:zoom-in;position:relative}
+.gzoom{position:absolute;right:.7rem;bottom:.7rem;display:inline-flex;align-items:center;gap:.35rem;background:rgba(20,28,22,.72);color:#fff;font:600 .82rem/1 var(--body);padding:.45rem .65rem;border-radius:999px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.gzoom svg{width:15px;height:15px}
+html.lbopen{overflow:hidden}
+#lb{position:fixed;inset:0;z-index:1000;background:rgba(10,14,11,.96);display:flex;flex-direction:column;color:#fff;animation:lbIn .2s ease}
+@keyframes lbIn{from{opacity:0}to{opacity:1}}
+.lb-top{display:flex;align-items:center;gap:1rem;padding:.8rem 1rem;flex:none}
+.lb-count{font-weight:700;min-width:3.5rem}.lb-title{flex:1;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-x{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:1.2rem;cursor:pointer}
+.lb-stage{flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;touch-action:none;padding:0 3.5rem}
+.lb-stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;cursor:zoom-in;transition:transform .2s ease}
+#lb.zoomed .lb-stage img{cursor:grab;transition:none}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:2rem;line-height:1;cursor:pointer}
+.lb-nav:hover,.lb-x:hover{background:rgba(255,255,255,.26)}
+.lb-prev{left:.8rem}.lb-next{right:.8rem}
+.lb-dots{display:flex;gap:.45rem;justify-content:center;padding:.8rem;flex:none;overflow-x:auto}
+.lb-dots button{flex:none;width:62px;height:46px;padding:0;border:2px solid transparent;border-radius:7px;overflow:hidden;background:none;cursor:pointer;opacity:.55}
+.lb-dots button[aria-current=true]{border-color:var(--tape);opacity:1}
+.lb-dots img{width:100%;height:100%;object-fit:cover}
+@media (max-width:640px){.lb-stage{padding:0}.lb-nav{width:40px;height:40px;font-size:1.6rem;background:rgba(0,0,0,.35)}}

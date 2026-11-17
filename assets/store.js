@@ -101,7 +101,38 @@ function bindShop() {
   const q0 = new URLSearchParams(location.search).get('q'); if (q0) { $('search').value = q0; draw(); }
   $('search').oninput = draw; $('sort').onchange = draw;
 }
+/* full-screen photo viewer: swipe or arrow keys to move, tap or double-tap to zoom, Esc to close */
+function lightbox(imgs, start, title) {
+  let i = start, zoom = 1, ox = 0, oy = 0, sx = 0, sy = 0, moved = false;
+  const back = document.activeElement, box = document.createElement('div');
+  box.id = 'lb'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', title + ' photos');
+  box.innerHTML = '<div class="lb-top"><span class="lb-count" aria-live="polite"></span><span class="lb-title"></span><button type="button" class="lb-x" aria-label="Close">✕</button></div>' +
+    '<div class="lb-stage"><img alt=""/></div>' + (imgs.length > 1 ? '<button type="button" class="lb-nav lb-prev" aria-label="Previous photo">‹</button><button type="button" class="lb-nav lb-next" aria-label="Next photo">›</button><div class="lb-dots">' + imgs.map((u, k) => '<button type="button" data-k="' + k + '" aria-label="Photo ' + (k + 1) + '"><img src="' + u.replace(/^(\/images\/(?:products|site|blog)\/[a-z0-9-]+)\.webp$/, '$1-xs.webp') + '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'' + '\'+this.closest(\'button\').dataset.full"/></button>').join('') + '</div>' : '');
+  box.querySelectorAll('.lb-dots button').forEach((b, k) => b.dataset.full = imgs[k]);
+  const img = box.querySelector('.lb-stage img'), stage = box.querySelector('.lb-stage');
+  const apply = () => { img.style.transform = 'translate(' + ox + 'px,' + oy + 'px) scale(' + zoom + ')'; box.classList.toggle('zoomed', zoom > 1); };
+  const show = k => { i = (k + imgs.length) % imgs.length; zoom = 1; ox = oy = 0; apply(); img.src = imgs[i]; img.alt = title + ' — photo ' + (i + 1); box.querySelector('.lb-count').textContent = imgs.length > 1 ? (i + 1) + ' / ' + imgs.length : ''; box.querySelector('.lb-title').textContent = title; box.querySelectorAll('.lb-dots button').forEach((b, k) => b.setAttribute('aria-current', k === i)); [imgs[i + 1], imgs[i - 1]].forEach(u => { if (u) new Image().src = u; }); };
+  const close = () => { box.remove(); document.documentElement.classList.remove('lbopen'); removeEventListener('keydown', key); back && back.focus && back.focus(); };
+  const key = e => { if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') show(i + 1); else if (e.key === 'ArrowLeft') show(i - 1); else if (e.key === 'Tab') { e.preventDefault(); box.querySelector('.lb-x').focus(); } };
+  box.addEventListener('click', e => {
+    if (e.target.closest('.lb-x')) return close();
+    if (e.target.closest('.lb-prev')) return show(i - 1);
+    if (e.target.closest('.lb-next')) return show(i + 1);
+    const d = e.target.closest('[data-k]'); if (d) return show(+d.dataset.k);
+    if (e.target === img && !moved) { zoom = zoom > 1 ? 1 : 2.2; if (zoom === 1) { ox = oy = 0; } apply(); return; }
+    if (e.target === stage && zoom === 1 && !moved) close();
+  });
+  stage.addEventListener('pointerdown', e => { moved = false; sx = e.clientX; sy = e.clientY; stage._d = { ox, oy }; });
+  stage.addEventListener('pointermove', e => { if (!stage._d) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) + Math.abs(dy) > 6) moved = true; if (zoom > 1) { ox = stage._d.ox + dx; oy = stage._d.oy + dy; apply(); } });
+  stage.addEventListener('pointerleave', () => { stage._d = null; });
+  stage.addEventListener('pointerup', e => { const d = stage._d; stage._d = null; if (!d) return; const dx = e.clientX - sx; if (zoom === 1 && moved && Math.abs(dx) > 50 && imgs.length > 1) show(i + (dx < 0 ? 1 : -1)); setTimeout(() => moved = false, 0); });
+  document.body.append(box); document.documentElement.classList.add('lbopen'); addEventListener('keydown', key); show(start); box.querySelector('.lb-x').focus();
+}
 function bindProduct() {
+  const g = document.querySelector('.gallery[data-gal]');
+  if (g) { const imgs = g.dataset.gal.split('|').filter(Boolean); let cur = 0;
+    g.querySelector('.gopen').onclick = () => lightbox(imgs, cur, g.dataset.title);
+    const th = $('thumbs'); if (th) th.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cur = [...th.children].indexOf(b); const z = g.querySelector('.gzoom'); if (z && imgs.length > 1) z.lastChild.textContent = (cur + 1) + ' / ' + imgs.length; }); }
   const rf = $('rvf'); if (rf) rf.onsubmit = e => {
     e.preventDefault(); const d = Object.fromEntries(new FormData(rf)); if (d._honey) return;
     if (!d.name.trim() || d.text.trim().length < 10) { toast(tt('Add your name and a few words about the product.'), true); return; }

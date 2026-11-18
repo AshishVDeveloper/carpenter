@@ -134,7 +134,8 @@ td .s{color:var(--muted);font-size:.82rem}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
   .sb{position:fixed;left:0;top:0;bottom:0;width:250px;z-index:60;transform:translateX(-100%);transition:transform .25s}
-  .sb.open{transform:none;box-shadow:0 0 0 100vmax rgba(15,22,17,.5)}
+  .sb.open{transform:none;box-shadow:0 0 30px rgba(0,0,0,.25)}
+  .sb.open~.scrim{display:block}
   .burger{display:block}
   .top{padding:.8rem 1rem}
   .top .sub,.conn span{display:none}
@@ -372,3 +373,5 @@ html.dark .edsvg{box-shadow:0 2px 12px rgba(0,0,0,.5)}
 .ppimg img{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain}
 .ppkv{display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;margin:0;font-size:.92rem}.ppkv dt{color:var(--muted)}.ppkv dd{margin:0;font-weight:600;word-break:break-word}
 @media (max-width:640px){.ppgrid{grid-template-columns:1fr}}
+
+.scrim{display:none;position:fixed;inset:0;z-index:59;background:rgba(15,22,17,.5);cursor:pointer;-webkit-tap-highlight-color:transparent}

@@ -366,4 +366,13 @@ Disallow: /pay/
 
 Sitemap: ${S.site_url}/sitemap.xml
 `);
+// admin: add ?v=<content hash> to its own scripts and styles, so a new version reaches phones straight away (no stale cache)
+{ const { createHash } = await import('node:crypto');
+  for (const f of ['admin/index.html', 'admin/login/index.html']) {
+    const fp = path.join(ROOT, f); if (!fs.existsSync(fp)) continue; const dir = path.dirname(fp), html = fs.readFileSync(fp, 'utf8');
+    const out = html.replace(/(<(?:script|link)\b[^>]*?(?:src|href)=")([^":?#]+\.(?:js|css))(?:\?v=\w+)?"/g, (m, a, u) => {
+      const file = u.startsWith('/') ? path.join(ROOT, u) : path.join(dir, u); if (!fs.existsSync(file)) return m;
+      return a + u + '?v=' + createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 8) + '"'; });
+    if (out !== html) fs.writeFileSync(fp, out);
+  } }
 console.log('Built', routes.length * 3, 'pages + 404, sitemap.xml, robots.txt');

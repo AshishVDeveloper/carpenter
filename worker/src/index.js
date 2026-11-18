@@ -14,7 +14,7 @@
 
 import { connect } from 'cloudflare:sockets';
 
-const SESSION_TTL = 12 * 3600, TICKET_TTL = 300, PENDING_TTL = 900, MAX_FAIL = 5;
+const REMEMBER_TTL = 30 * 86400, SESSION_TTL = 12 * 3600, TICKET_TTL = 300, PENDING_TTL = 900, MAX_FAIL = 5;
 
 export default {
   async fetch(req, env) {
@@ -193,7 +193,42 @@ async function route(req, env, url) {
       codes = backupCodes(); u.totp = t.secret; u.last = step; u.backup = await Promise.all(codes.map(c => sha(c.replace(/-/g, '')))); await saveUser(KV, u);
     } else if (!(await secondFactor(KV, u, b.code))) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong. Use the newest code from the app.'); }
     await KV.delete('ticket:' + b.ticket); await KV.delete('fail:' + ip);
-    return json({ ...(await newSession(KV, u.email)), ...(codes ? { backup: codes } : {}) });
+    return json({ ...(await newSession(KV, u.email, b.remember ? REMEMBER_TTL : 0)), ...(codes ? { backup: codes } : {}) });
+  }
+
+  // ── forgot password: a 6-digit code is emailed to the account's own address (any team member). Two-step sign-in still applies. ──
+  if (p === '/forgot/start' && m === 'POST') {
+    const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local', email = lc(b.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw err(400, 'bad', 'Enter the email you sign in with.');
+    if (!env.SMTP_PASS) throw err(503, 'nosmtp', 'Email sending is not set up yet. Ask the owner to reset your password.');
+    const hr = Math.floor(Date.now() / 36e5), ipk = 'fpi:' + ip + ':' + hr, ek = 'fpe:' + email + ':' + hr, [ipn, en] = [+(await KV.get(ipk)) || 0, +(await KV.get(ek)) || 0];
+    if (ipn >= 6 || en >= 3) throw err(429, 'limit', 'Too many codes asked for. Wait an hour and try again.');
+    await KV.put(ipk, String(ipn + 1), { expirationTtl: 4000 }); await KV.put(ek, String(en + 1), { expirationTtl: 4000 });
+    const u = await getUser(KV, email).catch(() => null);
+    if (u && u.active !== false) {
+      const code = String(100000 + (new Uint32Array(rand(4).buffer)[0] % 900000));
+      await KV.put('forgot:' + email, JSON.stringify({ ch: await sha(email + '|' + code), tries: 0 }), { expirationTtl: 900 });
+      await smtpSend(env, { to: email, subject: 'Your password reset code: ' + code + ' — Mumbai Interior admin',
+        text: 'Your code to reset your Mumbai Interior admin password is ' + code + '\n\nIt works for 15 minutes. If you did not ask for this, ignore this email — your password stays the same.',
+        html: brandMail(env, { preheader: 'Your password reset code is ' + code, title: 'Reset your admin password', intro: 'Type this code on the sign-in page to choose a new password. It works for <b>15 minutes</b>.<div style="font:800 32px/1.2 Arial,sans-serif;letter-spacing:8px;margin:18px 0;color:#2F4A3A">' + code + '</div>If you did not ask for this, ignore this email — your password stays the same.', cta: false }) });
+    }
+    return json({ ok: true }); // same answer whether or not the email has an account
+  }
+  if (p === '/forgot/finish' && m === 'POST') {
+    const b = await body(req), ip = req.headers.get('CF-Connecting-IP') || 'local', email = lc(b.email);
+    await lockCheck(KV, ip);
+    const f = JSON.parse(await KV.get('forgot:' + email) || 'null');
+    if (!f) throw err(400, 'expired', 'This code has expired. Ask for a new one.');
+    if (f.ch !== await sha(email + '|' + String(b.code || '').replace(/\D/g, ''))) {
+      f.tries++; if (f.tries >= 5) await KV.delete('forgot:' + email); else await KV.put('forgot:' + email, JSON.stringify(f), { expirationTtl: 900 });
+      await lockFail(KV, ip); throw err(401, 'code', f.tries >= 5 ? 'Too many wrong codes. Ask for a new one.' : 'That code is wrong. Check the latest email.');
+    }
+    if (!/^[0-9a-f]{64}$/.test(b.hash || '')) throw err(400, 'bad', 'Missing details.');
+    const u = await getUser(KV, email); if (!u || u.active === false) throw err(400, 'expired', 'This code has expired. Ask for a new one.');
+    u.salt = hex(rand(16)); u.ph = await sha(u.salt + b.hash); u.pwAt = Date.now(); delete u.mustChange; await saveUser(KV, u);
+    await KV.delete('forgot:' + email);
+    try { await smtpSend(env, { to: email, subject: 'Your admin password was changed — Mumbai Interior', text: 'Your Mumbai Interior admin password was just changed. If this was not you, contact the owner straight away.', html: brandMail(env, { preheader: 'Your admin password was changed', title: 'Your password was changed', intro: 'Your Mumbai Interior admin password was just changed, and you were signed out on other devices. If this was not you, contact the owner straight away.', cta: false }) }); } catch (e) { }
+    return json({ ok: true });
   }
 
   // ── password reset (forgot password) for the owner: GitHub key + 2FA code or backup code. Team members ask the owner. ──
@@ -204,7 +239,7 @@ async function route(req, env, url) {
     await ghOwner(env, b.github);
     if (!(await secondFactor(KV, a, b.code))) { await lockFail(KV, ip); throw err(401, 'code', 'That code is wrong.'); }
     if (!/^[0-9a-f]{64}$/.test(b.hash || '')) throw err(400, 'bad', 'Missing details.');
-    a.salt = hex(rand(16)); a.ph = await sha(a.salt + b.hash); a.gh = b.github;
+    a.salt = hex(rand(16)); a.ph = await sha(a.salt + b.hash); a.gh = b.github; a.pwAt = Date.now();
     await saveUser(KV, a);
     return json({ ok: true });
   }
@@ -641,9 +676,9 @@ function ghMods(f) {
   return ['publishing'];
 }
 
-async function newSession(KV, email) {
-  const id = hex(rand(32)), exp = Date.now() + SESSION_TTL * 1000;
-  await KV.put('sess:' + id, JSON.stringify({ email, exp }), { expirationTtl: SESSION_TTL });
+async function newSession(KV, email, ttl) {
+  ttl = ttl || SESSION_TTL; const id = hex(rand(32)), exp = Date.now() + ttl * 1000;
+  await KV.put('sess:' + id, JSON.stringify({ email, exp, t: Date.now() }), { expirationTtl: ttl });
   const u = await getUser(KV, email); if (u) { u.lastLogin = Date.now(); await saveUser(KV, u); }
   return { session: id, exp };
 }
@@ -652,7 +687,7 @@ async function session(KV, req) {
   const s = id && /^[0-9a-f]{64}$/.test(id) ? JSON.parse(await KV.get('sess:' + id) || 'null') : null;
   if (!s || s.exp < Date.now()) throw err(401, 'session', 'Please sign in again.');
   const user = await getUser(KV, s.email);
-  if (!user || user.active === false) { await KV.delete('sess:' + id); throw err(401, 'session', 'Please sign in again.'); }
+  if (!user || user.active === false || (user.pwAt && (s.t || 0) < user.pwAt)) { await KV.delete('sess:' + id); throw err(401, 'session', 'Please sign in again.'); }
   return { ...s, id, user, perms: permsOf(user, await rolesLoad(KV)) };
 }
 async function lockCheck(KV, ip) {

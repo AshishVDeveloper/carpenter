@@ -37,7 +37,7 @@ async function srvLogin(e) {
   $('lBtn').disabled = true; $('lBtn').textContent = 'Checking…';
   try {
     const r = await api('/login', { email, hash: await srvHash(email, pw) });
-    PENDING = { ticket: r.ticket, email, pw, setup: r.setup }; showTfa();
+    PENDING = { ticket: r.ticket, email, pw, setup: r.setup, remember: !!($('lRem') && $('lRem').checked) }; showTfa();
   } catch (err) { msg('lErr', err.message); }
   $('lBtn').disabled = false; $('lBtn').textContent = 'Sign in';
 }
@@ -65,15 +65,62 @@ async function finishLogin() {
       catch (er) { console.warn('vault open', er && er.message); if (er.locked && me.owner && window.confirm('Your saved documents can\'t be opened with this password. Start a new, empty document store? (You can restore a backup file afterwards.)')) await vaultOpenKey(key, null, true); }
     } catch (e) { console.warn('vault key', e && e.message); }
   }
-  sessionStorage.setItem(SESS, JSON.stringify({ email: me.email, t: Date.now() })); PENDING = null;
+  sessionStorage.setItem(SESS, JSON.stringify({ email: me.email, t: Date.now() }));
+  rememberSave(!!P.remember); PENDING = null;
   location.replace('/admin/' + (me.mustChange ? '#account' : location.hash));
 }
+/* "Remember me": keep this device signed in (30 days) by saving the tab's sign-in in localStorage; the page head copies it back */
+const RMK = 'carpenter_remember';
+function rememberSave(on) {
+  if (!on) { localStorage.removeItem(RMK); return; }
+  const s = srvSess(), ss = {}; [SESS, SRVK, 'carpenter_vault_key'].forEach(k => { const v = sessionStorage.getItem(k); if (v) ss[k] = v; });
+  if (s) localStorage.setItem(RMK, JSON.stringify({ exp: s.exp, ss }));
+}
+const remembered = () => { try { const r = JSON.parse(localStorage.getItem(RMK) || 'null'); return !!(r && r.exp > Date.now()); } catch (e) { return false; } };
+
+/* ── forgot password: code by email ── */
+function fpShow(on) {
+  let f = $('fpForm');
+  if (!f) {
+    f = document.createElement('div'); f.id = 'fpForm';
+    f.innerHTML = '<h1>Forgot password</h1><div id="fp1"><p>Enter the email you sign in with. We\'ll email you a 6-digit code.</p><div class="msg err" id="fpErr" hidden></div>' +
+      '<form onsubmit="fpStart(event)"><div class="field"><label for="fpEmail">Email</label><input id="fpEmail" type="email" autocomplete="username" required/></div><button class="btn pri" id="fpBtn">Send code</button></form></div>' +
+      '<div id="fp2" hidden><div class="msg ok" id="fpSent"></div><div class="msg err" id="fpErr2" hidden></div><form onsubmit="fpFinish(event)">' + codeField('fpCode', 'Code from the email') +
+      '<div class="field"><label for="fpNew">New password</label><input id="fpNew" type="password" autocomplete="new-password" minlength="8" required/><div class="hint">At least 8 characters.</div></div>' +
+      '<div class="field"><label for="fpConf">Repeat new password</label><input id="fpConf" type="password" autocomplete="new-password" required/></div><button class="btn pri" id="fpBtn2">Change password</button></form>' +
+      '<button class="linkbtn" onclick="fpStart()">Send a new code</button></div>' +
+      '<div class="lrow" style="margin-top:.4rem"><button class="linkbtn" onclick="showReset(false)">Back to sign in</button><button class="linkbtn" onclick="fpGithub()">Owner: use GitHub key</button></div>';
+    $('loginForm').after(f);
+  }
+  f.hidden = !on; $('loginForm').hidden = on; $('resetForm').hidden = true; if ($('tfaForm')) $('tfaForm').hidden = true;
+  if (on) { $('fp1').hidden = false; $('fp2').hidden = true; msg('fpErr', ''); $('fpEmail').value = $('lEmail').value; $('fpEmail').focus(); }
+}
+function fpGithub() { $('fpForm').hidden = true; $('resetForm').hidden = false; srvResetForm(); }
+async function fpStart(e) {
+  if (e) e.preventDefault(); const em = $('fpEmail').value.trim(); if (!em) { $('fp1').hidden = false; $('fp2').hidden = true; return; }
+  const b = $('fpBtn'); b.disabled = true; b.textContent = 'Sending…';
+  try { await api('/forgot/start', { email: em }); $('fp1').hidden = true; $('fp2').hidden = false; msg('fpErr2', ''); msg('fpSent', 'If ' + em + ' has an admin account, a code is on its way. Check the inbox (and spam). It works for 15 minutes.', 'ok'); $('fpCode').value = ''; $('fpCode').focus(); }
+  catch (err) { msg($('fp1').hidden ? 'fpErr2' : 'fpErr', err.message); }
+  b.disabled = false; b.textContent = 'Send code';
+}
+async function fpFinish(e) {
+  e.preventDefault(); const em = $('fpEmail').value.trim();
+  if ($('fpNew').value.length < 8) return msg('fpErr2', 'Use at least 8 characters.');
+  if ($('fpNew').value !== $('fpConf').value) return msg('fpErr2', 'The two passwords don\'t match.');
+  const b = $('fpBtn2'); b.disabled = true; b.textContent = 'Changing…';
+  try {
+    await api('/forgot/finish', { email: em, code: $('fpCode').value, hash: await srvHash(em, $('fpNew').value) });
+    fpShow(false); $('lEmail').value = em; $('lPass').value = ''; if ($('lPass').type !== 'password') $('lPass').nextElementSibling.click(); msg('lErr', 'Password changed. Sign in with your new password.', 'ok'); $('lPass').focus();
+  } catch (err) { msg('fpErr2', err.message); }
+  b.disabled = false; b.textContent = 'Change password';
+}
+
 function tfaBack() { PENDING = null; $('tfaForm').hidden = true; $('loginForm').hidden = false; $('lPass').value = ''; $('lPass').focus(); }
 async function srvTfa(e) {
   e.preventDefault(); if (!PENDING) return tfaBack();
   $('tBtn').disabled = true; $('tBtn').textContent = 'Verifying…';
   try {
-    const s = await api('/login/2fa', { ticket: PENDING.ticket, code: $('tCode').value });
+    const s = await api('/login/2fa', { ticket: PENDING.ticket, code: $('tCode').value, remember: PENDING.remember });
     sessionStorage.setItem(SRVK, JSON.stringify({ session: s.session, exp: s.exp }));
     if (s.backup) { $('tfaForm').innerHTML = '<h1>Save your backup codes</h1><div class="msg info">Each code lets you sign in once if you lose your phone. This is the only time they are shown.</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.4rem .8rem;font:600 1.05rem ui-monospace,monospace;margin:1rem 0;padding:1rem;border:1px dashed var(--line);border-radius:12px;user-select:all">' + s.backup.map(c => '<span>' + c + '</span>').join('') + '</div><button class="btn pri" id="tBtn" onclick="this.disabled=true;finishLogin()">I\'ve saved them — continue</button>'; return; }
     await finishLogin(); return;

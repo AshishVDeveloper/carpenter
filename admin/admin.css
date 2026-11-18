@@ -375,3 +375,7 @@ html.dark .edsvg{box-shadow:0 2px 12px rgba(0,0,0,.5)}
 @media (max-width:640px){.ppgrid{grid-template-columns:1fr}}
 
 .scrim{display:none;position:fixed;inset:0;z-index:59;background:rgba(15,22,17,.5);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pwwrap{position:relative;display:block}.pwwrap input{width:100%;padding-right:2.9rem}
+.eye{position:absolute;right:.35rem;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:2.3rem;height:2.3rem;border:0;border-radius:8px;background:none;color:var(--muted,#5d6b61);cursor:pointer}
+.eye:hover{color:var(--forest)}.eye:focus-visible{outline:2px solid var(--forest);outline-offset:1px}
+.lrow{display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;margin:-.1rem 0 .9rem}.lrow .check{margin:0;font-weight:500;font-size:.92rem}.lrow .linkbtn{margin:0}

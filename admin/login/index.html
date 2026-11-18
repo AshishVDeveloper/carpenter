@@ -18,8 +18,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="assets/doc/doc.css"/>
+<script>/* "Remember me": bring back the saved sign-in for this tab */try{var R=JSON.parse(localStorage.getItem('carpenter_remember')||'null');if(R&&R.exp>Date.now()){if(!sessionStorage.getItem('carpenter_admin'))for(var k in R.ss)sessionStorage.setItem(k,R.ss[k])}else if(R)localStorage.removeItem('carpenter_remember')}catch(e){}</script>
 <script>if(sessionStorage.getItem('carpenter_admin'))document.documentElement.classList.add('checking')</script>
-<link rel="stylesheet" href="/admin/admin.css?v=a903e154"/>
+<link rel="stylesheet" href="/admin/admin.css?v=33bafc8f"/>
 </head>
 <body>
 <div class="boot" aria-live="polite"><img src="/admin/icon-192.png" alt=""/><span>Checking sign-in…</span></div>
@@ -32,9 +33,10 @@
       <form onsubmit="doLogin(event)">
         <div class="field"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required/></div>
         <div class="field"><label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" required/></div>
+        <div class="lrow"><label class="check" for="lRem"><input type="checkbox" id="lRem"/> Remember me</label><button type="button" class="linkbtn" onclick="showReset(true)">Forgot password?</button></div>
         <button class="btn pri" id="lBtn">Sign in</button>
       </form>
-      <button class="linkbtn" onclick="showReset(true)">Forgot password?</button>
+      <p class="hint" id="lRemHint" hidden>You'll stay signed in on this device for 30 days. Don't tick this on a shared phone or computer.</p>
     </div>
     <div id="resetForm" hidden>
       <h1>Reset password</h1>
@@ -55,7 +57,7 @@
 <script src="assets/doc/doc.js"></script>
 <script src="assets/doc/admin-docs.js"></script>
 <script src="/assets/vendor/qrcode.js?v=4c79be16"></script>
-<script src="/admin/secure.js?v=0aede59a"></script>
-<script src="/admin/admin.js?v=89a3492a"></script>
+<script src="/admin/secure.js?v=c6436adb"></script>
+<script src="/admin/admin.js?v=3afde543"></script>
 </body>
 </html>

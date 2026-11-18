@@ -1,4 +1,4 @@
-const C = 'mi-offline-mwmf876b', OFF = '/offline/';
+const C = 'mi-offline-mwmfgfzu', OFF = '/offline/';
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll([OFF, '/assets/logo-96.png', '/favicon.ico']))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(n => n !== C).map(n => caches.delete(n)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

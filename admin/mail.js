@@ -73,11 +73,11 @@ async function mailLoad() {
 async function mailOpen(i) {
   const m = MAIL.list[i]; if (!m) return; MAIL.open = m.id;
   document.querySelectorAll('.mitem').forEach((b, j) => b.classList.toggle('on', j === i));
-  const r = $('mRead'); r.innerHTML = '<p class="hint">Opening…</p>'; document.querySelector('.mailgrid').classList.add('reading');
+  const r = $('mRead'); r.innerHTML = '<p class="hint">Opening…</p>'; mailOpenView();
   try {
     const d0 = await api('/mail/read?' + mbq() + '&folder=' + encodeURIComponent(m.folder) + '&id=' + encodeURIComponent(m.id)); const d = { ...d0, from: un(d0.from), fromAddress: un(d0.fromAddress), to: un(d0.to), cc: un(d0.cc), subject: un(d0.subject) };
     if (m.unread && d0.marked !== false) mailSetRead(i, true, true);
-    r.innerHTML = '<button class="btn sm mback" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\')">← Back</button><h2 class="mh">' + esc(d.subject || m.subject || '(no subject)') + '</h2>' +
+    r.innerHTML = '<button class="btn sm mback" onclick="mailCloseView()">← Back</button><h2 class="mh">' + esc(d.subject || m.subject || '(no subject)') + '</h2>' +
       '<div class="mmeta"><b>' + esc(d.from || m.from || '') + '</b> &lt;' + esc(d.fromAddress || m.fromAddress || '') + '&gt;<br/>To: ' + esc(d.to || '') + (d.cc ? '<br/>Cc: ' + esc(d.cc) : '') + '<br/>' + (d.time ? new Date(d.time).toLocaleString('en-IN') : '') + '</div>' +
       '<iframe class="mbody" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" scrolling="no" referrerpolicy="no-referrer" title="Email content"></iframe>' +
       '<div class="bar" style="justify-content:flex-start"><button class="btn pri" data-perm="mail.send" onclick="mailCompose(' + i + ')">Reply</button><button class="btn" onclick="mailToggleRead(' + i + ')" id="mRd">Mark as unread</button></div>';
@@ -111,18 +111,18 @@ function mailClean(html) {
 }
 function mailCompose(i) {
   const m = i != null ? MAIL.list[i] : null, r = $('mRead');
-  document.querySelector('.mailgrid').classList.add('reading');
-  r.innerHTML = '<button class="btn sm mback" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\')">← Back</button><h2 class="mh">' + (m ? 'Reply' : 'New email') + '</h2><div class="msg err" id="cErr" hidden></div>' +
+  mailOpenView();
+  r.innerHTML = '<button class="btn sm mback" onclick="mailCloseView()">← Back</button><h2 class="mh">' + (m ? 'Reply' : 'New email') + '</h2><div class="msg err" id="cErr" hidden></div>' +
     '<form onsubmit="mailSend(event,' + (m ? '\'' + esc(m.id) + '\'' : 'null') + ')">' + (MAIL.boxes.length > 1 && !m ? '<div class="field"><label for="c_from">From</label><select id="c_from">' + MAIL.boxes.map(e => '<option' + (e === MAIL.email ? ' selected' : '') + '>' + esc(e) + '</option>').join('') + '</select></div>' : '') + '<div class="field"><label for="c_to">To</label><input id="c_to" type="email" multiple required value="' + esc(m ? (m.fromAddress || '') : '') + '" placeholder="customer@example.com"/></div>' +
     '<div class="field"><label for="c_sub">Subject</label><input id="c_sub" value="' + esc(m ? (/^re:/i.test(m.subject || '') ? m.subject : 'Re: ' + (m.subject || '')) : '') + '"/></div>' +
     '<div class="field"><label for="c_body">Message</label><textarea id="c_body" required style="min-height:200px"></textarea><div class="hint">' + (m || MAIL.boxes.length < 2 ? 'Sent from ' + esc(MAIL.email) + '. ' : '') + 'Your logo, address and phone are added at the top and bottom automatically.</div></div>' +
-    '<div class="bar" style="justify-content:flex-start"><button class="btn pri" id="cBtn">Send</button><button type="button" class="btn" onclick="document.querySelector(\'.mailgrid\').classList.remove(\'reading\');$(\'mRead\').innerHTML=\'<div class=empty>Choose an email to read it.</div>\'">Cancel</button></div></form>';
+    '<div class="bar" style="justify-content:flex-start"><button class="btn pri" id="cBtn">Send</button><button type="button" class="btn" onclick="mailCloseView();$(\'mRead\').innerHTML=\'<div class=empty>Choose an email to read it.</div>\'">Cancel</button></div></form>';
   $(m ? 'c_body' : 'c_to').focus();
 }
 async function mailSend(e, replyTo) {
   e.preventDefault(); const b = $('cBtn'); b.disabled = true; b.textContent = 'Sending…'; $('cErr').hidden = true;
   const text = $('c_body').value, html = '<div style="white-space:normal">' + esc(text).replace(/\n/g, '<br/>') + '</div>', from = $('c_from') ? $('c_from').value : MAIL.email;
-  try { await api('/mail/send', { box: from, to: $('c_to').value.trim(), subject: $('c_sub').value.trim(), content: html, replyTo: replyTo || undefined }); toast('Email sent.'); document.querySelector('.mailgrid').classList.remove('reading'); $('mRead').innerHTML = '<div class="empty">Sent. Choose an email to read it.</div>'; }
+  try { await api('/mail/send', { box: from, to: $('c_to').value.trim(), subject: $('c_sub').value.trim(), content: html, replyTo: replyTo || undefined }); toast('Email sent.'); mailCloseView(); $('mRead').innerHTML = '<div class="empty">Sent. Choose an email to read it.</div>'; }
   catch (er) { $('cErr').textContent = er.message; $('cErr').hidden = false; b.disabled = false; b.textContent = 'Send'; }
 }
 function mailConnect(more) {
@@ -154,3 +154,15 @@ async function mailBadge(dec) {
   let n = a.querySelector('.n'); if (!MAIL_UNREAD) { n && n.remove(); return; }
   if (!n) { n = document.createElement('span'); n.className = 'n'; a.append(n); } n.textContent = MAIL_UNREAD;
 }
+
+/* phone: opening an email adds a step to the browser history, so the phone's own Back button returns to the list */
+const mailNarrow = () => matchMedia('(max-width:860px)').matches;
+function mailOpenView() {
+  const g = document.querySelector('.mailgrid'); if (!g) return; g.classList.add('reading');
+  if (mailNarrow() && !(history.state && history.state.mailRead)) history.pushState({ mailRead: 1 }, '', location.href);
+}
+function mailCloseView() {
+  if (history.state && history.state.mailRead) { history.back(); return; } // popstate below closes it
+  const g = document.querySelector('.mailgrid'); if (g) g.classList.remove('reading');
+}
+addEventListener('popstate', () => { const g = document.querySelector('.mailgrid'); if (g && !(history.state && history.state.mailRead)) g.classList.remove('reading'); });

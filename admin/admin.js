@@ -112,6 +112,8 @@ function chrome(){const cnt={documents:window.vaultCount?vaultCount():'',project
   const c=gh();$('conn').className='conn'+(c&&c.token?' ok':'');$('conn').querySelector('span').textContent=c&&c.token?'Publishing to GitHub':'Not connected';
   $('pubAll').hidden=!DIRTY.size;$('pubAll').textContent=DIRTY.size>1?'Publish all changes ('+DIRTY.size+')':'Publish changes'}
 if($('burger'))$('burger').onclick=()=>$('sb').classList.toggle('open');
+/* phone menu: a tap anywhere outside it just closes it (and doesn't also press what's underneath) */
+document.addEventListener('click',e=>{const sb=$('sb');if(!sb||!sb.classList.contains('open')||sb.contains(e.target)||e.target.closest('#burger'))return;e.preventDefault();e.stopPropagation();sb.classList.remove('open')},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('sb')){$('sb').classList.remove('open');if(!$('modal').hidden)$('mNo').click()}});
 const C=h=>$('content').innerHTML=h;
 /* ── pagination: every list shows Sr. No., rows per page and numbered pages; goes back to page 1 when the search or filter changes ── */

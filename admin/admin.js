@@ -137,12 +137,7 @@ function mv(k,i,d,redraw){const a=DB[k],j=i+d;if(j<0||j>=a.length)return;[a[i],a
 const catName=s=>(DB.categories.find(c=>c.slug===s)||{}).name||s||'—';
 
 /* ── dashboard ── */
-function pgDash(){const P=DB.products,c=gh(),S=DB.settings;
-  C((c&&c.token?'':'<div class="msg info"><b>Connect GitHub first.</b> Then every Publish button updates the live shop, and you can upload product photos. <a href="#publishing">Set up publishing</a></div>')+
-  (S.sample_data?'<div class="msg info"><b>Sample products are showing.</b> Replace them with your real furniture, photos and prices in <a href="#products">Products</a>, check your details in <a href="#settings">Shop details</a>, then untick "Sample data" there.</div>':'')+
-  (DIRTY.size?'<div class="msg info">Unpublished changes in: '+[...DIRTY].map(k=>'<a href="#'+k+'">'+PAGES[k].t+'</a>').join(', ')+'.</div>':'')+
-  '<div class="stats">'+[['projects',DB.projects.length,'Project sites'],['products',P.length,'Products'],['products',P.filter(p=>p.visible===false).length,'Hidden'],['categories',DB.categories.length,'Categories'],['testimonials',DB.testimonials.length,'Reviews'],['orders',orders().length,'Orders on this device']].map(s=>'<a href="#'+s[0]+'"><b>'+s[1]+'</b><span>'+s[2]+'</span></a>').join('')+'</div>'+
-  '<div class="card"><h2>Quick actions</h2><div class="bar" style="justify-content:flex-start"><a class="btn pri" href="#documents/new-quotation">New quotation</a><a class="btn" href="#documents">Documents</a><a class="btn" data-perm="projects.add" href="#projects/new">Add a project site</a><a class="btn" data-perm="products.add" href="#products/new">Add a product</a><a class="btn" href="#settings">Edit business details</a><a class="btn" data-perm="testimonials.add" href="#testimonials/new">Add a review</a><a class="btn" href="/" target="_blank" rel="noopener">Open the website</a></div></div>')}
+/* pgDash lives in dashboard.js */
 
 /* ── products ── */
 let PQ='',PC='';

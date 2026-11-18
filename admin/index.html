@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="assets/doc/doc.css"/>
 <script>/* "Remember me": bring back the saved sign-in for this tab */try{var R=JSON.parse(localStorage.getItem('carpenter_remember')||'null');if(R&&R.exp>Date.now()){if(!sessionStorage.getItem('carpenter_admin'))for(var k in R.ss)sessionStorage.setItem(k,R.ss[k])}else if(R)localStorage.removeItem('carpenter_remember')}catch(e){}</script>
 <script>if(!sessionStorage.getItem('carpenter_admin'))location.replace('/admin/login/'+location.hash);else document.documentElement.classList.add('booting')</script>
-<link rel="stylesheet" href="/admin/admin.css?v=33bafc8f"/>
+<link rel="stylesheet" href="/admin/admin.css?v=e0e07c69"/>
 </head>
 <body>
 <div class="boot" aria-live="polite"><img src="/admin/icon-192.png" alt=""/><span>Opening admin…</span></div>
@@ -56,6 +56,7 @@
 <script src="/admin/catalogue.js?v=c2737d2d"></script>
 <script src="/admin/banners.js?v=b6ae51ef"></script>
 <script src="/admin/payments.js?v=43e390e3"></script>
-<script src="/admin/admin.js?v=3afde543"></script>
+<script src="/admin/dashboard.js?v=7a5109a8"></script>
+<script src="/admin/admin.js?v=9d06b7fc"></script>
 </body>
 </html>

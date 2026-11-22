@@ -1,5 +1,5 @@
 {
-  "fx": "fade",
+  "fx": "pan",
   "auto": true,
   "interval": 6,
   "random": true,

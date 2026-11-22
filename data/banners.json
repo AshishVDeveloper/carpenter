@@ -1,5 +1,5 @@
 {
-  "fx": "zoom",
+  "fx": "fade",
   "auto": true,
   "interval": 6,
   "random": true,

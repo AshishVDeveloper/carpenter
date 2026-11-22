@@ -1,5 +1,5 @@
 {
-  "fx": "pan",
+  "fx": "zoom",
   "auto": true,
   "interval": 6,
   "random": true,
